@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSolutions &mdash; Inventário Hospitalar</title>
+    <link rel="shortcut icon" href="assets/images/logo-medsoft.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fontawesome/all.min.css">
+    <link rel="stylesheet" href="assets/css/estilos.css">
+</head>
+<body>
+
+    <header class="mhs-topbar">
+        <div class="mhs-topbar-inner">
+            <a href="#" class="mhs-logo-link">
+                <img src="assets/images/logo-medsoft.svg" alt="Logotipo MedSolutions">
+                <span>MedSolutions</span>
+            </a>
+
+            <nav class="mhs-nav" id="mainNav">
+                <a href="#quem-somos">Quem Somos</a>
+                <a href="#produto">O Produto</a>
+                <a href="#funcionalidades">Funcionalidades</a>
+                <a href="#setor-saude">Setor Saúde</a>
+                <a href="#contacto">Contacto</a>
+            </nav>
+
+            <a href="login.html" class="mhs-btn-outline">Entrar na Plataforma</a>
+
+            <button class="mhs-burger" id="burgerBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <section class="mhs-hero" id="quem-somos">
+        <div class="mhs-hero-content">
+            <p class="mhs-overline">Tecnologia para hospitais</p>
+            <h1>Inventário hospitalar com <strong>visão clara e operação rápida</strong></h1>
+            <p class="mhs-hero-sub">Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.</p>
+            <div class="mhs-hero-actions">
+                <a href="#produto" class="mhs-btn-primary">Conhecer o Produto</a>
+                <a href="login.html" class="mhs-btn-ghost">Aceder ao Painel <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="mhs-hero-metrics">
+                <div class="mhs-hero-metric">
+                    <strong>Dashboard</strong>
+                    <span>KPIs e alertas em tempo real</span>
+                </div>
+                <div class="mhs-hero-metric">
+                    <strong>Inventário</strong>
+                    <span>Estados, localização e criticidade</span>
+                </div>
+                <div class="mhs-hero-metric">
+                    <strong>Contratos</strong>
+                    <span>Gestão preventiva de garantias</span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="mhs-section" id="produto">
+        <div class="mhs-section-header">
+            <p class="mhs-overline">O produto</p>
+            <h2>MedInventar</h2>
+            <p>Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.</p>
+        </div>
+
+        <div class="mhs-grid-3">
+            <article class="mhs-info-card">
+                <div class="mhs-info-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                <h4>Visão Global</h4>
+                <p>Dashboard com indicadores de equipamentos por estado, criticidade e serviço hospitalar.</p>
+            </article>
+            <article class="mhs-info-card">
+                <div class="mhs-info-icon"><i class="fa-solid fa-route"></i></div>
+                <h4>Rastreabilidade</h4>
+                <p>Cada equipamento com localização, fornecedor, documentação e histórico completo.</p>
+            </article>
+            <article class="mhs-info-card">
+                <div class="mhs-info-icon"><i class="fa-solid fa-user-shield"></i></div>
+                <h4>Governança</h4>
+                <p>Perfis admin e técnico com controlo de acesso por sessão PHP e encriptação AES.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="mhs-section mhs-section--alt" id="funcionalidades">
+        <div class="mhs-section-header">
+            <p class="mhs-overline">Funcionalidades</p>
+            <h2>Módulos do sistema</h2>
+            <p>Cada módulo segue o padrão CRUD com validação dupla, indicadores claros e operação orientada a equipas hospitalares.</p>
+        </div>
+
+        <div class="mhs-grid-4">
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                <h4>Equipamentos</h4>
+                <p>Código de inventário, estado clínico, criticidade e ficha detalhada completa.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <h4>Localizações</h4>
+                <p>Mapa lógico por edifício, piso, serviço e sala do hospital.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-truck-field"></i></div>
+                <h4>Fornecedores</h4>
+                <p>Fabricantes, distribuidores e assistência técnica com relação N:N.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <h4>Documentação</h4>
+                <p>Manuais, certificados e contratos com validade e alertas.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-file-contract"></i></div>
+                <h4>Garantias</h4>
+                <p>Contratos de manutenção com prazos e alertas de expiração.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                <h4>Pesquisa Avançada</h4>
+                <p>Filtros combinados por código, estado, criticidade, fornecedor e mais.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-tags"></i></div>
+                <h4>Categorias</h4>
+                <p>Classificação funcional de equipamentos por tipo clínico.</p>
+            </article>
+            <article class="mhs-feat-card">
+                <div class="mhs-feat-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                <h4>Dashboard</h4>
+                <p>KPIs: totais, ativos, em manutenção, garantias expiradas e visão por serviço.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="mhs-section" id="setor-saude">
+        <div class="mhs-split">
+            <div class="mhs-split-text">
+                <p class="mhs-overline">Contexto hospitalar</p>
+                <h2>Desenhado para o setor da saúde</h2>
+                <p>Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.</p>
+                <ul class="mhs-checks">
+                    <li><i class="fa-solid fa-circle-check"></i> Informação sempre atualizada e consistente</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Apoio à decisão operacional das equipas clínicas</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Classificação por criticidade incluindo suporte de vida</li>
+                </ul>
+            </div>
+            <div class="mhs-split-visual">
+                <div class="mhs-badge-stack">
+                    <span class="mhs-badge mhs-badge--green">Ativo</span>
+                    <span class="mhs-badge mhs-badge--amber">Em manutenção</span>
+                    <span class="mhs-badge mhs-badge--red">Inativo</span>
+                    <span class="mhs-badge mhs-badge--dark">Suporte de vida</span>
+                    <span class="mhs-badge mhs-badge--blue">Em calibração</span>
+                    <span class="mhs-badge mhs-badge--gray">Abatido</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mhs-section mhs-section--alt" id="contacto">
+        <div class="mhs-section-header">
+            <p class="mhs-overline">Contacto</p>
+            <h2>Fale connosco</h2>
+            <p>Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.</p>
+        </div>
+
+        <form class="mhs-form" method="post" action="#contacto" novalidate>
+            <div class="mhs-form-row">
+                <div class="mhs-form-group">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" placeholder="O seu nome" required>
+                </div>
+                <div class="mhs-form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="email@exemplo.pt" required>
+                </div>
+            </div>
+            <div class="mhs-form-group">
+                <label for="mensagem">Mensagem</label>
+                <textarea id="mensagem" name="mensagem" rows="4" placeholder="Descreva o que pretende..." required></textarea>
+            </div>
+            <button type="submit" class="mhs-btn-primary">Enviar Mensagem</button>
+        </form>
+    </section>
+
+    <footer class="mhs-footer">
+        <div class="mhs-footer-inner">
+            <div class="mhs-footer-brand">
+                <img src="assets/images/logo-medsoft-white.svg" alt="MedSolutions">
+                <span>MedSolutions</span>
+            </div>
+            <div class="mhs-footer-cols">
+                <div>
+                    <strong>Empresa</strong>
+                    <p>MedSolutions</p>
+                    <p>Porto, Portugal</p>
+                </div>
+                <div>
+                    <strong>Contactos</strong>
+                    <p>geral@medsolutions.pt</p>
+                    <p>+351 220 600 700</p>
+                </div>
+                <div>
+                    <strong>Produto</strong>
+                    <p>MedInventar v1.0</p>
+                    <p>&copy; 2026 MedSolutions</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('burgerBtn').addEventListener('click', function () {
+            document.getElementById('mainNav').classList.toggle('mhs-nav--open');
+        });
+    </script>
+</body>
+</html>
