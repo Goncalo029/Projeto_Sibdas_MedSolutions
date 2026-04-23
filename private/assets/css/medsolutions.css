@@ -468,11 +468,11 @@ img {
     position: fixed !important;
     top: 18px !important;
     left: 18px !important;
-    bottom: 18px !important;
+    bottom: auto !important;
+    max-height: 100vh !important;
     width: var(--mhs-sidebar-width) !important;
     z-index: 1040;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(255, 255, 255, 0.92);
@@ -483,7 +483,7 @@ img {
 }
 
 .mhs-sidebar-header {
-    padding: 26px 22px 18px;
+    padding: 14px 22px 8px;
 }
 
 .mhs-sidebar-logo {
@@ -508,7 +508,7 @@ img {
 .mhs-sidebar-logo-copy strong {
     display: block;
     font-family: 'Sora', sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--mhs-text);
     letter-spacing: -0.02em;
 }
@@ -520,6 +520,7 @@ img {
 }
 
 .mhs-sidebar-copy {
+    display: none;
     margin: 0;
     color: var(--mhs-muted);
     font-size: 0.86rem;
@@ -528,16 +529,16 @@ img {
 
 .mhs-sidebar-nav {
     flex: 1;
-    padding: 6px 12px 14px;
+    padding: 2px 12px 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .mhs-nav-section {
-    padding: 16px 12px 6px;
+    padding: 14px 12px 5px;
     color: #94a3b8;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -548,10 +549,10 @@ img {
     display: flex !important;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
+    padding: 11px 13px;
     border-radius: 16px;
     color: #334155 !important;
-    font-size: 0.92rem;
+    font-size: 0.89rem;
     font-weight: 600;
     transition: transform var(--mhs-transition), color var(--mhs-transition), background var(--mhs-transition), box-shadow var(--mhs-transition);
 }
@@ -593,10 +594,9 @@ img {
 }
 
 .mhs-sidebar-footer {
-    padding: 18px 22px 22px;
+    display: none;
+    padding: 8px 22px 10px;
     border-top: 1px solid rgba(148, 163, 184, 0.18);
-    display: flex;
-    flex-direction: column;
     gap: 4px;
 }
 
