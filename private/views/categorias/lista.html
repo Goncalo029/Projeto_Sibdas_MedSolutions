@@ -101,46 +101,7 @@
     </div>
 </div>
 </body>
-
-<!-- Modal de confirmacao de apagar -->
-<div class="modal fade" id="mhsDeleteModal" tabindex="-1" aria-labelledby="mhsDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: #dc2626; color: white;">
-                <h5 class="modal-title" id="mhsDeleteModalLabel"><i class="fa-solid fa-trash me-2"></i>Confirmar Apagar</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Tem a certeza que deseja apagar <strong id="mhsDeleteName"></strong>?</p>
-                <p class="text-muted small mb-0">Esta ação não pode ser revertida.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="confirmarApagar()"><i class="fa-solid fa-trash me-1"></i>Apagar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-delete-id]');
-    if (!btn) return;
-    e.preventDefault();
-    window.deleteItemId = btn.getAttribute('data-delete-id');
-    var deleteName = btn.getAttribute('data-delete-name') || '';
-    document.getElementById('mhsDeleteName').textContent = deleteName;
-    var modal = new bootstrap.Modal(document.getElementById('mhsDeleteModal'));
-    modal.show();
-});
-
-function confirmarApagar() {
-    var modal = bootstrap.Modal.getInstance(document.getElementById('mhsDeleteModal'));
-    modal.hide();
-    alert('Item apagado com sucesso!');
-}
-</script>
-
+</html>
 
 
 
