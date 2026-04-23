@@ -77,8 +77,20 @@
         <thead class="mhs-thead">
           <tr><th>Equipamento</th><th>Início</th><th>Fim</th><th>Contrato</th><th>Tipo</th><th>Entidade</th><th>Ações</th></tr>
         </thead>
-        <tbody>
-          
+                <tbody>
+          <tr>
+            <td>Item 1</td>
+            <td>Descrição 1</td>
+            <td>
+              <div class="d-flex gap-1 flex-nowrap">
+                <a href="detalhes.html" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                <a href="editar.html" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="1" data-delete-name="Item 1">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -89,6 +101,47 @@
     </div>
 </div>
 </body>
+<!-- Modal de confirmacao de apagar -->
+<div class="modal fade" id="mhsDeleteModal" tabindex="-1" aria-labelledby="mhsDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #dc2626; color: white;">
+                <h5 class="modal-title" id="mhsDeleteModalLabel"><i class="fa-solid fa-trash me-2"></i>Confirmar Apagar</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem a certeza que deseja apagar <strong id="mhsDeleteName"></strong>?</p>
+                <p class="text-muted small mb-0">Esta ação não pode ser revertida.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarApagar()"><i class="fa-solid fa-trash me-1"></i>Apagar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-delete-id]');
+    if (!btn) return;
+    e.preventDefault();
+    window.deleteItemId = btn.getAttribute('data-delete-id');
+    var deleteName = btn.getAttribute('data-delete-name') || '';
+    document.getElementById('mhsDeleteName').textContent = deleteName;
+    var modal = new bootstrap.Modal(document.getElementById('mhsDeleteModal'));
+    modal.show();
+});
+
+function confirmarApagar() {
+    var modal = bootstrap.Modal.getInstance(document.getElementById('mhsDeleteModal'));
+    modal.hide();
+    alert('Item apagado com sucesso!');
+}
+</script>
 </html>
+
+
+
 
 
