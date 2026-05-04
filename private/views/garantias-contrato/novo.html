@@ -72,15 +72,22 @@
   </div>
 </div><div class="card mhs-data-card">
   <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-6"><label class="form-label">Campo 1</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-md-6"><label class="form-label">Campo 2</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-12"><label class="form-label">Observações</label><textarea class="form-control" rows="4" placeholder="Sem dados reais para já"></textarea></div>
-    </div>
-    <div class="d-flex gap-2 mt-4">
-      <button class="btn btn-primary" type="button">Guardar</button>
-      <a href="lista.html" class="btn btn-outline-secondary">Cancelar</a>
-    </div>
+    <form style="max-width:720px">
+      <div class="row g-3">
+        <div class="col-12"><label class="form-label fw-semibold">Equipamento <span class="text-danger">*</span></label><select name="id_equipamento" class="form-select" required><option value="">-- Selecione --</option><option>EQ-001 - Monitor multiparametrico</option><option>EQ-002 - Bomba de infusao</option><option>EQ-003 - Ventilador pulmonar</option></select></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Data Início</label><input type="text" name="data_inicio" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Data Fim</label><input type="text" name="data_fim" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" /></div>
+        <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input type="checkbox" class="form-check-input" name="tem_contrato" id="tem_contrato" value="1" /><label class="form-check-label fw-semibold" for="tem_contrato">Tem contrato de manutenção</label></div></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Tipo de Contrato</label><input type="text" name="tipo_contrato" class="form-control" placeholder="Ex.: Preventiva" maxlength="100" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Entidade Responsável</label><input type="text" name="entidade_responsavel" class="form-control" placeholder="Fornecedor ou entidade" maxlength="150" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Periodicidade</label><select name="periodicidade" class="form-select"><option value="">-- Selecione --</option><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option>Bianual</option></select></div>
+        <div class="col-12"><label class="form-label fw-semibold">Observações</label><textarea name="observacoes" class="form-control" rows="2" placeholder="Notas da garantia ou contrato"></textarea></div>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <button type="button" class="btn btn-primary mhs-btn-save"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
+        <a href="lista.html" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
   </div>
 </div>
             </main>

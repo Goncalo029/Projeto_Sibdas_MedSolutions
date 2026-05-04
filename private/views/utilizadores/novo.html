@@ -72,15 +72,17 @@
   </div>
 </div><div class="card mhs-data-card">
   <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-6"><label class="form-label">Campo 1</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-md-6"><label class="form-label">Campo 2</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-12"><label class="form-label">Observações</label><textarea class="form-control" rows="4" placeholder="Sem dados reais para já"></textarea></div>
-    </div>
-    <div class="d-flex gap-2 mt-4">
-      <button class="btn btn-primary" type="button">Guardar</button>
-      <a href="lista.html" class="btn btn-outline-secondary">Cancelar</a>
-    </div>
+    <form style="max-width:760px">
+      <div class="row g-3">
+        <div class="col-md-6"><label for="email" class="form-label fw-semibold">Email <span class="text-danger">*</span></label><input type="email" class="form-control" id="email" name="email" placeholder="utilizador@hospital.pt" required maxlength="190" /></div>
+        <div class="col-md-6"><label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label><input type="text" class="form-control" id="password" name="password" placeholder="Minimo 6 caracteres" required minlength="6" maxlength="50" /></div>
+        <div class="col-md-6"><label for="profile" class="form-label fw-semibold">Perfil <span class="text-danger">*</span></label><select class="form-select" id="profile" name="profile" required><option value="">-- Selecione --</option><option value="tecnico">Tecnico</option><option value="admin">Admin</option></select></div>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="btn btn-primary"><i class="fa-solid fa-check me-2"></i>Guardar</button>
+        <a href="lista.html" class="btn btn-secondary ms-2">Cancelar</a>
+      </div>
+    </form>
   </div>
 </div>
             </main>

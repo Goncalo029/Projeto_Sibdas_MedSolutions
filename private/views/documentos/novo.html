@@ -72,15 +72,49 @@
   </div>
 </div><div class="card mhs-data-card">
   <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-6"><label class="form-label">Campo 1</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-md-6"><label class="form-label">Campo 2</label><input class="form-control" placeholder="Preencher" /></div>
-      <div class="col-12"><label class="form-label">Observações</label><textarea class="form-control" rows="4" placeholder="Sem dados reais para já"></textarea></div>
-    </div>
-    <div class="d-flex gap-2 mt-4">
-      <button class="btn btn-primary" type="button">Guardar</button>
-      <a href="lista.html" class="btn btn-outline-secondary">Cancelar</a>
-    </div>
+    <form enctype="multipart/form-data" style="max-width:760px">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Equipamento <span class="text-danger">*</span></label>
+          <select id="id_equipamento" name="id_equipamento" class="form-select" required>
+            <option value="">-- Selecione --</option>
+            <option>EQ-001 - Monitor multiparametrico</option>
+            <option>EQ-002 - Bomba de infusao</option>
+            <option>EQ-003 - Ventilador pulmonar</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Fornecedor</label>
+          <select name="id_fornecedor" class="form-select">
+            <option value="">-- Nenhum --</option>
+            <option>MedTech Portugal</option>
+            <option>Clinicare Equipamentos</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Tipo de Documento</label>
+          <select id="tipo_documento" name="tipo_documento" class="form-select">
+            <option value="">-- Selecione --</option>
+            <option>Manual de utilizador</option>
+            <option>Manual de servico</option>
+            <option>Certificado de calibracao</option>
+            <option>Contrato de manutencao</option>
+            <option>Fatura</option>
+            <option>Declaracao de conformidade</option>
+            <option>Relatorio tecnico</option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label fw-semibold">Nome do Documento</label><input type="text" name="nome_documento" class="form-control" placeholder="Nome do documento" maxlength="200" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Data do Documento</label><input type="text" name="data_documento" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Data de Validade</label><input type="text" name="data_validade" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" /></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">PDF</label><input type="file" name="ficheiro_pdf" class="form-control" accept="application/pdf,.pdf" /><div class="form-text">Apenas PDF, ate 10 MB.</div></div>
+        <div class="col-12"><label class="form-label fw-semibold">Observações</label><textarea name="observacoes" class="form-control" rows="3" placeholder="Notas sobre o documento"></textarea></div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="button" class="btn btn-primary mhs-btn-save"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
+        <a href="lista.html" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
   </div>
 </div>
             </main>
