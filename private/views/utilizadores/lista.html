@@ -64,11 +64,11 @@
             <main class="col-12 p-4">
                 <div class="mhs-page-header mhs-page-header--dashboard">
   <div>
-    <span class="mhs-page-kicker"><i class="fa-solid fa-users fa-fw"></i></span>
-    <h1 class="mhs-page-title">Utilizadores</h1>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-user-gear fa-fw"></i></span>
+    <h1 class="mhs-page-title">Gestão de Utilizadores</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href='novo.html' class='btn btn-primary'><i class='fa-solid fa-plus me-2'></i>Novo</a>
+    <a href="novo.html" class="btn btn-primary"><i class="fa-solid fa-user-plus me-2"></i>Novo Utilizador</a>
   </div>
 </div><div class="card mhs-data-card">
   <div class="card-body p-0">
@@ -77,17 +77,30 @@
         <thead class="mhs-thead">
           <tr><th>Email</th><th>Perfil</th><th>Último login</th><th>Criado em</th><th>Ações</th></tr>
         </thead>
-                <tbody>
+                        <tbody>
           <tr>
-            <td>Item 1</td>
-            <td>Descrição 1</td>
+            <td>admin@hospital.pt</td>
+            <td><span class="badge bg-success">Admin</span></td>
+            <td>12/04/2026 10:35</td>
+            <td>10/04/2026</td>
             <td>
               <div class="d-flex gap-1 flex-nowrap">
                 <a href="detalhes.html" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
                 <a href="editar.html" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="1" data-delete-name="Item 1">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>tecnico@hospital.pt</td>
+            <td><span class="badge bg-info">Tecnico</span></td>
+            <td>11/04/2026 16:20</td>
+            <td>10/04/2026</td>
+            <td>
+              <div class="d-flex gap-1 flex-nowrap">
+                <a href="detalhes.html" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                <a href="editar.html" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -100,46 +113,56 @@
         </div>
     </div>
 </div>
-</body>
-<!-- Modal de confirmacao de apagar -->
+
 <div class="modal fade" id="mhsDeleteModal" tabindex="-1" aria-labelledby="mhsDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: #dc2626; color: white;">
-                <h5 class="modal-title" id="mhsDeleteModalLabel"><i class="fa-solid fa-trash me-2"></i>Confirmar Apagar</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Tem a certeza que deseja apagar <strong id="mhsDeleteName"></strong>?</p>
-                <p class="text-muted small mb-0">Esta ação não pode ser revertida.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="confirmarApagar()"><i class="fa-solid fa-trash me-1"></i>Apagar</button>
-            </div>
-        </div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#dc2626;color:#fff;">
+        <h5 class="modal-title" id="mhsDeleteModalLabel"><i class="fa-solid fa-trash me-2"></i>Confirmar Apagar</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que deseja apagar <strong id="mhsDeleteName">este registo</strong>?</p>
+        <p class="text-muted small mb-0">Esta ação não pode ser revertida.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" onclick="confirmarApagar()"><i class="fa-solid fa-trash me-1"></i>Apagar</button>
+      </div>
     </div>
+  </div>
 </div>
 
+<script src="../../assets/bootstrap/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-delete-id]');
-    if (!btn) return;
-    e.preventDefault();
-    window.deleteItemId = btn.getAttribute('data-delete-id');
-    var deleteName = btn.getAttribute('data-delete-name') || '';
-    document.getElementById('mhsDeleteName').textContent = deleteName;
-    var modal = new bootstrap.Modal(document.getElementById('mhsDeleteModal'));
-    modal.show();
+document.addEventListener('click', function (event) {
+  var button = event.target.closest('[data-delete-button]');
+  if (!button) return;
+  event.preventDefault();
+  var row = button.closest('tr');
+  var name = button.getAttribute('data-delete-name') || (row ? row.cells[0].textContent.trim() : 'este registo');
+  document.getElementById('mhsDeleteName').textContent = name;
+  var modal = new bootstrap.Modal(document.getElementById('mhsDeleteModal'));
+  modal.show();
 });
 
 function confirmarApagar() {
-    var modal = bootstrap.Modal.getInstance(document.getElementById('mhsDeleteModal'));
-    modal.hide();
-    alert('Item apagado com sucesso!');
+  var modal = bootstrap.Modal.getInstance(document.getElementById('mhsDeleteModal'));
+  if (modal) modal.hide();
+  alert('Registo apagado com sucesso!');
 }
 </script>
+</body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 

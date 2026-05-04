@@ -28,6 +28,11 @@
                 <a href="#contacto">Contacto</a>
             </nav>
 
+            <div class="mhs-lang-switch" aria-label="Selecionar idioma">
+                <button class="mhs-lang-btn is-active" type="button" data-lang="pt">PT</button>
+                <button class="mhs-lang-btn" type="button" data-lang="en">EN</button>
+            </div>
+
             <a href="login.html" class="mhs-btn-outline">Entrar na Plataforma</a>
 
             <button class="mhs-burger" id="burgerBtn" aria-label="Menu">
@@ -217,9 +222,66 @@
         </div>
     </footer>
 
+    <nav class="mhs-mobile-tabbar" aria-label="Navegação mobile">
+        <a href="#quem-somos" class="mhs-mobile-tab">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#funcionalidades" class="mhs-mobile-tab">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Módulos</span>
+        </a>
+        <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainNav">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <a href="login.html" class="mhs-mobile-tab">
+            <i class="fa-regular fa-user"></i>
+            <span>Entrar</span>
+        </a>
+        <a href="#contacto" class="mhs-mobile-tab">
+            <i class="fa-solid fa-headset"></i>
+            <span>Contactar</span>
+        </a>
+    </nav>
+
     <script>
-        document.getElementById('burgerBtn').addEventListener('click', function () {
-            document.getElementById('mainNav').classList.toggle('mhs-nav--open');
+        const mainNav = document.getElementById('mainNav');
+        const burgerBtn = document.getElementById('burgerBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const langButtons = document.querySelectorAll('.mhs-lang-btn');
+
+        function toggleMenu() {
+            const isOpen = mainNav.classList.toggle('mhs-nav--open');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+        }
+
+        if (burgerBtn) {
+            burgerBtn.addEventListener('click', toggleMenu);
+        }
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMenu);
+        }
+
+        mainNav.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                mainNav.classList.remove('mhs-nav--open');
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+
+        langButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                langButtons.forEach(function (item) {
+                    item.classList.remove('is-active');
+                });
+                button.classList.add('is-active');
+                document.documentElement.lang = button.dataset.lang === 'en' ? 'en' : 'pt';
+            });
         });
     </script>
 </body>

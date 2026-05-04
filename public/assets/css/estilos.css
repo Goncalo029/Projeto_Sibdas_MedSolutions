@@ -114,6 +114,37 @@ a {
     background: rgba(37, 99, 235, 0.08);
 }
 
+.mhs-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.22rem;
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    border-radius: 999px;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.mhs-lang-btn {
+    min-width: 38px;
+    height: 32px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ms-muted);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--ms-transition), color var(--ms-transition), box-shadow var(--ms-transition);
+}
+
+.mhs-lang-btn.is-active {
+    background: linear-gradient(135deg, var(--ms-primary), var(--ms-secondary));
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+}
+
 .mhs-btn-outline,
 .mhs-btn-primary {
     display: inline-flex;
@@ -1005,6 +1036,10 @@ a {
     color: var(--ms-primary);
 }
 
+.mhs-mobile-tabbar {
+    display: none;
+}
+
 @media (max-width: 1024px) {
     .mhs-hero {
         grid-template-columns: 1fr;
@@ -1048,6 +1083,10 @@ a {
         display: none;
     }
 
+    .mhs-lang-switch {
+        margin-left: auto;
+    }
+
     .mhs-hero-metrics,
     .mhs-preview-stats,
     .mhs-preview-panels,
@@ -1057,13 +1096,241 @@ a {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+    html {
+        scroll-padding-top: 82px;
+    }
+
+    body {
+        padding-bottom: 82px;
+        background: linear-gradient(180deg, #f8fbff 0%, #edf5fb 100%);
+    }
+
     .mhs-topbar {
-        padding: 0.75rem 0.9rem 0;
+        position: sticky;
+        top: 0;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        backdrop-filter: blur(18px);
     }
 
     .mhs-topbar-inner {
-        padding: 0.85rem 1rem;
+        min-height: 58px;
+        padding: 0.55rem 0.85rem;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+    }
+
+    .mhs-logo-link {
+        color: var(--ms-ink);
+    }
+
+    .mhs-logo-link img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .mhs-logo-link span {
+        font-size: 0.98rem;
+    }
+
+    .mhs-lang-switch {
+        padding: 0.18rem;
+        border-color: rgba(37, 99, 235, 0.12);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .mhs-lang-btn {
+        min-width: 34px;
+        height: 30px;
+        font-size: 0.72rem;
+    }
+
+    .mhs-burger {
+        display: none;
+    }
+
+    .mhs-nav {
+        position: fixed;
+        left: 1rem;
+        right: 1rem;
+        top: auto;
+        bottom: 88px;
+        z-index: 500;
+        display: none;
+        max-height: min(420px, calc(100vh - 150px));
+        overflow-y: auto;
+        padding: 0.65rem;
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    }
+
+    .mhs-nav--open {
+        display: flex !important;
+    }
+
+    .mhs-nav a {
+        display: flex;
+        align-items: center;
+        min-height: 46px;
+        padding: 0.8rem 0.95rem;
+        border-radius: 12px;
+        color: var(--ms-ink);
+        font-size: 0.95rem;
+    }
+
+    .mhs-hero {
+        min-height: calc(100vh - 140px);
+        padding: 3.2rem 1.15rem 2.1rem;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .mhs-hero-content {
+        width: 100%;
+    }
+
+    .mhs-overline {
+        margin-bottom: 0.8rem;
+        background: rgba(37, 99, 235, 0.1);
+    }
+
+    .mhs-hero h1 {
+        max-width: 11ch;
+        font-size: clamp(2.15rem, 12vw, 3.25rem);
+        line-height: 1.04;
+    }
+
+    .mhs-hero-sub {
+        max-width: 30ch;
+        font-size: 1rem;
+    }
+
+    .mhs-hero-actions {
+        align-items: stretch;
+        gap: 0.65rem;
+    }
+
+    .mhs-hero-actions .mhs-btn-primary,
+    .mhs-hero-actions .mhs-btn-ghost {
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    .mhs-hero-actions .mhs-btn-ghost {
+        padding: 0.82rem 1rem;
+        background: #ffffff;
+        box-shadow: var(--ms-shadow-sm);
+    }
+
+    .mhs-hero-metrics {
+        margin-top: 1rem;
+        gap: 0.6rem;
+    }
+
+    .mhs-hero-metric {
+        padding: 0.85rem;
+        border-radius: 14px;
+    }
+
+    .mhs-section {
+        padding: 3rem 1rem;
+    }
+
+    .mhs-section-header {
+        text-align: left;
+        margin-bottom: 1.4rem;
+    }
+
+    .mhs-info-card,
+    .mhs-feat-card,
+    .mhs-badge-stack,
+    .mhs-auth-card {
+        border-radius: 18px;
+    }
+
+    .mhs-footer {
+        margin-bottom: 0;
+    }
+
+    .mhs-mobile-tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 600;
+        display: grid;
+        grid-template-columns: 1fr 1fr 76px 1fr 1fr;
+        align-items: end;
+        height: 74px;
+        padding: 0.45rem 0.7rem max(0.45rem, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(148, 163, 184, 0.24);
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 -14px 34px rgba(15, 23, 42, 0.12);
+        backdrop-filter: blur(18px);
+    }
+
+    .mhs-mobile-tab,
+    .mhs-mobile-menu-btn {
+        color: var(--ms-primary);
+    }
+
+    .mhs-mobile-tab {
+        min-width: 0;
+        display: grid;
+        justify-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    .mhs-mobile-tab i {
+        font-size: 1.05rem;
+    }
+
+    .mhs-mobile-tab span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mhs-mobile-menu-btn {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 0.25rem;
+        border: 4px solid #ffffff;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, var(--ms-primary), var(--ms-secondary));
+        color: #ffffff;
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.32);
+        font-size: 1.25rem;
+        cursor: pointer;
+    }
+
+    .mhs-mobile-menu-btn[aria-expanded="true"] {
+        background: linear-gradient(135deg, #0f172a, var(--ms-primary));
+    }
+}
+
+@media (max-width: 640px) {
+    .mhs-topbar {
+        padding: 0;
+    }
+
+    .mhs-topbar-inner {
+        padding: 0.55rem 0.85rem;
     }
 
     .mhs-hero {
