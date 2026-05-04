@@ -70,16 +70,92 @@
   <div class="mhs-page-actions">
     
   </div>
-</div><div class="card mhs-data-card"><div class="card-body">
-  <h5 class="mb-3">Detalhes do registo</h5>
-  <p class="text-muted mb-2">Esta página mostra os detalhes quando o backend estiver ligado.</p>
-  <ul class="mb-4">
-    <li>Campo A: —</li>
-    <li>Campo B: —</li>
-    <li>Campo C: —</li>
-  </ul>
-  <a href="lista.html" class="btn btn-outline-primary">Voltar à lista</a>
-</div></div>
+</div><div class="mhs-page-actions mb-4">
+  <a href="editar.html" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-2"></i>Editar</a>
+  <a href="lista.html" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-8">
+    <div class="card mhs-data-card h-100">
+      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-barcode me-1"></i>Dados gerais</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Código inventário</dt><dd class="col-sm-8">EQ-001</dd>
+          <dt class="col-sm-4">Designação</dt><dd class="col-sm-8">Monitor multiparametrico</dd>
+          <dt class="col-sm-4">Categoria</dt><dd class="col-sm-8">Monitorizacao</dd>
+          <dt class="col-sm-4">Marca / Modelo</dt><dd class="col-sm-8">Philips / IntelliVue MX450</dd>
+          <dt class="col-sm-4">Número de série</dt><dd class="col-sm-8">SN-450-2026</dd>
+          <dt class="col-sm-4">Fabricante</dt><dd class="col-sm-8">Philips Healthcare</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mhs-data-card h-100">
+      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-heart-pulse me-1"></i>Estado operacional</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5">Estado</dt><dd class="col-7"><span class="badge bg-success">Ativo</span></dd>
+          <dt class="col-5">Criticidade</dt><dd class="col-7">Média</dd>
+          <dt class="col-5">Localização</dt><dd class="col-7">Urgencia / Sala 204</dd>
+          <dt class="col-5">Entrada</dt><dd class="col-7">Compra</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card mhs-data-card h-100">
+      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-receipt me-1"></i>Aquisição</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5">Data aquisição</dt><dd class="col-7">15/01/2026</dd>
+          <dt class="col-5">Ano fabrico</dt><dd class="col-7">2025</dd>
+          <dt class="col-5">Custo</dt><dd class="col-7">12 500,00 €</dd>
+          <dt class="col-5">Tipo entrada</dt><dd class="col-7">Compra</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mhs-data-card h-100">
+      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-shield-halved me-1"></i>Garantia / contrato</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5">Data início</dt><dd class="col-7">10/01/2026</dd>
+          <dt class="col-5">Data fim</dt><dd class="col-7">10/01/2028</dd>
+          <dt class="col-5">Contrato</dt><dd class="col-7">Sim</dd>
+          <dt class="col-5">Entidade</dt><dd class="col-7">MedTech Portugal</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mhs-data-card mb-4">
+  <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-truck me-1"></i>Fornecedores associados</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>Fornecedor</th><th>Tipo relação</th><th>Telefone</th></tr></thead>
+        <tbody>
+          <tr><td>MedTech Portugal</td><td>Fabricante</td><td>210 000 000</td></tr>
+          <tr><td>Clinicare Equipamentos</td><td>Assistência técnica</td><td>211 000 000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mhs-data-card">
+  <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-comment me-1"></i>Observações</div>
+  <div class="card-body">
+    <p class="mb-0">Equipamento operacional e associado ao servico de urgencia.</p>
+  </div>
+</div>
             </main>
         </div>
     </div>
