@@ -13,6 +13,8 @@
 </head>
 <body>
 
+    <div class="mhs-mobile-nav-backdrop" id="mobileNavBackdrop"></div>
+
     <header class="mhs-topbar">
         <div class="mhs-topbar-inner">
             <a href="#" class="mhs-logo-link">
@@ -222,6 +224,37 @@
         </div>
     </footer>
 
+    <div class="mhs-mobile-sheet" id="mobileSheet" aria-hidden="true">
+        <a href="#quem-somos" class="mhs-mobile-sheet-link">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#produto" class="mhs-mobile-sheet-link">
+            <i class="fa-solid fa-box-open"></i>
+            <span>Produto</span>
+        </a>
+        <a href="#funcionalidades" class="mhs-mobile-sheet-link">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Funcionalidades</span>
+        </a>
+        <a href="#setor-saude" class="mhs-mobile-sheet-link">
+            <i class="fa-solid fa-hospital"></i>
+            <span>Setor Saúde</span>
+        </a>
+        <a href="#contacto" class="mhs-mobile-sheet-link">
+            <i class="fa-solid fa-headset"></i>
+            <span>Contacto</span>
+        </a>
+        <a href="login.html" class="mhs-mobile-sheet-link">
+            <i class="fa-regular fa-user"></i>
+            <span>Entrar</span>
+        </a>
+        <div class="mhs-mobile-sheet-lang" aria-label="Selecionar idioma">
+            <button class="mhs-lang-btn is-active" type="button" data-lang="pt">PT</button>
+            <button class="mhs-lang-btn" type="button" data-lang="en">EN</button>
+        </div>
+    </div>
+
     <nav class="mhs-mobile-tabbar" aria-label="Navegação mobile">
         <a href="#quem-somos" class="mhs-mobile-tab">
             <i class="fa-solid fa-house"></i>
@@ -231,7 +264,7 @@
             <i class="fa-solid fa-list-check"></i>
             <span>Módulos</span>
         </a>
-        <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainNav">
+        <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileSheet">
             <i class="fa-solid fa-bars"></i>
         </button>
         <a href="login.html" class="mhs-mobile-tab">
@@ -248,14 +281,55 @@
         const mainNav = document.getElementById('mainNav');
         const burgerBtn = document.getElementById('burgerBtn');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileNavBackdrop = document.getElementById('mobileNavBackdrop');
+        const mobileSheet = document.getElementById('mobileSheet');
         const langButtons = document.querySelectorAll('.mhs-lang-btn');
 
+        function setMobileSheetState(isOpen) {
+            if (!mobileSheet) {
+                return;
+            }
+
+            mobileSheet.classList.toggle('is-open', isOpen);
+            mobileSheet.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+            mobileSheet.style.position = 'fixed';
+            mobileSheet.style.left = '1rem';
+            mobileSheet.style.right = '1rem';
+            mobileSheet.style.bottom = '88px';
+            mobileSheet.style.zIndex = '1200';
+            mobileSheet.style.display = isOpen ? 'grid' : 'none';
+            mobileSheet.style.gridTemplateColumns = '1fr 1fr';
+            mobileSheet.style.gap = '.7rem';
+            mobileSheet.style.padding = '1rem';
+            mobileSheet.style.border = '1px solid rgba(255,255,255,.95)';
+            mobileSheet.style.borderRadius = '22px';
+            mobileSheet.style.background = 'rgba(255,255,255,.98)';
+            mobileSheet.style.boxShadow = '0 24px 60px rgba(15,23,42,.22)';
+            mobileSheet.style.visibility = isOpen ? 'visible' : 'hidden';
+            mobileSheet.style.opacity = isOpen ? '1' : '0';
+            mobileSheet.style.pointerEvents = isOpen ? 'auto' : 'none';
+        }
+
         function toggleMenu() {
-            const isOpen = mainNav.classList.toggle('mhs-nav--open');
+            const isOpen = !document.body.classList.contains('mhs-mobile-nav-open');
+            document.body.classList.toggle('mhs-mobile-nav-open', isOpen);
+            mainNav.classList.toggle('mhs-nav--open', isOpen);
+            setMobileSheetState(isOpen);
             if (mobileMenuBtn) {
                 mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             }
         }
+
+        function closeMenu() {
+            document.body.classList.remove('mhs-mobile-nav-open');
+            mainNav.classList.remove('mhs-nav--open');
+            setMobileSheetState(false);
+            if (mobileMenuBtn) {
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        setMobileSheetState(false);
 
         if (burgerBtn) {
             burgerBtn.addEventListener('click', toggleMenu);
@@ -267,11 +341,26 @@
 
         mainNav.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function () {
-                mainNav.classList.remove('mhs-nav--open');
-                if (mobileMenuBtn) {
-                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                }
+                closeMenu();
             });
+        });
+
+        if (mobileSheet) {
+            mobileSheet.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    closeMenu();
+                });
+            });
+        }
+
+        if (mobileNavBackdrop) {
+            mobileNavBackdrop.addEventListener('click', closeMenu);
+        }
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 760) {
+                closeMenu();
+            }
         });
 
         langButtons.forEach(function (button) {
