@@ -1,4 +1,34 @@
-﻿<!DOCTYPE html>
+﻿<?php
+session_start();
+
+// Verificar se form foi enviado
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['text_username'] ?? '';
+    $password = $_POST['text_password'] ?? '';
+    
+    // Validação básica
+    if (!empty($email) && !empty($password)) {
+        // Aqui você adiciona a lógica de autenticação com a BD
+        // Por enquanto é apenas um placeholder
+        
+        // Exemplo: Validação simples (SUBSTITUIR COM BD)
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            // Simulação de login bem-sucedido
+            $_SESSION['user_email'] = $email;
+            $_SESSION['user_logged_in'] = true;
+            
+            // Redirecionar para painel privado
+            header('Location: ../private/index.php');
+            exit;
+        } else {
+            $error_msg = 'E-mail inválido.';
+        }
+    } else {
+        $error_msg = 'Por favor preencha todos os campos.';
+    }
+}
+?>
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -37,7 +67,14 @@
                 <p class="mhs-auth-subtitle">Introduza as suas credenciais para aceder ao painel.</p>
             </div>
 
-            <form name="mhs_login_form" action="#" method="post" class="mhs-auth-form" autocomplete="off">
+            <?php if (!empty($error_msg)): ?>
+            <div class="mhs-auth-alert mhs-auth-alert--danger">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <p><?php echo htmlspecialchars($error_msg); ?></p>
+            </div>
+            <?php endif; ?>
+
+            <form name="mhs_login_form" action="login.php" method="post" class="mhs-auth-form" autocomplete="off">
                 <div class="mhs-input-group">
                     <label for="text_username">E-mail</label>
                     <div class="mhs-input-wrap">
@@ -63,7 +100,7 @@
             </form>
 
             <div class="mhs-auth-footer-link">
-                <a class="mhs-auth-back" href="index.html">
+                <a class="mhs-auth-back" href="index.php">
                     <i class="fa-solid fa-arrow-left"></i> Voltar ao website
                 </a>
             </div>

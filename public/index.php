@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿<?php
+session_start();
+?>
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -35,7 +38,7 @@
                 <button class="mhs-lang-btn" type="button" data-lang="en">EN</button>
             </div>
 
-            <a href="login.html" class="mhs-btn-outline">Entrar na Plataforma</a>
+            <a href="login.php" class="mhs-btn-outline">Entrar na Plataforma</a>
 
             <button class="mhs-burger" id="burgerBtn" aria-label="Menu">
                 <span></span><span></span><span></span>
@@ -50,7 +53,7 @@
             <p class="mhs-hero-sub">Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.</p>
             <div class="mhs-hero-actions">
                 <a href="#produto" class="mhs-btn-primary">Conhecer o Produto</a>
-                <a href="login.html" class="mhs-btn-ghost">Aceder ao Painel <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="login.php" class="mhs-btn-ghost">Aceder ao Painel <i class="fa-solid fa-arrow-right"></i></a>
             </div>
             <div class="mhs-hero-metrics">
                 <div class="mhs-hero-metric">
@@ -245,7 +248,7 @@
             <i class="fa-solid fa-headset"></i>
             <span>Contacto</span>
         </a>
-        <a href="login.html" class="mhs-mobile-sheet-link">
+        <a href="login.php" class="mhs-mobile-sheet-link">
             <i class="fa-regular fa-user"></i>
             <span>Entrar</span>
         </a>
@@ -267,7 +270,7 @@
         <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileSheet">
             <i class="fa-solid fa-bars"></i>
         </button>
-        <a href="login.html" class="mhs-mobile-tab">
+        <a href="login.php" class="mhs-mobile-tab">
             <i class="fa-regular fa-user"></i>
             <span>Entrar</span>
         </a>
