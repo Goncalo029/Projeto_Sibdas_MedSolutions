@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/config.php';
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,16 +8,25 @@ header('Content-Type: text/html; charset=utf-8');
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?php echo isset($page_title) ? htmlspecialchars($page_title) . ' | MedSolutions' : 'MedSolutions'; ?></title>
-    <link rel="icon" type="image/svg+xml" href="../../public/assets/images/logo-medsoft.svg" />
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>" />
+    <title><?php echo APP_NAME; ?></title>
+    <link rel="shortcut icon" href="/MedSolutions/public/assets/images/logo-medsoft.svg" type="image/svg+xml">
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="../assets/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="../assets/fontawesome/all.min.css" />
-    <link rel="stylesheet" href="../assets/css/medsolutions.css" />
+    <!-- CSS globais -->
+    <link rel="stylesheet" href="/MedSolutions/private/assets/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="/MedSolutions/private/assets/datatables/datatables.min.css">
+    <link rel="stylesheet" href="/MedSolutions/private/assets/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="/MedSolutions/private/assets/fontawesome/all.min.css">
+    <link rel="stylesheet" href="/MedSolutions/private/assets/css/medsolutions.css">
+    <!-- Scripts -->
+    <script src="/MedSolutions/private/assets/jQuery/jquery-3.6.0.min.js"></script>
+    <script src="/MedSolutions/private/assets/datatables/datatables.min.js"></script>
+    <script src="/MedSolutions/private/assets/flatpickr/flatpickr.js"></script>
 </head>
 <body class="mhs-app">
 
