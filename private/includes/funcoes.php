@@ -3,7 +3,7 @@
  * Verificar se utilizador está autenticado
  */
 function is_logged_in() {
-    return !empty($_SESSION['user_logged_in'] ?? false);
+    return !empty($_SESSION['logged_in'] ?? false);
 }
 
 /**
@@ -99,5 +99,38 @@ function get_message() {
     }
     
     return '';
+}
+
+/**
+ * Encriptar string com AES-256-CBC (para URLs)
+ */
+function aes_encrypt($data) {
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length(OPENSSL_METHOD));
+    $encrypted = openssl_encrypt($data, OPENSSL_METHOD, OPENSSL_KEY, 0, $iv);
+    return base64_encode($iv . $encrypted);
+}
+
+/**
+ * Desencriptar string com AES-256-CBC (de URLs)
+ */
+function aes_decrypt($data) {
+    try {
+        $data = base64_decode($data);
+        $iv_len = openssl_cipher_iv_length(OPENSSL_METHOD);
+        $iv = substr($data, 0, $iv_len);
+        $encrypted = substr($data, $iv_len);
+        return openssl_decrypt($encrypted, OPENSSL_METHOD, OPENSSL_KEY, 0, $iv);
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Validações gerais (placeholder para extensão futura)
+ */
+function validate_equipment_fields($data) {
+    $errors = [];
+    // Implementar validações conforme necessário
+    return $errors;
 }
 ?>

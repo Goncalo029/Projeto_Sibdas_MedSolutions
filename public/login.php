@@ -1,31 +1,21 @@
 ﻿<?php
 session_start();
 
-// Verificar se form foi enviado
+// Verificar se form foi enviado e redirecionar para processa_login.php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['text_username'] ?? '';
-    $password = $_POST['text_password'] ?? '';
-    
-    // Validação básica
-    if (!empty($email) && !empty($password)) {
-        // Aqui você adiciona a lógica de autenticação com a BD
-        // Por enquanto é apenas um placeholder
-        
-        // Exemplo: Validação simples (SUBSTITUIR COM BD)
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            // Simulação de login bem-sucedido
-            $_SESSION['user_email'] = $email;
-            $_SESSION['user_logged_in'] = true;
-            
-            // Redirecionar para painel privado
-            header('Location: ../private/index.php');
-            exit;
-        } else {
-            $error_msg = 'E-mail inválido.';
-        }
-    } else {
-        $error_msg = 'Por favor preencha todos os campos.';
-    }
+    header('Location: ../private/processa_login.php');
+    exit;
+}
+
+// Recolher mensagens de erro da sessão
+$validation_errors = $_SESSION['validation_errors'] ?? [];
+$server_error = $_SESSION['server_error'] ?? '';
+unset($_SESSION['validation_errors']);
+unset($_SESSION['server_error']);
+
+$error_msg = $server_error;
+if (!empty($validation_errors)) {
+    $error_msg = implode(' ', $validation_errors);
 }
 ?>
 <!DOCTYPE html>
