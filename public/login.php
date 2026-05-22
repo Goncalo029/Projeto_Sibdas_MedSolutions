@@ -1,12 +1,6 @@
 ﻿<?php
 session_start();
 
-// Verificar se form foi enviado e redirecionar para processa_login.php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Location: ../private/processa_login.php');
-    exit;
-}
-
 // Recolher mensagens de erro da sessão
 $validation_errors = $_SESSION['validation_errors'] ?? [];
 $server_error = $_SESSION['server_error'] ?? '';
@@ -64,7 +58,7 @@ if (!empty($validation_errors)) {
             </div>
             <?php endif; ?>
 
-            <form name="mhs_login_form" action="login.php" method="post" class="mhs-auth-form" autocomplete="off">
+            <form name="mhs_login_form" action="/MedSolutions/private/processa_login.php" method="post" class="mhs-auth-form" autocomplete="off">
                 <div class="mhs-input-group">
                     <label for="text_username">E-mail</label>
                     <div class="mhs-input-wrap">

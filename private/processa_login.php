@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Só aceita POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../public/login.php');
+    echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 
@@ -34,7 +34,7 @@ if (strlen($password) < 6 || strlen($password) > 50) {
 
 if (!empty($validation_errors)) {
     $_SESSION['validation_errors'] = $validation_errors;
-    header('Location: ../public/login.php');
+    echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 
@@ -49,57 +49,60 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    // Verificar se a tabela utilizadores existe
+    // Verificar se a tabela agents existe
     $tableExistsStmt = $pdo->query("
         SELECT COUNT(*) FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = '" . MYSQL_DATABASE . "' 
-        AND TABLE_NAME = 'utilizadores'
+        AND TABLE_NAME = 'agents'
     ");
     $tableExists = $tableExistsStmt->fetchColumn() > 0;
 
     if (!$tableExists) {
         $_SESSION['server_error'] = 'Sistema de autenticação não configurado.';
-        header('Location: ../public/login.php');
+        echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
         exit;
     }
 
-    // Procurar utilizador
+    // Procurar utilizador (agents) - usando AES_DECRYPT na BD
     $stmt = $pdo->prepare("
-        SELECT id, email, password, profile
-        FROM utilizadores
-        WHERE email = :email
+        SELECT id, name, passwrd, profile
+        FROM agents
+        WHERE AES_DECRYPT(name, :chave) = :email
         LIMIT 1
     ");
-    $stmt->execute([':email' => $email]);
-    $utilizador = $stmt->fetch(PDO::FETCH_OBJ);
+    $stmt->execute([
+        ':chave' => MYSQL_AES_KEY,
+        ':email' => $email
+    ]);
+    $agent = $stmt->fetch(PDO::FETCH_OBJ);
 
     // Validar password (usar password_verify se estiver com hash, ou comparação direta se plaintext)
     $password_valid = false;
-    if ($utilizador) {
+    if ($agent) {
         // Se a password está armazenada com hash (recomendado)
-        if (password_verify($password, $utilizador->password)) {
+        if (password_verify($password, $agent->passwrd)) {
             $password_valid = true;
         }
         // Fallback: comparação direta (usar apenas em desenvolvimento)
-        elseif ($password === $utilizador->password) {
+        elseif ($password === $agent->passwrd) {
             $password_valid = true;
         }
     }
 
-    if (!$utilizador || !$password_valid) {
+    if (!$agent || !$password_valid) {
         $_SESSION['server_error'] = 'Credenciais inválidas. Tente novamente.';
-        header('Location: ../public/login.php');
+        echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
         exit;
     }
 
     // Atualizar último login
-    $pdo->prepare("UPDATE utilizadores SET last_login = NOW() WHERE id = ?")
-        ->execute([$utilizador->id]);
+    $pdo->prepare("UPDATE agents SET last_login = NOW() WHERE id = ?")
+        ->execute([$agent->id]);
 
     // Guardar sessão
-    $_SESSION['user_id'] = $utilizador->id;
-    $_SESSION['user_email'] = $utilizador->email;
-    $_SESSION['profile'] = $utilizador->profile;
+    $_SESSION['user_id'] = $agent->id;
+    $_SESSION['user_email'] = $email;
+    $_SESSION['profile'] = $agent->profile;
     $_SESSION['logged_in'] = true;
 
     header('Location: ' . BASE_URL . '/private/home.php');
@@ -107,7 +110,7 @@ try {
 
 } catch (PDOException $e) {
     $_SESSION['server_error'] = 'Erro ao ligar à base de dados: ' . $e->getMessage();
-    header('Location: ../public/login.php');
+    echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 ?>

@@ -208,3 +208,104 @@ body.mhs-sidebar-open .mhs-sidebar-overlay{display:block}
 @media (max-width:576px){.mhs-page-title{font-size:1.5rem}
 .btn{padding:.6rem .9rem!important;font-size:.85rem!important}
 .btn-sm{padding:.45rem .7rem!important;font-size:.8rem!important}}
+
+/* Ajustes para um layout mais simples e alinhado */
+body.mhs-app{background:#f4f7fb}
+.mhs-topbar,
+.mhs-sidebar,
+.card,
+.mhs-data-card,
+.mhs-kpi-card,
+.modal-content,
+.btn,
+.form-control,
+.form-select,
+.alert,
+.mhs-page-kicker,
+.mhs-avatar-btn,
+.mhs-sidebar-logo-mark{border-radius:4px!important}
+.mhs-topbar,
+.mhs-sidebar,
+.card,
+.mhs-data-card,
+.mhs-kpi-card{border-color:#d8e2ec!important;background:#fff!important;box-shadow:0 4px 14px rgba(15,23,42,.05)!important;backdrop-filter:none!important}
+.card:hover,
+.mhs-kpi-card:hover{transform:none!important;box-shadow:0 4px 14px rgba(15,23,42,.05)!important}
+.btn:hover{transform:none!important}
+.btn-primary{background:#2563eb!important}
+.btn-success{background:#16a34a!important}
+.btn-danger{background:#dc2626!important}
+.mhs-datatable thead th:last-child,
+.mhs-datatable tbody td:last-child{text-align:right!important;width:140px;min-width:140px}
+.mhs-datatable tbody td:last-child .d-flex{justify-content:flex-end!important}
+
+/* Tabelas modernas, quadradas e mais limpas */
+.dataTables_wrapper{background:#fff;color:#172033}
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter{float:none!important;display:flex;align-items:center;margin:0!important;color:#5b6b82;font-size:.86rem;font-weight:700}
+.dataTables_wrapper .dataTables_length{justify-content:flex-start}
+.dataTables_wrapper .dataTables_filter{justify-content:flex-end}
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label{display:flex;align-items:center;gap:8px;margin:0}
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select{height:38px!important;border:1px solid #cbd5e1!important;border-radius:0!important;background:#fff!important;color:#172033!important;font-size:.9rem!important;box-shadow:none!important;outline:0!important}
+.dataTables_wrapper .dataTables_filter input{width:280px;margin-left:8px!important;padding:0 12px!important}
+.dataTables_wrapper .dataTables_length select{min-width:72px;margin:0 4px!important;padding:0 28px 0 10px!important}
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus{border-color:#2563eb!important;box-shadow:inset 0 -2px 0 #2563eb!important}
+.dataTables_wrapper::before{content:"";display:block;height:0;clear:both}
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter{padding:18px 18px 14px}
+.dataTables_wrapper .dataTables_length{float:left!important}
+.dataTables_wrapper .dataTables_filter{float:right!important}
+table.dataTable,
+.mhs-datatable{width:100%!important;border-collapse:collapse!important;border-spacing:0!important;border:0!important}
+table.dataTable.no-footer{border-bottom:1px solid #d8e2ec!important}
+.mhs-datatable thead th,
+table.dataTable thead th{padding:14px 16px!important;border-top:1px solid #d8e2ec!important;border-bottom:1px solid #b9c6d6!important;background:#f8fafc!important;color:#52657e!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+.mhs-datatable tbody td,
+table.dataTable tbody td{padding:15px 16px!important;border-top:1px solid #e6edf5!important;color:#334155!important;font-size:.9rem!important;vertical-align:middle!important;background:#fff!important}
+.mhs-datatable tbody tr:hover td,
+table.dataTable tbody tr:hover td{background:#f8fbff!important}
+.mhs-datatable tbody td:last-child,
+table.dataTable tbody td:last-child{padding-right:28px!important;text-align:right!important}
+.mhs-datatable thead th:last-child,
+table.dataTable thead th:last-child{padding-right:28px!important;text-align:right!important}
+.mhs-datatable tbody td:last-child .d-flex{gap:6px!important}
+.mhs-datatable .btn-sm{width:34px!important;height:34px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;border-radius:0!important;background:#fff!important}
+.mhs-datatable .btn-outline-secondary{border-color:#cbd5e1!important;color:#334155!important}
+.mhs-datatable .btn-outline-primary{border-color:#b7cdfb!important;color:#2563eb!important}
+.mhs-datatable .btn-outline-danger{border-color:#fecaca!important;color:#dc2626!important}
+.mhs-datatable .btn-sm:hover{background:#f1f5f9!important;box-shadow:none!important}
+.dataTables_wrapper .dataTables_info{clear:both!important;float:left!important;padding:16px 18px!important;color:#5b6b82!important;font-size:.88rem!important;font-weight:600}
+.dataTables_wrapper .dataTables_paginate{float:right!important;padding:10px 18px!important}
+.dataTables_wrapper .dataTables_paginate .paginate_button{min-width:38px!important;height:38px!important;margin-left:4px!important;padding:8px 12px!important;border:1px solid transparent!important;border-radius:0!important;background:#fff!important;color:#52657e!important;font-size:.88rem!important;font-weight:700!important;line-height:20px!important;box-shadow:none!important}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover{border-color:#2563eb!important;background:#2563eb!important;color:#fff!important}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover{border-color:#cbd5e1!important;background:#f1f5f9!important;color:#172033!important}
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover{background:transparent!important;color:#94a3b8!important;border-color:transparent!important}
+
+/* Overrides finais contra estilos default/cacheados do DataTables */
+.mhs-data-card{border-radius:0!important;box-shadow:none!important;border:1px solid #d7dee8!important}
+.mhs-data-card .card-body{background:#fff!important}
+.dataTables_wrapper .dataTables_filter label::before{content:"Pesquisar";display:inline-flex;align-items:center;height:38px;color:#52657e;font-size:.82rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.dataTables_wrapper .dataTables_filter label{font-size:0!important}
+.dataTables_wrapper .dataTables_filter input{font-size:.9rem!important}
+.dataTables_wrapper .dataTables_length label{font-size:0!important}
+.dataTables_wrapper .dataTables_length label::before{content:"Mostrar";font-size:.82rem;font-weight:800;color:#52657e;letter-spacing:.04em;text-transform:uppercase}
+.dataTables_wrapper .dataTables_length label::after{content:"registos";font-size:.82rem;font-weight:800;color:#52657e;letter-spacing:.04em;text-transform:uppercase}
+.dataTables_wrapper .dataTables_length select{font-size:.9rem!important}
+.mhs-datatable .btn-sm,
+.mhs-datatable .btn-sm:focus,
+.mhs-datatable .btn-sm:active{border-radius:0!important;box-shadow:none!important}
+.mhs-datatable td,
+.mhs-datatable th{border-radius:0!important}
+
+/* Todas as paginas de lista ficam com a mesma largura e alinhamento */
+.mhs-main-content > .mhs-page-header,
+.mhs-main-content > .mhs-data-card{max-width:1400px;margin-left:26px!important;margin-right:26px!important}
+.mhs-main-content > .container-fluid{max-width:1452px;margin-left:0!important;margin-right:auto!important}
+.mhs-page-header{align-items:flex-end!important}
+.mhs-page-actions{margin-left:auto!important}
+.mhs-page-actions .btn-primary{min-width:112px;height:56px;display:inline-flex;align-items:center;justify-content:center}

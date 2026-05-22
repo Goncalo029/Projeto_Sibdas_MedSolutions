@@ -12,19 +12,33 @@ include __DIR__ . '/../../includes/header.php';
     <h1 class="mhs-page-title">Garantias-Contrato</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href='novo.php' class='btn btn-primary'><i class='fa-solid fa-plus me-2'></i>Novo</a>
+    <a href="novo.php" class="btn btn-primary"><i class="fa-solid fa-plus me-2"></i>Novo</a>
   </div>
-</div><div class="card mhs-data-card">
+</div>
+
+<div class="card mhs-data-card">
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover mhs-datatable mb-0">
         <thead class="mhs-thead">
-          <tr><th>Equipamento</th><th>Início</th><th>Fim</th><th>Contrato</th><th>Tipo</th><th>Entidade</th><th>Ações</th></tr>
-        </thead>
-                <tbody>
           <tr>
-            <td>Item 1</td>
-            <td>Descrição 1</td>
+            <th>Equipamento</th>
+            <th>Inicio</th>
+            <th>Fim</th>
+            <th>Contrato</th>
+            <th>Tipo</th>
+            <th>Entidade</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Monitor de Sinais Vitais</td>
+            <td>01/01/2026</td>
+            <td>01/01/2027</td>
+            <td>CTR-2026-001</td>
+            <td>Garantia</td>
+            <td>Clinicare Equipamentos</td>
             <td>
               <div class="d-flex gap-1 flex-nowrap">
                 <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>

@@ -1,8 +1,14 @@
 <?php
+require_once __DIR__ . '/../../config/config.php';
+
 /**
  * Verificar se utilizador está autenticado
  */
 function is_logged_in() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
     return !empty($_SESSION['logged_in'] ?? false);
 }
 
@@ -11,7 +17,7 @@ function is_logged_in() {
  */
 function redirect_if_not_logged() {
     if (!is_logged_in()) {
-        header('Location: ../../public/login.php');
+        header('Location: ' . BASE_URL . '/public/login.php');
         exit;
     }
 }
@@ -21,7 +27,7 @@ function redirect_if_not_logged() {
  */
 function redirect_if_logged() {
     if (is_logged_in()) {
-        header('Location: ../private/index.php');
+        header('Location: ' . BASE_URL . '/private/home.php');
         exit;
     }
 }

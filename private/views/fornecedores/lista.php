@@ -12,19 +12,31 @@ include __DIR__ . '/../../includes/header.php';
     <h1 class="mhs-page-title">Fornecedores</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href='novo.php' class='btn btn-primary'><i class='fa-solid fa-plus me-2'></i>Novo</a>
+    <a href="novo.php" class="btn btn-primary"><i class="fa-solid fa-plus me-2"></i>Novo</a>
   </div>
-</div><div class="card mhs-data-card">
+</div>
+
+<div class="card mhs-data-card">
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover mhs-datatable mb-0">
         <thead class="mhs-thead">
-          <tr><th>Nome</th><th>NIF</th><th>Tipo</th><th>Telefone</th><th>Email</th><th>Ações</th></tr>
-        </thead>
-                <tbody>
           <tr>
-            <td>Item 1</td>
-            <td>Descrição 1</td>
+            <th>Nome</th>
+            <th>NIF</th>
+            <th>Tipo</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Clinicare Equipamentos</td>
+            <td>509123456</td>
+            <td>Assistencia tecnica</td>
+            <td>210 000 000</td>
+            <td>geral@clinicare.pt</td>
             <td>
               <div class="d-flex gap-1 flex-nowrap">
                 <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>

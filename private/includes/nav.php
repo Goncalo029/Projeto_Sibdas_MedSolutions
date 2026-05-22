@@ -12,9 +12,9 @@ $hoje = date('d/m/Y');
             <button class="mhs-sidebar-toggle d-lg-none" onclick="document.body.classList.toggle('mhs-sidebar-open')">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <a href="../index.php" class="mhs-topbar-brand">
+            <a href="<?= BASE_URL ?>/private/home.php" class="mhs-topbar-brand">
                 <span class="mhs-topbar-brand-mark">
-                    <img alt="Logo" src="../../public/assets/images/logo-medsoft.svg" height="32" />
+                    <img alt="Logo" src="<?= BASE_URL ?>/public/assets/images/logo-medsoft.svg" height="32" />
                 </span>
                 <span class="mhs-topbar-brand-copy">
                     <strong>MedSolutions</strong>
@@ -28,7 +28,7 @@ $hoje = date('d/m/Y');
                 <?php echo htmlspecialchars($hoje); ?>
             </span>
             
-            <a class="mhs-avatar-btn" href="../../public/logout.php" title="Logout">
+            <a class="mhs-avatar-btn" href="<?= BASE_URL ?>/public/logout.php" title="Logout">
                 <span class="mhs-avatar"><?php echo $iniciais; ?></span>
                 <span class="mhs-avatar-name d-none d-md-inline"><?php echo htmlspecialchars($nome); ?></span>
             </a>

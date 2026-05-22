@@ -12,8 +12,9 @@ $(document).ready(function () {
             const customSearchInputs = tableId ? document.querySelectorAll('[data-table-search="' + tableId + '"]') : [];
             const dataTable = $table.DataTable({
                 language: {
-                    search: 'Pesquisar:',
-                    lengthMenu: 'Mostrar _MENU_ registos',
+                    search: '',
+                    searchPlaceholder: 'Pesquisar',
+                    lengthMenu: '_MENU_ registos',
                     info: 'A mostrar _START_ a _END_ de _TOTAL_ registos',
                     infoEmpty: 'Sem registos',
                     infoFiltered: '(filtrado de _MAX_ total)',
