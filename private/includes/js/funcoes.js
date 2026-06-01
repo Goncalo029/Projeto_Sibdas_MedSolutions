@@ -34,6 +34,17 @@ $(document).ready(function () {
                     });
                 });
             }
+
+            // Vinculação de campos de pesquisa por tabela (novos filtros)
+            const searchFieldId = tableId ? tableId.replace('Table', 'Search') : null;
+            if (searchFieldId) {
+                const $searchField = document.getElementById(searchFieldId);
+                if ($searchField) {
+                    $searchField.addEventListener('input', function () {
+                        dataTable.search(this.value).draw();
+                    });
+                }
+            }
         });
     }
 });

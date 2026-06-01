@@ -36,6 +36,7 @@ if ($mhs_page_file === 'detalhes.php') {
     <script src="/MedSolutions/private/assets/jQuery/jquery-3.6.0.min.js"></script>
     <script src="/MedSolutions/private/assets/datatables/datatables.min.js"></script>
     <script src="/MedSolutions/private/assets/flatpickr/flatpickr.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="mhs-app<?= $mhs_body_page_class ?>">
 

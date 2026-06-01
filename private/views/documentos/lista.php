@@ -35,6 +35,20 @@ include __DIR__ . '/../../includes/header.php';
 
 <?php if ($erro_bd) : ?><div class="alert alert-warning"><?= esc($erro_bd) ?></div><?php endif; ?>
 
+<div class="card mhs-data-card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Pesquisar</label>
+        <input type="text" class="form-control" id="documentosSearch" placeholder="Equipamento, tipo ou nome..." />
+      </div>
+      <div class="col-md-6 text-end">
+        <button class="btn btn-outline-secondary" onclick="document.getElementById('documentosSearch').value=''; jQuery('#documentosTable').DataTable().search('').draw();"><i class="fa-solid fa-times me-2"></i>Limpar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="card mhs-data-card">
   <div class="card-body p-0">
     <div class="table-responsive">

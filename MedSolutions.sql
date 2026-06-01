@@ -285,12 +285,6 @@ INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `websi
 
 USE `MedSolutions`;
 
-INSERT INTO `agents` (`name`, `passwrd`, `profile`, `created_at`)
-SELECT AES_ENCRYPT('gestor@hospital.pt', 'M3dSol_MySQL_AES_2026!'), 'gestor123', 'gestor', NOW()
-WHERE NOT EXISTS (
-  SELECT 1 FROM `agents` WHERE AES_DECRYPT(`name`, 'M3dSol_MySQL_AES_2026!') = 'gestor@hospital.pt'
-);
-
 INSERT INTO `categorias` (`nome`, `descricao`, `created_at`)
 SELECT 'Cirurgia', 'Equipamentos de apoio a blocos operatorios', NOW()
 WHERE NOT EXISTS (SELECT 1 FROM `categorias` WHERE `nome` = 'Cirurgia');

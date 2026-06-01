@@ -22,7 +22,6 @@ function mhs_active(string $segment): string
             <span class="mhs-sidebar-logo-mark"><img alt="Logo MedSolutions" src="<?= BASE_URL ?>/public/assets/images/logo-medsoft.svg" /></span>
             <span class="mhs-sidebar-logo-copy">
                 <strong>MedSolutions</strong>
-                <small>Inventário clínico centralizado</small>
             </span>
         </a>
         <p class="mhs-sidebar-copy">Operações, equipamentos, contratos e documentação num único painel.</p>
@@ -44,13 +43,14 @@ function mhs_active(string $segment): string
 
         <div class="mhs-nav-section">Ferramentas</div>
         <a href="<?= BASE_URL ?>/private/views/pesquisa/pesquisa.php" class="mhs-nav-link<?= mhs_active('pesquisa'); ?>"><i class="fa-solid fa-magnifying-glass fa-fw"></i><span>Pesquisa</span></a>
-        <a href="<?= BASE_URL ?>/private/views/utilizadores/lista.php" class="mhs-nav-link<?= mhs_active('utilizadores'); ?>"><i class="fa-solid fa-users fa-fw"></i><span>Utilizadores</span></a>
-    </nav>
 
-    <div class="mhs-sidebar-footer">
-        <span class="mhs-sidebar-footer-label">Versão v1.0</span>
-        <small>&copy; 2026 MedSolutions</small>
-    </div>
+        <?php if (isset($_SESSION['profile']) && $_SESSION['profile'] === 'admin'): ?>
+        <div class="mhs-nav-section">Administração</div>
+        <a href="<?= BASE_URL ?>/private/views/utilizadores/lista.php" class="mhs-nav-link<?= mhs_active('utilizadores'); ?>"><i class="fa-solid fa-users fa-fw"></i><span>Utilizadores</span></a>
+        <a href="<?= BASE_URL ?>/private/views/utilizadores/novo.php" class="mhs-nav-link"><i class="fa-solid fa-user-plus fa-fw"></i><span>Novo Utilizador</span></a>
+        <a href="<?= BASE_URL ?>/private/views/logs/index.php" class="mhs-nav-link<?= mhs_active('logs'); ?>"><i class="fa-solid fa-history fa-fw"></i><span>Logs</span></a>
+        <?php endif; ?>
+    </nav>
 </aside>
 
 <div class="mhs-sidebar-overlay" onclick="document.body.classList.remove('mhs-sidebar-open')"></div>
