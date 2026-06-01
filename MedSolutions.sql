@@ -12,9 +12,7 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- ============================================================
--- Criar base de dados
--- ============================================================
+
 DROP DATABASE IF EXISTS `MedSolutions`;
 CREATE DATABASE `MedSolutions`;
 USE `MedSolutions`;

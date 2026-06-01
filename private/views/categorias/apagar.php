@@ -2,6 +2,31 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+
+try {
+    $pdo = new PDO(
+        "mysql:host=" . MYSQL_HOST . ";dbname=" . MYSQL_DATABASE . ";charset=utf8mb4",
+        MYSQL_USERNAME,
+        MYSQL_PASSWORD,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+    $id = $_GET['id'] ?? 0;
+    $stmt = $pdo->prepare("SELECT * FROM categorias WHERE id = ? LIMIT 1");
+    $stmt->execute([$id]);
+    $categoria = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$categoria) {
+        $_SESSION['error_message'] = 'Categoria não encontrada!';
+        echo '<script>window.location.href = "lista.php";</script>';
+        exit;
+    }
+} catch (Exception $e) {
+    $_SESSION['error_message'] = 'Erro ao carregar categoria: ' . $e->getMessage();
+    echo '<script>window.location.href = "lista.php";</script>';
+    exit;
+}
+
 $page_title = 'Categorias - Apagar';
 include __DIR__ . '/../../includes/header.php';
 ?>
@@ -28,7 +53,7 @@ include __DIR__ . '/../../includes/header.php';
                                 <div class="card border-0 bg-light">
                                     <div class="card-body">
                                         <h6 class="card-title fw-semibold">Nome</h6>
-                                        <p class="mb-0">Monitorização</p>
+                                        <p class="mb-0"><?php echo htmlspecialchars($categoria['nome']); ?></p>
                                     </div>
                                 </div>
                             </div>
@@ -36,13 +61,14 @@ include __DIR__ . '/../../includes/header.php';
                                 <div class="card border-0 bg-light">
                                     <div class="card-body">
                                         <h6 class="card-title fw-semibold">Descrição</h6>
-                                        <p class="mb-0">Categoria usada para equipamentos de monitorização clínica.</p>
+                                        <p class="mb-0"><?php echo htmlspecialchars($categoria['descricao'] ?? ''); ?></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <form method="POST" action="lista.php">
+                        <form method="POST" action="confirmar_apagar.php">
+                            <input type="hidden" name="id_enc" value="<?php echo htmlspecialchars($categoria['id']); ?>">
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-2"></i>Apagar</button>
                                 <a href="lista.php" class="btn btn-secondary"><i class="fa-solid fa-times me-2"></i>Cancelar</a>
