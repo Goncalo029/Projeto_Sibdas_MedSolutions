@@ -5,6 +5,14 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 header('Content-Type: text/html; charset=utf-8');
 $mhs_css_version = filemtime(__DIR__ . '/../assets/css/medsolutions.css');
+$mhs_page_file = basename($_SERVER['SCRIPT_NAME'] ?? '');
+$mhs_body_page_class = '';
+
+if ($mhs_page_file === 'detalhes.php') {
+    $mhs_body_page_class = ' mhs-detail-page';
+} elseif ($mhs_page_file === 'editar.php') {
+    $mhs_body_page_class = ' mhs-edit-page';
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt">
@@ -29,7 +37,7 @@ $mhs_css_version = filemtime(__DIR__ . '/../assets/css/medsolutions.css');
     <script src="/MedSolutions/private/assets/datatables/datatables.min.js"></script>
     <script src="/MedSolutions/private/assets/flatpickr/flatpickr.js"></script>
 </head>
-<body class="mhs-app">
+<body class="mhs-app<?= $mhs_body_page_class ?>">
 
 <?php
 include __DIR__ . '/nav.php';

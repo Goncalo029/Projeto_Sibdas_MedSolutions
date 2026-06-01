@@ -2,7 +2,28 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+
 $page_title = 'Equipamentos - Lista';
+$equipamentos = [];
+$erro_bd = '';
+
+try {
+    $equipamentos = mhs_pdo()->query("
+        SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.estado, e.criticidade,
+               c.nome AS categoria, l.servico,
+               COUNT(d.id) AS total_documentos
+        FROM equipamentos e
+        LEFT JOIN categorias c ON c.id = e.id_categoria
+        LEFT JOIN localizacoes l ON l.id = e.id_localizacao
+        LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.deleted_at IS NULL
+        WHERE e.deleted_at IS NULL
+        GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.estado, e.criticidade, c.nome, l.servico
+        ORDER BY e.codigo_inventario
+    ")->fetchAll();
+} catch (PDOException $e) {
+    $erro_bd = 'Nao foi possivel carregar equipamentos.';
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -12,67 +33,39 @@ include __DIR__ . '/../../includes/header.php';
     <h1 class="mhs-page-title">Equipamentos</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href='novo.php' class='btn btn-primary'><i class='fa-solid fa-plus me-2'></i>Novo</a>
+    <a href="novo.php" class="btn btn-primary"><i class="fa-solid fa-plus me-2"></i>Novo</a>
   </div>
-</div><div class="card mhs-data-card">
+</div>
+
+<?php if ($erro_bd) : ?><div class="alert alert-warning"><?= esc($erro_bd) ?></div><?php endif; ?>
+
+<div class="card mhs-data-card">
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mhs-datatable mb-0">
+      <table class="table table-hover mhs-datatable mb-0" id="equipamentosTable">
         <thead class="mhs-thead">
-          <tr><th>Código</th><th>Designação</th><th>Marca</th><th>Categoria</th><th>Serviço</th><th>Estado</th><th>Criticidade</th><th>Docs</th><th>Ações</th></tr>
+          <tr><th>Codigo</th><th>Designacao</th><th>Marca</th><th>Categoria</th><th>Servico</th><th>Estado</th><th>Criticidade</th><th>Docs</th><th>Acoes</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td>EQ-001</td>
-            <td>Monitor de Sinais Vitais</td>
-            <td>Philips</td>
-            <td>Monitorização</td>
-            <td>Urgência</td>
-            <td><span class="badge bg-success">Ativo</span></td>
-            <td><span class="badge bg-warning text-dark">Alta</span></td>
-            <td>2</td>
-            <td>
-              <div class="d-flex gap-1 flex-nowrap">
-                <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                <a href="editar.php" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>EQ-002</td>
-            <td>Ventilador UCI</td>
-            <td>Dräger</td>
-            <td>Suporte de Vida</td>
-            <td>UCI</td>
-            <td><span class="badge bg-success">Ativo</span></td>
-            <td><span class="badge bg-danger">Crítica</span></td>
-            <td>1</td>
-            <td>
-              <div class="d-flex gap-1 flex-nowrap">
-                <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                <a href="editar.php" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>EQ-003</td>
-            <td>Desfibrilhador AED</td>
-            <td>Zoll</td>
-            <td>Emergência</td>
-            <td>Bloco Operatório</td>
-            <td><span class="badge bg-warning text-dark">Manutenção</span></td>
-            <td><span class="badge bg-danger">Crítica</span></td>
-            <td>0</td>
-            <td>
-              <div class="d-flex gap-1 flex-nowrap">
-                <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                <a href="editar.php" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          </tr>
+          <?php foreach ($equipamentos as $equipamento) : ?>
+            <tr>
+              <td><?= esc($equipamento->codigo_inventario) ?></td>
+              <td><?= esc($equipamento->designacao) ?></td>
+              <td><?= esc($equipamento->marca) ?></td>
+              <td><?= esc($equipamento->categoria) ?></td>
+              <td><?= esc($equipamento->servico) ?></td>
+              <td><?= get_estado_badge($equipamento->estado) ?></td>
+              <td><?= get_criticidade_badge($equipamento->criticidade) ?></td>
+              <td><?= (int) $equipamento->total_documentos ?></td>
+              <td>
+                <div class="d-flex gap-1 flex-nowrap">
+                  <a href="detalhes.php?id=<?= (int) $equipamento->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int) $equipamento->id ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $equipamento->id ?>" data-delete-name="<?= esc($equipamento->codigo_inventario) ?>"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
         </tbody>
       </table>
     </div>

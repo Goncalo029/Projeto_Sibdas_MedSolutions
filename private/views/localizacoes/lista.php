@@ -2,7 +2,22 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+
 $page_title = 'Localizacoes - Lista';
+$localizacoes = [];
+$erro_bd = '';
+
+try {
+    $localizacoes = mhs_pdo()->query("
+        SELECT id, edificio, piso, servico, sala
+        FROM localizacoes
+        WHERE deleted_at IS NULL
+        ORDER BY edificio, piso, servico, sala
+    ")->fetchAll();
+} catch (PDOException $e) {
+    $erro_bd = 'Nao foi possivel carregar localizacoes.';
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -16,33 +31,31 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
+<?php if ($erro_bd) : ?><div class="alert alert-warning"><?= esc($erro_bd) ?></div><?php endif; ?>
+
 <div class="card mhs-data-card">
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mhs-datatable mb-0">
+      <table class="table table-hover mhs-datatable mb-0" id="localizacoesTable">
         <thead class="mhs-thead">
-          <tr>
-            <th>Edificio</th>
-            <th>Piso</th>
-            <th>Servico</th>
-            <th>Sala</th>
-            <th>Acoes</th>
-          </tr>
+          <tr><th>Edificio</th><th>Piso</th><th>Servico</th><th>Sala</th><th>Acoes</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Edificio A</td>
-            <td>1</td>
-            <td>Urgencia</td>
-            <td>Sala 12</td>
-            <td>
-              <div class="d-flex gap-1 flex-nowrap">
-                <a href="detalhes.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                <a href="editar.php" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-delete-button><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          </tr>
+          <?php foreach ($localizacoes as $localizacao) : ?>
+            <tr>
+              <td><?= esc($localizacao->edificio) ?></td>
+              <td><?= esc($localizacao->piso) ?></td>
+              <td><?= esc($localizacao->servico) ?></td>
+              <td><?= esc($localizacao->sala) ?></td>
+              <td>
+                <div class="d-flex gap-1 flex-nowrap">
+                  <a href="detalhes.php?id=<?= (int) $localizacao->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int) $localizacao->id ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $localizacao->id ?>" data-delete-name="<?= esc($localizacao->servico) ?>"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
         </tbody>
       </table>
     </div>

@@ -16,7 +16,7 @@
 -- Criar base de dados
 -- ============================================================
 DROP DATABASE IF EXISTS `MedSolutions`;
-CREATE DATABASE `MedSolutions` 
+CREATE DATABASE `MedSolutions`;
 USE `MedSolutions`;
 
 
@@ -279,4 +279,101 @@ INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `websi
 ('B. Braun Medical', '503456789', '210000003', 'info@bbraun.pt', 'Rua Industrial 25, Porto', 'https://www.bbraun.pt', 'Carlos Mendes', '912345003', 'Fabricante', NOW()),
 ('Zoll Medical', '504567890', '210000004', 'info@zoll.pt', 'Rua Nova 10, Lisboa', 'https://www.zoll.com', 'Maria Santos', '912345004', 'Distribuidor', NOW()),
 ('TecnoMed Assistência', '505678901', '210000005', 'geral@tecnomed.pt', 'Rua Técnica 5, Porto', NULL, 'Pedro Alves', '912345005', 'Assistência técnica', NOW());
+
+
+-- ============================================================
+-- Dados adicionais para o backoffice
+-- ============================================================
+
+USE `MedSolutions`;
+
+INSERT INTO `agents` (`name`, `passwrd`, `profile`, `created_at`)
+SELECT AES_ENCRYPT('gestor@hospital.pt', 'M3dSol_MySQL_AES_2026!'), 'gestor123', 'gestor', NOW()
+WHERE NOT EXISTS (
+  SELECT 1 FROM `agents` WHERE AES_DECRYPT(`name`, 'M3dSol_MySQL_AES_2026!') = 'gestor@hospital.pt'
+);
+
+INSERT INTO `categorias` (`nome`, `descricao`, `created_at`)
+SELECT 'Cirurgia', 'Equipamentos de apoio a blocos operatorios', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `categorias` WHERE `nome` = 'Cirurgia');
+
+INSERT INTO `categorias` (`nome`, `descricao`, `created_at`)
+SELECT 'Imagiologia', 'Equipamentos de diagnostico por imagem', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `categorias` WHERE `nome` = 'Imagiologia');
+
+INSERT INTO `localizacoes` (`edificio`, `piso`, `servico`, `sala`, `created_at`)
+SELECT 'Edificio Principal', 'Piso 1', 'Bloco Operatorio', 'Sala 1.3', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `localizacoes` WHERE `servico` = 'Bloco Operatorio' AND `sala` = 'Sala 1.3');
+
+INSERT INTO `localizacoes` (`edificio`, `piso`, `servico`, `sala`, `created_at`)
+SELECT 'Edificio C', 'Piso 0', 'Imagiologia', 'Sala RX', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `localizacoes` WHERE `servico` = 'Imagiologia' AND `sala` = 'Sala RX');
+
+INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `website`, `pessoa_contacto`, `tel_contacto`, `tipo_fornecedor`, `created_at`)
+SELECT 'Medtronic Portugal', '506789012', '210000006', 'info@medtronic.pt', 'Av. Tecnica 12, Lisboa', 'https://www.medtronic.com', 'Rui Fernandes', '912345006', 'Fabricante', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `fornecedores` WHERE `nif` = '506789012');
+
+INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `website`, `pessoa_contacto`, `tel_contacto`, `tipo_fornecedor`, `created_at`)
+SELECT 'Siemens Healthineers', '507890123', '210000007', 'info@siemens-healthineers.pt', 'Rua da Inovacao 40, Porto', 'https://www.siemens-healthineers.com', 'Sofia Martins', '912345007', 'Fabricante', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `fornecedores` WHERE `nif` = '507890123');
+
+INSERT IGNORE INTO `equipamentos`
+(`codigo_inventario`, `designacao`, `id_categoria`, `marca`, `modelo`, `numero_serie`, `fabricante`, `data_aquisicao`, `ano_fabrico`, `custo_aquisicao`, `tipo_entrada`, `id_localizacao`, `estado`, `criticidade`, `observacoes`, `created_at`)
+VALUES
+('EQ-001', 'Monitor de Sinais Vitais', (SELECT id FROM categorias WHERE nome LIKE 'Monitoriza%' LIMIT 1), 'Philips', 'IntelliVue MX450', 'PH-MX450-001', 'Philips Healthcare', '2024-01-18', 2023, 6800.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Urg%' LIMIT 1), 'Ativo', 'Alta', 'Monitor multiparametrico com ECG, SpO2 e NIBP.', NOW()),
+('EQ-002', 'Ventilador UCI', (SELECT id FROM categorias WHERE nome = 'Suporte de vida' LIMIT 1), 'Drager', 'Evita V600', 'DR-EV600-002', 'Drager', '2023-09-04', 2023, 28500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Unidade de Cuidados Intensivos' LIMIT 1), 'Ativo', 'Suporte de vida', 'Ventilador para cuidados intensivos.', NOW()),
+('EQ-003', 'Desfibrilhador AED', (SELECT id FROM categorias WHERE nome LIKE 'Terapia' LIMIT 1), 'Zoll', 'AED 3', 'ZO-AED3-003', 'Zoll Medical', '2022-11-22', 2022, 1950.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Bloco Operatorio' LIMIT 1), 'Manutencao', 'Alta', 'Requer verificacao de bateria.', NOW()),
+('EQ-004', 'Bomba de Infusao', (SELECT id FROM categorias WHERE nome = 'Terapia' LIMIT 1), 'B. Braun', 'Infusomat Space', 'BB-INF-004', 'B. Braun Medical', '2024-03-12', 2024, 2400.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Medicina Interna' LIMIT 1), 'Ativo', 'Media', 'Bomba volumetrica para perfusao continua.', NOW()),
+('EQ-005', 'Autoclave de Esterilizacao', (SELECT id FROM categorias WHERE nome LIKE 'Esteriliza%' LIMIT 1), 'Tuttnauer', '5596', 'TU-AUT-005', 'Tuttnauer', '2021-06-10', 2021, 18500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Laboratorio%' LIMIT 1), 'Ativo', 'Media', 'Ciclo de esterilizacao validado.', NOW()),
+('EQ-006', 'Ecografo Portatil', (SELECT id FROM categorias WHERE nome = 'Imagiologia' LIMIT 1), 'Siemens', 'Acuson P500', 'SI-ECO-006', 'Siemens Healthineers', '2023-02-14', 2022, 32500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico = 'Imagiologia' LIMIT 1), 'Ativo', 'Alta', 'Ecografo portatil para urgencia e UCI.', NOW()),
+('EQ-007', 'Marquesa de Fisioterapia', (SELECT id FROM categorias WHERE nome LIKE 'Reabilita%' LIMIT 1), 'Gymna', 'One', 'GY-MAR-007', 'Gymna', '2020-05-20', 2020, 1250.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Fisioterapia' LIMIT 1), 'Inativo', 'Baixa', 'A aguardar substituicao.', NOW());
+
+INSERT IGNORE INTO `equipamentos_fornecedores` (`id_equipamento`, `id_fornecedor`, `tipo_relacao`, `created_at`)
+SELECT e.id, f.id, 'Fornecedor principal', NOW()
+FROM equipamentos e
+JOIN fornecedores f ON
+  (e.marca = 'Philips' AND f.nome = 'Philips Healthcare') OR
+  (e.marca = 'Drager' AND f.nome = 'Drager Portugal') OR
+  (e.marca = 'Zoll' AND f.nome = 'Zoll Medical') OR
+  (e.marca = 'B. Braun' AND f.nome = 'B. Braun Medical') OR
+  (e.marca = 'Siemens' AND f.nome = 'Siemens Healthineers');
+
+INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `data_validade`, `nome_ficheiro`, `created_at`)
+SELECT e.id, f.id, 'Manual', CONCAT('Manual tecnico ', e.codigo_inventario), '2024-01-01', NULL, CONCAT(e.codigo_inventario, '_manual.pdf'), NOW()
+FROM equipamentos e
+LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
+LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor
+WHERE NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento = e.id AND d.tipo_documento = 'Manual');
+
+INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `data_validade`, `nome_ficheiro`, `created_at`)
+SELECT e.id, f.id, 'Certificado', CONCAT('Certificado calibracao ', e.codigo_inventario), '2026-01-15', '2027-01-15', CONCAT(e.codigo_inventario, '_calibracao.pdf'), NOW()
+FROM equipamentos e
+LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
+LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor
+WHERE e.codigo_inventario IN ('EQ-001', 'EQ-004', 'EQ-006')
+AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento = e.id AND d.tipo_documento = 'Certificado');
+
+INSERT INTO `garantias_contratos` (`id_equipamento`, `data_inicio`, `data_fim`, `tem_contrato`, `tipo_contrato`, `entidade_responsavel`, `periodicidade`, `created_at`)
+SELECT e.id, e.data_aquisicao, DATE_ADD(e.data_aquisicao, INTERVAL 3 YEAR), 1, 'Garantia e manutencao', COALESCE(f.nome, e.fabricante), 'Anual', NOW()
+FROM equipamentos e
+LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
+LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor
+WHERE NOT EXISTS (SELECT 1 FROM garantias_contratos g WHERE g.id_equipamento = e.id);
+
+INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `created_at`)
+SELECT e.id, 'estado', 'Rececionado', e.estado, 'admin@hospital.pt', NOW()
+FROM equipamentos e
+WHERE NOT EXISTS (SELECT 1 FROM equipamentos_movimentacoes m WHERE m.id_equipamento = e.id AND m.campo = 'estado');
+
+INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `estado`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+SELECT e.id, e.id_localizacao, l.id, '2026-05-10', '2026-06-10', 'Ativo', 'Emprestimo temporario para reforco do servico.', 'admin@hospital.pt', NOW(), NOW()
+FROM equipamentos e
+JOIN localizacoes l ON l.servico = 'Urgencia'
+WHERE e.codigo_inventario = 'EQ-006'
+AND NOT EXISTS (SELECT 1 FROM emprestimos_equipamentos emp WHERE emp.id_equipamento = e.id AND emp.estado = 'Ativo');
+
+INSERT INTO `manutencoes_preventivas` (`id_equipamento`, `ultima_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+SELECT e.id, '2026-01-15', '2027-01-15', 'Anual', 'Planeada', 'tecnico@hospital.pt', 'Plano preventivo anual.', 'admin@hospital.pt', NOW(), NOW()
+FROM equipamentos e
+WHERE NOT EXISTS (SELECT 1 FROM manutencoes_preventivas mp WHERE mp.id_equipamento = e.id);
 

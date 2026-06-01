@@ -309,3 +309,60 @@ table.dataTable thead th:last-child{padding-right:28px!important;text-align:righ
 .mhs-page-header{align-items:flex-end!important}
 .mhs-page-actions{margin-left:auto!important}
 .mhs-page-actions .btn-primary{min-width:112px;height:56px;display:inline-flex;align-items:center;justify-content:center}
+
+/* Ver detalhes / editar: caixas modernas sem cantos curvos */
+body.mhs-detail-page .card,
+body.mhs-edit-page .card{border:1px solid #d8e2ec!important;border-radius:0!important;background:#fff!important;box-shadow:0 10px 28px rgba(15,23,42,.06)!important;overflow:hidden!important}
+body.mhs-detail-page .card-header,
+body.mhs-edit-page .card-header{min-height:74px;display:flex;align-items:center;gap:8px;padding:0 22px!important;border-bottom:1px solid #d8e2ec!important;background:#f8fbff!important;color:#111827!important;font-family:'Sora',sans-serif;font-size:1rem!important;font-weight:800!important}
+body.mhs-detail-page .card-header.bg-primary,
+body.mhs-detail-page .card-header.bg-secondary,
+body.mhs-detail-page .card-header.bg-dark,
+body.mhs-detail-page .card-header.bg-info,
+body.mhs-edit-page .card-header.bg-primary,
+body.mhs-edit-page .card-header.bg-secondary,
+body.mhs-edit-page .card-header.bg-dark,
+body.mhs-edit-page .card-header.bg-info{background:#f8fbff!important;color:#111827!important}
+body.mhs-detail-page .card-header i,
+body.mhs-edit-page .card-header i{color:#111827!important}
+body.mhs-detail-page .card-body,
+body.mhs-edit-page .card-body{padding:26px 24px!important}
+body.mhs-detail-page dl.row{display:grid!important;grid-template-columns:minmax(150px,28%) 1fr;column-gap:28px;row-gap:0;margin:0!important}
+body.mhs-detail-page dl.row dt,
+body.mhs-detail-page dl.row dd{width:auto!important;max-width:none!important;flex:none!important;margin:0!important;padding:14px 0!important;border-bottom:1px solid #edf2f7}
+body.mhs-detail-page dl.row dt{color:#64748b;font-size:.86rem;font-weight:800}
+body.mhs-detail-page dl.row dd{color:#111827;font-size:1rem;font-weight:800}
+body.mhs-detail-page dl.row dt:last-of-type,
+body.mhs-detail-page dl.row dd:last-of-type{border-bottom:0}
+body.mhs-detail-page .badge,
+body.mhs-edit-page .badge{border-radius:0!important;padding:.38rem .7rem!important}
+body.mhs-detail-page .badge.bg-success,
+body.mhs-edit-page .badge.bg-success{background:#dcfce7!important;color:#166534!important}
+body.mhs-detail-page .badge.bg-warning,
+body.mhs-edit-page .badge.bg-warning{background:#fef3c7!important;color:#92400e!important}
+body.mhs-detail-page .badge.bg-danger,
+body.mhs-edit-page .badge.bg-danger{background:#fee2e2!important;color:#991b1b!important}
+body.mhs-detail-page .badge.bg-info,
+body.mhs-edit-page .badge.bg-info{background:#dbeafe!important;color:#1d4ed8!important}
+body.mhs-edit-page .form-label{color:#64748b!important;font-size:.76rem!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+body.mhs-edit-page .form-control,
+body.mhs-edit-page .form-select,
+body.mhs-edit-page textarea.form-control{border-radius:0!important;border:1px solid #cbd5e1!important;background:#fff!important;box-shadow:none!important}
+body.mhs-edit-page .form-control:focus,
+body.mhs-edit-page .form-select:focus,
+body.mhs-edit-page textarea.form-control:focus{border-color:#2563eb!important;box-shadow:inset 0 -2px 0 #2563eb!important}
+body.mhs-detail-page .table,
+body.mhs-edit-page .table{border-collapse:collapse!important}
+body.mhs-detail-page .table thead th,
+body.mhs-edit-page .table thead th{background:#f8fafc!important;border-bottom:1px solid #cbd5e1!important;color:#52657e!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+body.mhs-detail-page .table tbody td,
+body.mhs-edit-page .table tbody td{border-top:1px solid #e6edf5!important;color:#334155!important}
+body.mhs-detail-page .mhs-history-copy,
+body.mhs-detail-page .mhs-loan-history-item{border-radius:0!important;border-color:#d8e2ec!important;background:#fff!important}
+body.mhs-detail-page .mhs-history-dot{border-radius:0!important;box-shadow:none!important}
+
+@media (max-width:767.98px){
+body.mhs-detail-page dl.row{grid-template-columns:1fr}
+body.mhs-detail-page dl.row dt{padding-bottom:4px;border-bottom:0}
+body.mhs-detail-page dl.row dd{padding-top:0}
+}
