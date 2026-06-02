@@ -28,10 +28,24 @@ $hoje = date('d/m/Y');
                 <?php echo htmlspecialchars($hoje); ?>
             </span>
             
-            <a class="mhs-avatar-btn" href="<?= BASE_URL ?>/public/logout.php" title="Logout">
-                <span class="mhs-avatar"><?php echo $iniciais; ?></span>
-                <span class="mhs-avatar-name d-none d-md-inline"><?php echo htmlspecialchars($nome); ?></span>
-            </a>
+            <div class="mhs-avatar-dropdown" id="avatarDropdown">
+                <button class="mhs-avatar-btn" onclick="toggleAvatarMenu(event)" type="button">
+                    <span class="mhs-avatar"><?php echo $iniciais; ?></span>
+                    <span class="mhs-avatar-name d-none d-md-inline"><?php echo htmlspecialchars($nome); ?></span>
+                    <i class="fa-solid fa-chevron-down mhs-avatar-chevron"></i>
+                </button>
+                <div class="mhs-avatar-menu" id="avatarMenu">
+                    <a class="mhs-avatar-menu-item" href="<?= BASE_URL ?>/private/views/utilizadores/perfil.php">
+                        <i class="fa-regular fa-user"></i>
+                        Perfil
+                    </a>
+                    <div class="mhs-avatar-menu-divider"></div>
+                    <a class="mhs-avatar-menu-item mhs-avatar-menu-item--danger" href="<?= BASE_URL ?>/public/logout.php">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </header>

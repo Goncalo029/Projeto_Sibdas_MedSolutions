@@ -2,6 +2,25 @@
 // Validacoes client-side e helpers visuais
 
 // ============================================================
+// Avatar dropdown
+// ============================================================
+function toggleAvatarMenu(e) {
+    e.stopPropagation();
+    var dropdown = document.getElementById('avatarDropdown');
+    var menu = document.getElementById('avatarMenu');
+    var isOpen = dropdown.classList.contains('open');
+    dropdown.classList.toggle('open', !isOpen);
+    menu.classList.toggle('visible', !isOpen);
+}
+
+document.addEventListener('click', function () {
+    var dropdown = document.getElementById('avatarDropdown');
+    var menu = document.getElementById('avatarMenu');
+    if (dropdown) dropdown.classList.remove('open');
+    if (menu) menu.classList.remove('visible');
+});
+
+// ============================================================
 // DataTables - inicializacao padrao PT
 // ============================================================
 $(document).ready(function () {
