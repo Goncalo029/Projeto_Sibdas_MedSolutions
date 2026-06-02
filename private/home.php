@@ -3,445 +3,413 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/includes/funcoes.php';
 redirect_if_not_logged();
 
-// Conexão com BD
 try {
     $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
-    if ($mysqli->connect_error) {
-        die('Erro na conexão: ' . $mysqli->connect_error);
-    }
+    if ($mysqli->connect_error) die('Erro na conexão: ' . $mysqli->connect_error);
     $mysqli->set_charset('utf8mb4');
 } catch (Exception $e) {
     die('Erro: ' . $e->getMessage());
 }
 
-// Queries para os dados dos gráficos
-$equipamentos_estado = [];
+$equipamentos_estado   = [];
 $equipamentos_categoria = [];
-$documentos_tipo = [];
-$fornecedores_uso = [];
-$localizacoes_uso = [];
-$garantias_vencimento = [];
+$documentos_tipo       = [];
+$fornecedores_uso      = [];
+$localizacoes_uso      = [];
+$garantias_vencimento  = [];
 
-// Equipamentos por estado
-$result = $mysqli->query("SELECT estado, COUNT(*) as total FROM equipamentos GROUP BY estado");
-while ($row = $result->fetch_assoc()) {
-    $equipamentos_estado[] = $row;
-}
+$r = $mysqli->query("SELECT estado, COUNT(*) as total FROM equipamentos GROUP BY estado ORDER BY total DESC");
+while ($row = $r->fetch_assoc()) $equipamentos_estado[] = $row;
 
-// Equipamentos por categoria
-$result = $mysqli->query("
-    SELECT c.nome, COUNT(e.id) as total 
-    FROM categorias c 
-    LEFT JOIN equipamentos e ON c.id = e.categoria_id 
-    GROUP BY c.id, c.nome 
-    ORDER BY total DESC
-");
-while ($row = $result->fetch_assoc()) {
-    $equipamentos_categoria[] = $row;
-}
+$r = $mysqli->query("SELECT c.nome, COUNT(e.id) as total FROM categorias c LEFT JOIN equipamentos e ON c.id = e.id_categoria GROUP BY c.id, c.nome ORDER BY total DESC");
+while ($row = $r->fetch_assoc()) $equipamentos_categoria[] = $row;
 
-// Documentos por tipo
-$result = $mysqli->query("SELECT tipo, COUNT(*) as total FROM documentos GROUP BY tipo ORDER BY total DESC");
-while ($row = $result->fetch_assoc()) {
-    $documentos_tipo[] = $row;
-}
+$r = $mysqli->query("SELECT tipo_documento as tipo, COUNT(*) as total FROM documentos GROUP BY tipo_documento ORDER BY total DESC");
+while ($row = $r->fetch_assoc()) $documentos_tipo[] = $row;
 
-// Fornecedores mais usados
-$result = $mysqli->query("
-    SELECT f.nome, COUNT(e.id) as total 
-    FROM fornecedores f 
-    LEFT JOIN equipamentos e ON f.id = e.fornecedor_id 
-    GROUP BY f.id, f.nome 
-    ORDER BY total DESC 
-    LIMIT 8
-");
-while ($row = $result->fetch_assoc()) {
-    $fornecedores_uso[] = $row;
-}
+$r = $mysqli->query("SELECT f.nome, COUNT(ef.id_equipamento) as total FROM fornecedores f LEFT JOIN equipamentos_fornecedores ef ON f.id = ef.id_fornecedor GROUP BY f.id, f.nome ORDER BY total DESC LIMIT 8");
+while ($row = $r->fetch_assoc()) $fornecedores_uso[] = $row;
 
-// Localizações mais usadas
-$result = $mysqli->query("
-    SELECT l.nome, COUNT(e.id) as total 
-    FROM localizacoes l 
-    LEFT JOIN equipamentos e ON l.id = e.localizacao_id 
-    GROUP BY l.id, l.nome 
-    ORDER BY total DESC 
-    LIMIT 6
-");
-while ($row = $result->fetch_assoc()) {
-    $localizacoes_uso[] = $row;
-}
+$r = $mysqli->query("SELECT CONCAT(l.servico, IF(l.sala IS NOT NULL AND l.sala != '', CONCAT(' · ', l.sala), '')) as nome, COUNT(e.id) as total FROM localizacoes l LEFT JOIN equipamentos e ON l.id = e.id_localizacao GROUP BY l.id ORDER BY total DESC LIMIT 6");
+while ($row = $r->fetch_assoc()) $localizacoes_uso[] = $row;
 
-// Garantias por mês de vencimento
-$result = $mysqli->query("
-    SELECT DATE_FORMAT(data_validade, '%Y-%m') as mes, COUNT(*) as total 
-    FROM garantias_contrato 
-    WHERE data_validade IS NOT NULL 
-    GROUP BY DATE_FORMAT(data_validade, '%Y-%m') 
-    ORDER BY mes ASC 
-    LIMIT 12
-");
-while ($row = $result->fetch_assoc()) {
-    $garantias_vencimento[] = $row;
-}
+$r = $mysqli->query("SELECT DATE_FORMAT(data_fim,'%Y-%m') as mes, COUNT(*) as total FROM garantias_contratos WHERE data_fim IS NOT NULL GROUP BY DATE_FORMAT(data_fim,'%Y-%m') ORDER BY mes ASC LIMIT 12");
+while ($row = $r->fetch_assoc()) $garantias_vencimento[] = $row;
 
-// Estatísticas gerais
-$stats_equipamentos = $mysqli->query("SELECT COUNT(*) as total FROM equipamentos")->fetch_assoc()['total'];
-$stats_documentos = $mysqli->query("SELECT COUNT(*) as total FROM documentos")->fetch_assoc()['total'];
-$stats_fornecedores = $mysqli->query("SELECT COUNT(*) as total FROM fornecedores")->fetch_assoc()['total'];
-$stats_garantias = $mysqli->query("SELECT COUNT(*) as total FROM garantias_contrato WHERE data_validade > NOW()")->fetch_assoc()['total'];
-$stats_criticos = $mysqli->query("SELECT COUNT(*) as total FROM equipamentos WHERE prioridade = 'Crítica'")->fetch_assoc()['total'];
-$stats_inativos = $mysqli->query("SELECT COUNT(*) as total FROM equipamentos WHERE estado = 'Inativo'")->fetch_assoc()['total'];
+$stats_equipamentos = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos")->fetch_assoc()['t'];
+$stats_documentos   = (int)$mysqli->query("SELECT COUNT(*) as t FROM documentos")->fetch_assoc()['t'];
+$stats_fornecedores = (int)$mysqli->query("SELECT COUNT(*) as t FROM fornecedores")->fetch_assoc()['t'];
+$stats_garantias    = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW()")->fetch_assoc()['t'];
+$stats_criticos     = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade = 'Alta'")->fetch_assoc()['t'];
+$stats_inativos     = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado = 'Inativo'")->fetch_assoc()['t'];
 
 $page_title = 'Dashboard';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-    .mhs-dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-        gap: 2rem;
-        margin-top: 2rem;
-    }
+<!-- ════════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════════ -->
+<div class="dash-hero">
+    <div class="dash-hero-top">
+        <div>
+            <h1 class="dash-hero-title">Dashboard</h1>
+        </div>
+        <a href="home.php" class="dash-refresh-btn" title="Recarregar dados">
+            <i class="fas fa-rotate-right"></i> Atualizar
+        </a>
+    </div>
 
-    .mhs-dashboard-grid.full {
-        grid-template-columns: 1fr;
-    }
-
-    .mhs-chart-container {
-        background: white;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        position: relative;
-        min-height: 400px;
-    }
-
-    .mhs-chart-container h3 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .mhs-chart-container canvas {
-        max-height: 350px;
-    }
-
-    .mhs-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .mhs-stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        text-align: center;
-    }
-
-    .mhs-stat-card.blue {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .mhs-stat-card.green {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    }
-
-    .mhs-stat-card.orange {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-    }
-
-    .mhs-stat-card.yellow {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .mhs-stat-card.purple {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .mhs-stat-card.red {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-
-    .mhs-stat-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0.5rem 0;
-    }
-
-    .mhs-stat-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
-    }
-
-    .mhs-page-header--dashboard {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 3rem 2rem;
-        margin: -2rem -2rem 2rem -2rem;
-        border-radius: 0 0 1rem 1rem;
-    }
-
-    .mhs-page-header--dashboard .mhs-page-title {
-        color: white;
-        font-size: 2.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .mhs-page-header--dashboard .mhs-page-copy {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 1rem;
-    }
-
-    .mhs-chart-icon {
-        font-size: 1.2rem;
-    }
-</style>
-
-<div class="mhs-page-header mhs-page-header--dashboard">
-    <div>
-        <span class="mhs-page-kicker">Centro de controlo</span>
-        <h1 class="mhs-page-title">Dashboard Analítico</h1>
-        <p class="mhs-page-copy">Visão geral de equipamentos, documentos e análises operacionais</p>
+    <!-- Stats strip: big numbers, no card boxes -->
+    <div class="dash-stats">
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-stethoscope"></i> &nbsp;Equipamentos</div>
+            <div class="dash-stat-num" data-count="<?= $stats_equipamentos ?>">0</div>
+            <div class="dash-stat-lbl">Total registado</div>
+        </div>
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-file-medical"></i> &nbsp;Documentos</div>
+            <div class="dash-stat-num" data-count="<?= $stats_documentos ?>">0</div>
+            <div class="dash-stat-lbl">Ficheiros indexados</div>
+        </div>
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-truck-medical"></i> &nbsp;Fornecedores</div>
+            <div class="dash-stat-num" data-count="<?= $stats_fornecedores ?>">0</div>
+            <div class="dash-stat-lbl">Parceiros ativos</div>
+        </div>
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-shield-halved"></i> &nbsp;Garantias</div>
+            <div class="dash-stat-num" data-count="<?= $stats_garantias ?>">0</div>
+            <div class="dash-stat-lbl">Ainda em vigor</div>
+        </div>
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-triangle-exclamation"></i> &nbsp;Críticos</div>
+            <div class="dash-stat-num" data-count="<?= $stats_criticos ?>">0</div>
+            <div class="dash-stat-lbl">Prioridade máxima</div>
+        </div>
+        <div class="dash-stat">
+            <div class="dash-stat-icon"><i class="fas fa-circle-xmark"></i> &nbsp;Inativos</div>
+            <div class="dash-stat-num" data-count="<?= $stats_inativos ?>">0</div>
+            <div class="dash-stat-lbl">Fora de serviço</div>
+        </div>
     </div>
 </div>
 
-<!-- Estatísticas Gerais -->
-<div class="mhs-stats-grid">
-    <div class="mhs-stat-card blue">
-        <div class="mhs-stat-label">Equipamentos</div>
-        <div class="mhs-stat-number"><?= $stats_equipamentos ?></div>
+<!-- ════════════════════════════════════════════════════════════
+     ROW 1 — Estados + Categorias
+════════════════════════════════════════════════════════════ -->
+<div class="dash-grid-2">
+
+    <div class="dash-panel" style="transition-delay:.05s">
+        <div class="dash-panel-head">
+            <h3 class="dash-panel-title">
+                <i class="fas fa-circle-half-stroke"></i> Estado dos Equipamentos
+            </h3>
+            <div class="dash-toggle">
+                <button class="dash-toggle-btn active" data-canvas="cEstados" data-type="pie">Setores</button>
+                <button class="dash-toggle-btn" data-canvas="cEstados" data-type="doughnut">Anel</button>
+            </div>
+        </div>
+        <div class="dash-panel-body loading" id="body-cEstados">
+            <canvas id="cEstados"></canvas>
+        </div>
     </div>
-    <div class="mhs-stat-card green">
-        <div class="mhs-stat-label">Documentos</div>
-        <div class="mhs-stat-number"><?= $stats_documentos ?></div>
+
+    <div class="dash-panel" style="transition-delay:.1s">
+        <div class="dash-panel-head">
+            <h3 class="dash-panel-title">
+                <i class="fas fa-layer-group"></i> Equipamentos por Categoria
+            </h3>
+            <div class="dash-toggle">
+                <button class="dash-toggle-btn active" data-canvas="cCategorias" data-type="bar-h">Barras</button>
+                <button class="dash-toggle-btn" data-canvas="cCategorias" data-type="bar">Colunas</button>
+            </div>
+        </div>
+        <div class="dash-panel-body loading" id="body-cCategorias">
+            <canvas id="cCategorias"></canvas>
+        </div>
     </div>
-    <div class="mhs-stat-card orange">
-        <div class="mhs-stat-label">Fornecedores</div>
-        <div class="mhs-stat-number"><?= $stats_fornecedores ?></div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ROW 2 — Localizações + Documentos
+════════════════════════════════════════════════════════════ -->
+<div class="dash-grid-32 dash-gap">
+
+    <div class="dash-panel" style="transition-delay:.15s">
+        <div class="dash-panel-head">
+            <h3 class="dash-panel-title">
+                <i class="fas fa-map-location-dot"></i> Distribuição por Localização
+            </h3>
+            <div class="dash-toggle">
+                <button class="dash-toggle-btn active" data-canvas="cLocalizacoes" data-type="doughnut">Anel</button>
+                <button class="dash-toggle-btn" data-canvas="cLocalizacoes" data-type="pie">Setores</button>
+                <button class="dash-toggle-btn" data-canvas="cLocalizacoes" data-type="bar-h">Barras</button>
+            </div>
+        </div>
+        <div class="dash-panel-body loading" id="body-cLocalizacoes">
+            <canvas id="cLocalizacoes"></canvas>
+        </div>
     </div>
-    <div class="mhs-stat-card yellow">
-        <div class="mhs-stat-label">Garantias Ativas</div>
-        <div class="mhs-stat-number"><?= $stats_garantias ?></div>
+
+    <div class="dash-panel" style="transition-delay:.2s">
+        <div class="dash-panel-head">
+            <h3 class="dash-panel-title">
+                <i class="fas fa-folder-tree"></i> Documentos por Tipo
+            </h3>
+            <div class="dash-toggle">
+                <button class="dash-toggle-btn active" data-canvas="cDocumentos" data-type="doughnut">Anel</button>
+                <button class="dash-toggle-btn" data-canvas="cDocumentos" data-type="bar">Colunas</button>
+            </div>
+        </div>
+        <div class="dash-panel-body loading" id="body-cDocumentos">
+            <canvas id="cDocumentos"></canvas>
+        </div>
     </div>
-    <div class="mhs-stat-card purple">
-        <div class="mhs-stat-label">Críticos</div>
-        <div class="mhs-stat-number"><?= $stats_criticos ?></div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ROW 3 — Fornecedores (full width)
+════════════════════════════════════════════════════════════ -->
+<div class="dash-panel dash-gap" style="transition-delay:.25s">
+    <div class="dash-panel-head">
+        <h3 class="dash-panel-title">
+            <i class="fas fa-building-columns"></i> Top Fornecedores por Equipamentos
+        </h3>
+        <div class="dash-toggle">
+            <button class="dash-toggle-btn active" data-canvas="cFornecedores" data-type="bar-h">Barras</button>
+            <button class="dash-toggle-btn" data-canvas="cFornecedores" data-type="bar">Colunas</button>
+        </div>
     </div>
-    <div class="mhs-stat-card red">
-        <div class="mhs-stat-label">Inativos</div>
-        <div class="mhs-stat-number"><?= $stats_inativos ?></div>
+    <div class="dash-panel-body loading" id="body-cFornecedores">
+        <canvas id="cFornecedores" style="max-height:280px"></canvas>
     </div>
 </div>
 
-<!-- Gráficos -->
-<div class="mhs-dashboard-grid">
-    <!-- Estados dos Equipamentos -->
-    <div class="mhs-chart-container">
-        <h3><i class="fas fa-chart-pie mhs-chart-icon"></i> Estado dos Equipamentos</h3>
-        <canvas id="chartEstados"></canvas>
+<!-- ════════════════════════════════════════════════════════════
+     ROW 4 — Garantias timeline (full width)
+════════════════════════════════════════════════════════════ -->
+<div class="dash-panel dash-gap" style="transition-delay:.3s;margin-bottom:1.5rem">
+    <div class="dash-panel-head">
+        <h3 class="dash-panel-title">
+            <i class="fas fa-calendar-days"></i> Vencimentos de Garantias por Mês
+        </h3>
+        <div class="dash-toggle">
+            <button class="dash-toggle-btn active" data-canvas="cGarantias" data-type="line">Série Temporal</button>
+            <button class="dash-toggle-btn" data-canvas="cGarantias" data-type="bar">Colunas</button>
+        </div>
     </div>
-
-    <!-- Equipamentos por Categoria -->
-    <div class="mhs-chart-container">
-        <h3><i class="fas fa-chart-bar mhs-chart-icon"></i> Equipamentos por Categoria</h3>
-        <canvas id="chartCategorias"></canvas>
-    </div>
-
-    <!-- Equipamentos por Localização -->
-    <div class="mhs-chart-container">
-        <h3><i class="fas fa-chart-doughnut mhs-chart-icon"></i> Equipamentos por Localização</h3>
-        <canvas id="chartLocalizacoes"></canvas>
-    </div>
-
-    <!-- Documentos por Tipo -->
-    <div class="mhs-chart-container">
-        <h3><i class="fas fa-file-chart-line mhs-chart-icon"></i> Documentos por Tipo</h3>
-        <canvas id="chartDocumentos"></canvas>
-    </div>
-
-    <!-- Fornecedores Mais Utilizados -->
-    <div class="mhs-chart-container full">
-        <h3><i class="fas fa-chart-bar mhs-chart-icon"></i> Fornecedores Mais Utilizados</h3>
-        <canvas id="chartFornecedores"></canvas>
-    </div>
-
-    <!-- Garantias por Vencimento -->
-    <div class="mhs-chart-container full">
-        <h3><i class="fas fa-calendar-check mhs-chart-icon"></i> Garantias - Calendário de Vencimentos</h3>
-        <canvas id="chartGarantias"></canvas>
+    <div class="dash-panel-body loading" id="body-cGarantias">
+        <canvas id="cGarantias" style="max-height:280px"></canvas>
     </div>
 </div>
 
 <script>
-    // Cores
-    const colors = {
-        primary: '#667eea',
-        success: '#11998e',
-        warning: '#ff8e53',
-        danger: '#ff6b6b',
-        info: '#4facfe',
-        accent: '#f093fb'
+(function () {
+    /* ── Palette ─────────────────────────────────────────────── */
+    const P = ['#3b82f6','#8b5cf6','#10b981','#f59e0b',
+               '#ef4444','#06b6d4','#ec4899','#84cc16',
+               '#f97316','#6366f1','#14b8a6','#a855f7'];
+
+    /* ── Data from PHP ───────────────────────────────────────── */
+    const chartData = {
+        cEstados:      { labels: <?= json_encode(array_column($equipamentos_estado,   'estado')) ?>, values: <?= json_encode(array_map('intval', array_column($equipamentos_estado,   'total'))) ?> },
+        cCategorias:   { labels: <?= json_encode(array_column($equipamentos_categoria,'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($equipamentos_categoria,'total'))) ?> },
+        cLocalizacoes: { labels: <?= json_encode(array_column($localizacoes_uso,      'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($localizacoes_uso,      'total'))) ?> },
+        cDocumentos:   { labels: <?= json_encode(array_column($documentos_tipo,       'tipo'))   ?>, values: <?= json_encode(array_map('intval', array_column($documentos_tipo,       'total'))) ?> },
+        cFornecedores: { labels: <?= json_encode(array_column($fornecedores_uso,      'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($fornecedores_uso,      'total'))) ?> },
+        cGarantias:    { labels: <?= json_encode(array_column($garantias_vencimento,  'mes'))    ?>, values: <?= json_encode(array_map('intval', array_column($garantias_vencimento,  'total'))) ?> }
     };
 
-    const chartColors = [
-        '#667eea', '#764ba2', '#11998e', '#38ef7d', '#ff8e53', '#f093fb', '#4facfe', '#00f2fe'
-    ];
+    /* ── Chart instance registry ─────────────────────────────── */
+    const instances = {};
 
-    // 1. Estado dos Equipamentos - Pizza
-    new Chart(document.getElementById('chartEstados'), {
-        type: 'pie',
-        data: {
-            labels: <?= json_encode(array_column($equipamentos_estado, 'estado')) ?>,
-            datasets: [{
-                data: <?= json_encode(array_column($equipamentos_estado, 'total')) ?>,
-                backgroundColor: chartColors,
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 20, font: { size: 12, weight: '500' } }
-                }
+    /* ── Build / rebuild a chart ─────────────────────────────── */
+    function buildChart(canvasId, type) {
+        const el = document.getElementById(canvasId);
+        if (!el) return;
+        const d = chartData[canvasId];
+        if (!d) return;
+
+        if (instances[canvasId]) instances[canvasId].destroy();
+
+        const isHBar    = type === 'bar-h';
+        const chartType = isHBar ? 'bar' : type;
+        const circular  = ['pie','doughnut','polarArea'].includes(chartType);
+        const isLine    = chartType === 'line';
+
+        /* Background colors */
+        let bg, border;
+        if (circular) {
+            bg     = P.slice(0, d.values.length);
+            border = '#fff';
+        } else if (isLine) {
+            const ctx = el.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 280);
+            grad.addColorStop(0, P[0] + '38');
+            grad.addColorStop(1, P[0] + '00');
+            bg     = grad;
+            border = P[0];
+        } else {
+            bg     = d.values.map((_, i) => P[i % P.length] + 'D0');
+            border = 'transparent';
+        }
+
+        const dataset = {
+            label: 'Total',
+            data:  d.values,
+            backgroundColor:   bg,
+            borderColor:       border,
+            borderWidth:       circular ? 2 : isLine ? 2.5 : 0,
+            borderRadius:      circular || isLine ? 0 : 7,
+            fill:              isLine,
+            tension:           isLine ? 0.45 : 0,
+            pointBackgroundColor: isLine ? P[0] : undefined,
+            pointBorderColor:     isLine ? '#fff' : undefined,
+            pointBorderWidth:     isLine ? 2.5 : undefined,
+            pointRadius:          isLine ? 5   : undefined,
+            pointHoverRadius:     isLine ? 7.5 : undefined,
+        };
+
+        const tooltipDefs = {
+            backgroundColor: '#0f172a',
+            titleColor:      '#fff',
+            bodyColor:       'rgba(255,255,255,.72)',
+            padding:         13,
+            cornerRadius:    11,
+            titleFont: { weight: '700', size: 12.5, family: 'Inter' },
+            bodyFont:  { size: 12, family: 'Inter' },
+            usePointStyle:  true,
+            boxWidth:  9,
+            boxHeight: 9,
+        };
+
+        const scaleBase = {
+            grid:   { color: 'rgba(148,163,184,.1)', drawBorder: false },
+            border: { display: false },
+            ticks:  { font: { size: 11, family: 'Inter' }, color: '#94a3b8', padding: 6 },
+            beginAtZero: true,
+        };
+
+        instances[canvasId] = new Chart(el, {
+            type: chartType,
+            data: { labels: d.labels, datasets: [dataset] },
+            options: {
+                indexAxis: isHBar ? 'y' : 'x',
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: { duration: 640, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        display: circular,
+                        position: 'bottom',
+                        labels: {
+                            padding: 18,
+                            font: { size: 11.5, weight: '600', family: 'Inter' },
+                            usePointStyle: true,
+                            pointStyleWidth: 9,
+                            color: '#334155',
+                        }
+                    },
+                    tooltip: tooltipDefs,
+                },
+                scales: circular ? {} : {
+                    x: { ...scaleBase, grid: { ...scaleBase.grid, display: isHBar } },
+                    y: { ...scaleBase, grid: { ...scaleBase.grid, display: !isHBar }, ticks: { ...scaleBase.ticks, stepSize: 1 } },
+                },
             }
-        }
+        });
+
+        /* Remove shimmer */
+        const body = document.getElementById('body-' + canvasId);
+        if (body) body.classList.remove('loading');
+    }
+
+    /* ── Animate stat counters ───────────────────────────────── */
+    function animateCounter(el) {
+        const target   = parseInt(el.dataset.count, 10) || 0;
+        const duration = 1100;
+        const fps      = 60;
+        const steps    = Math.ceil(duration / (1000 / fps));
+        let current    = 0;
+        let frame      = 0;
+        const timer = setInterval(() => {
+            frame++;
+            const progress = frame / steps;
+            /* ease-out-quart */
+            const ease = 1 - Math.pow(1 - progress, 4);
+            current = Math.round(target * ease);
+            el.textContent = current.toLocaleString('pt-PT');
+            if (frame >= steps) { el.textContent = target.toLocaleString('pt-PT'); clearInterval(timer); }
+        }, 1000 / fps);
+    }
+    document.querySelectorAll('.dash-stat-num').forEach(animateCounter);
+
+    /* ── Toggle buttons ─────────────────────────────────────── */
+    document.querySelectorAll('.dash-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const group = this.closest('.dash-toggle');
+            group.querySelectorAll('.dash-toggle-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            buildChart(this.dataset.canvas, this.dataset.type);
+        });
     });
 
-    // 2. Equipamentos por Categoria - Barras
-    new Chart(document.getElementById('chartCategorias'), {
-        type: 'bar',
-        data: {
-            labels: <?= json_encode(array_column($equipamentos_categoria, 'nome')) ?>,
-            datasets: [{
-                label: 'Quantidade',
-                data: <?= json_encode(array_column($equipamentos_categoria, 'total')) ?>,
-                backgroundColor: chartColors[0],
-                borderRadius: 5
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
-
-    // 3. Equipamentos por Localização - Doughnut
-    new Chart(document.getElementById('chartLocalizacoes'), {
-        type: 'doughnut',
-        data: {
-            labels: <?= json_encode(array_column($localizacoes_uso, 'nome')) ?>,
-            datasets: [{
-                data: <?= json_encode(array_column($localizacoes_uso, 'total')) ?>,
-                backgroundColor: chartColors,
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 20, font: { size: 12, weight: '500' } }
-                }
+    /* ── Intersection observer → fade panels in ─────────────── */
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('in');
+                observer.unobserve(e.target);
             }
-        }
-    });
+        });
+    }, { threshold: 0.06 });
 
-    // 4. Documentos por Tipo - Doughnut
-    new Chart(document.getElementById('chartDocumentos'), {
-        type: 'doughnut',
-        data: {
-            labels: <?= json_encode(array_column($documentos_tipo, 'tipo')) ?>,
-            datasets: [{
-                data: <?= json_encode(array_column($documentos_tipo, 'total')) ?>,
-                backgroundColor: chartColors,
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 20, font: { size: 12, weight: '500' } }
-                }
+    const panels = document.querySelectorAll('.dash-panel');
+    panels.forEach(p => observer.observe(p));
+
+    /* ── Initial render after first intersection ─────────────── */
+    const panelChartMap = {
+        'body-cEstados':      ['cEstados',      'pie'],
+        'body-cCategorias':   ['cCategorias',   'bar-h'],
+        'body-cLocalizacoes': ['cLocalizacoes', 'doughnut'],
+        'body-cDocumentos':   ['cDocumentos',   'doughnut'],
+        'body-cFornecedores': ['cFornecedores', 'bar-h'],
+        'body-cGarantias':    ['cGarantias',    'line'],
+    };
+
+    const renderObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting && e.target.classList.contains('loading')) {
+                const key = e.target.id;
+                if (panelChartMap[key]) buildChart(...panelChartMap[key]);
+                renderObserver.unobserve(e.target);
             }
-        }
+        });
+    }, { threshold: 0.05 });
+
+    Object.keys(panelChartMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) renderObserver.observe(el);
     });
 
-    // 5. Fornecedores - Barras Horizontal
-    new Chart(document.getElementById('chartFornecedores'), {
-        type: 'bar',
-        data: {
-            labels: <?= json_encode(array_column($fornecedores_uso, 'nome')) ?>,
-            datasets: [{
-                label: 'Equipamentos',
-                data: <?= json_encode(array_column($fornecedores_uso, 'total')) ?>,
-                backgroundColor: chartColors,
-                borderRadius: 5
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true } }
-        }
-    });
-
-    // 6. Garantias - Linha Temporal
-    new Chart(document.getElementById('chartGarantias'), {
-        type: 'line',
-        data: {
-            labels: <?= json_encode(array_column($garantias_vencimento, 'mes')) ?>,
-            datasets: [{
-                label: 'Garantias Vencimento',
-                data: <?= json_encode(array_column($garantias_vencimento, 'total')) ?>,
-                borderColor: colors.primary,
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: colors.primary,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { position: 'top' } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                x: { display: true }
+    /* Kick above-the-fold immediately */
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.dash-panel').forEach(p => {
+            if (p.getBoundingClientRect().top < window.innerHeight + 100) {
+                p.classList.add('in');
             }
-        }
+        });
+        Object.keys(panelChartMap).forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top < window.innerHeight + 100) {
+                buildChart(...panelChartMap[id]);
+            }
+        });
     });
+})();
 </script>
 
 <?php $mysqli->close(); include __DIR__ . '/includes/footer.php'; ?>

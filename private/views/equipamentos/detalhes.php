@@ -10,7 +10,6 @@ include __DIR__ . '/../../includes/header.php';
   <div>
     <span class="mhs-page-kicker">Ficha técnica</span>
     <h1 class="mhs-page-title">Monitor multiparamétrico</h1>
-    <p class="mhs-page-copy">Detalhe técnico, localização, aquisição e fornecedores associados.</p>
   </div>
   <div class="mhs-page-actions">
     <a href="#" class="btn btn-outline-dark"><i class="fa-solid fa-print me-2"></i>Etiqueta / QR</a>

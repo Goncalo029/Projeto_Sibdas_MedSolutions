@@ -22,8 +22,7 @@ $(document).ready(function () {
                     emptyTable: 'Sem dados disponiveis',
                     paginate: { first: 'Primeiro', last: 'Ultimo', next: 'Seguinte', previous: 'Anterior' }
                 },
-                pageLength: 15,
-                responsive: true
+                pageLength: 15
             });
 
             if (customSearchInputs.length) {
@@ -113,9 +112,6 @@ function validarFormLocalizacao() {
     return true;
 }
 
-// ============================================================
-// Validacao client-side - Formulario Documento
-// ============================================================
 function validarFormDocumento() {
     const campos = [
         { id: 'id_equipamento', label: 'Equipamento' },

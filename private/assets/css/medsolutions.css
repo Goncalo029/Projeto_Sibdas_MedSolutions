@@ -366,3 +366,44 @@ body.mhs-detail-page dl.row{grid-template-columns:1fr}
 body.mhs-detail-page dl.row dt{padding-bottom:4px;border-bottom:0}
 body.mhs-detail-page dl.row dd{padding-top:0}
 }
+
+/* ── Dashboard ───────────────────────────────────────────────── */
+.dash-hero{position:relative;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 45%,#0ea5e9 100%);border-radius:22px;padding:2.75rem 2.5rem 0;color:#fff;overflow:hidden;margin-bottom:1.5rem}
+.dash-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:340px;height:340px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+.dash-hero::after{content:'';position:absolute;bottom:-40px;left:30%;width:500px;height:200px;border-radius:50%;background:rgba(14,165,233,.12);pointer-events:none}
+.dash-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.dash-hero-kicker{display:inline-flex;align-items:center;gap:6px;padding:.38rem .75rem;border-radius:999px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.15);margin-bottom:.6rem}
+.dash-hero-title{font-family:'Sora',sans-serif;font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:800;letter-spacing:-.04em;margin:0 0 .35rem;color:#fff}
+.dash-hero-sub{font-size:.88rem;color:rgba(255,255,255,.6);margin:0}
+.dash-refresh-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font-size:.8rem;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s;text-decoration:none;white-space:nowrap}
+.dash-refresh-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.35);color:#fff}
+.dash-stats{display:flex;flex-wrap:wrap;margin-top:2.25rem;border-top:1px solid rgba(255,255,255,.1)}
+.dash-stat{flex:1;min-width:110px;padding:1.5rem 1.5rem 1.75rem;position:relative;cursor:default;transition:background .2s}
+.dash-stat:hover{background:rgba(255,255,255,.04)}
+.dash-stat+.dash-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.15)}
+.dash-stat-icon{font-size:.85rem;opacity:.45;margin-bottom:.55rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.7)}
+.dash-stat-num{font-family:'Sora',sans-serif;font-size:2.4rem;font-weight:800;line-height:1;color:#fff;margin-bottom:.3rem}
+.dash-stat-lbl{font-size:.72rem;opacity:.55;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:rgba(255,255,255,.8)}
+.dash-stat-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.dash-panel{background:rgba(255,255,255,.88);border-radius:18px;border:1px solid rgba(148,163,184,.14);box-shadow:0 2px 18px rgba(15,23,42,.05);overflow:hidden;opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
+.dash-panel.in{opacity:1;transform:none}
+.dash-panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.1rem 1.6rem;border-bottom:1px solid rgba(148,163,184,.1)}
+.dash-panel-title{font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:.55rem;margin:0}
+.dash-panel-title i{color:var(--mhs-primary);font-size:.95rem;width:18px;text-align:center}
+.dash-panel-body{padding:1.4rem 1.6rem 1.6rem}
+.dash-panel-body canvas{max-height:310px}
+.dash-toggle{display:flex;gap:3px;padding:4px;background:rgba(148,163,184,.12);border-radius:10px}
+.dash-toggle-btn{padding:4px 11px;font-size:.7rem;font-weight:700;letter-spacing:.02em;border:none;border-radius:7px;cursor:pointer;background:transparent;color:#94a3b8;transition:background .18s,color .18s,box-shadow .18s;white-space:nowrap}
+.dash-toggle-btn.active{background:#fff;color:var(--mhs-primary);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.dash-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.dash-grid-32{display:grid;grid-template-columns:1.1fr 1fr;gap:1.1rem}
+.dash-panel-body.loading canvas{visibility:hidden}
+.dash-panel-body.loading::after{content:'';display:block;height:240px;border-radius:10px;background:linear-gradient(90deg,#f0f4f8 25%,#e2e8f0 50%,#f0f4f8 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.dash-gap{margin-top:1.1rem}
+@media(max-width:860px){
+.dash-grid-2,.dash-grid-32{grid-template-columns:1fr}
+.dash-stat{min-width:45%}
+.dash-hero{padding:2rem 1.5rem 0}
+.dash-panel-head{flex-direction:column;align-items:flex-start;gap:.6rem}
+}

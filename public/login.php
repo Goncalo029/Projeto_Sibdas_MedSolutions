@@ -39,7 +39,6 @@ if (!empty($validation_errors)) {
                 </span>
                 <div>
                     <strong>MedSolutions</strong>
-                    <span>Plataforma hospitalar centralizada</span>
                 </div>
             </div>
 
@@ -83,6 +82,18 @@ if (!empty($validation_errors)) {
                 </button>
             </form>
 
+            <div class="mhs-auth-demo">
+                <div class="mhs-auth-demo-header">
+                    <span class="mhs-auth-demo-line"></span>
+                    <span class="mhs-auth-demo-label">Acesso Demo</span>
+                    <span class="mhs-auth-demo-line"></span>
+                </div>
+                <div class="mhs-auth-demo-btns">
+                    <button type="button" onclick="fillDemo('admin@hospital.pt','admin123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--admin">Admin</button>
+                    <button type="button" onclick="fillDemo('tecnico@hospital.pt','tecnico123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--tecnico">Técnico</button>
+                </div>
+            </div>
+
             <div class="mhs-auth-footer-link">
                 <a class="mhs-auth-back" href="index.php">
                     <i class="fa-solid fa-arrow-left"></i> Voltar ao website
@@ -92,6 +103,10 @@ if (!empty($validation_errors)) {
     </main>
 
     <script>
+    function fillDemo(email, password) {
+        document.getElementById('text_username').value = email;
+        document.getElementById('text_password').value = password;
+    }
     function togglePw() {
         const inp = document.getElementById('text_password');
         const icon = document.querySelector('.mhs-toggle-pw i');

@@ -25,6 +25,6 @@ include __DIR__ . '/../../includes/header.php';
     <button class="btn btn-outline-secondary" type="button">Limpar</button>
   </div>
 </div></div>
-<div class="card mhs-data-card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mhs-datatable mb-0"><thead class="mhs-thead"><tr><th>Código</th><th>Designação</th><th>Estado</th><th>Serviço</th><th>Ações</th></tr></thead><tbody><tr><td colspan="5" class="text-center text-muted py-4">Sem resultados para já.</td></tr></tbody></table></div></div></div>
+<div class="card mhs-data-card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mhs-datatable mb-0"><thead class="mhs-thead"><tr><th>Código</th><th>Designação</th><th>Estado</th><th>Serviço</th><th>Ações</th></tr></thead><tbody></tbody></table></div></div></div>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

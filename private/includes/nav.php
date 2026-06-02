@@ -18,7 +18,7 @@ $hoje = date('d/m/Y');
                 </span>
                 <span class="mhs-topbar-brand-copy">
                     <strong>MedSolutions</strong>
-                    <small>Controlo hospitalar em tempo real</small>
+                    <small></small>
                 </span>
             </a>
         </div>

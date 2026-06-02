@@ -46,3 +46,23 @@ include __DIR__ . '/sidebar.php';
 ?>
 
 <div class="mhs-main-content">
+<?php if (!empty($_SESSION['success_message'])): ?>
+<div class="position-fixed top-0 start-50 translate-middle-x" style="z-index:9999;margin-top:90px;min-width:320px">
+    <div class="toast show align-items-center text-bg-success border-0 shadow" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold"><i class="fas fa-circle-check me-2"></i><?= htmlspecialchars($_SESSION['success_message']) ?></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+<?php unset($_SESSION['success_message']); endif; ?>
+<?php if (!empty($_SESSION['error_message'])): ?>
+<div class="position-fixed top-0 start-50 translate-middle-x" style="z-index:9999;margin-top:90px;min-width:320px">
+    <div class="toast show align-items-center text-bg-danger border-0 shadow" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold"><i class="fas fa-circle-xmark me-2"></i><?= htmlspecialchars($_SESSION['error_message']) ?></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+<?php unset($_SESSION['error_message']); endif; ?>
