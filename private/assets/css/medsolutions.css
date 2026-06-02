@@ -47,8 +47,8 @@ body.mhs-app{margin:0;min-height:100vh;overflow-x:hidden;font-family:'Inter',-ap
 
 .mhs-sidebar{position:fixed;top:18px;left:18px;bottom:18px;width:var(--mhs-sidebar-width);z-index:1040;overflow-y:auto;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.92);border-radius:18px;background:rgba(255,255,255,.88);box-shadow:var(--mhs-shadow-sm);backdrop-filter:blur(18px)}
 
-.mhs-sidebar-header{padding:26px 22px 18px}
-.mhs-sidebar-logo{display:flex;align-items:center;gap:12px;margin-bottom:14px;text-decoration:none}
+.mhs-sidebar-header{padding:18px 22px 12px}
+.mhs-sidebar-logo{display:flex;align-items:center;gap:12px;margin-bottom:10px;text-decoration:none}
 .mhs-sidebar-logo-mark{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;overflow:hidden;box-shadow:0 10px 22px rgba(15,23,42,.08)}
 .mhs-sidebar-logo-mark img{width:48px;height:48px;display:block}
 
@@ -58,10 +58,10 @@ body.mhs-app{margin:0;min-height:100vh;overflow-x:hidden;font-family:'Inter',-ap
 
 .mhs-sidebar-copy{color:var(--mhs-muted);font-size:.82rem;line-height:1.5;display:none}
 
-.mhs-sidebar-nav{flex:1;padding:18px 22px;overflow:hidden}
-.mhs-nav-section{margin-bottom:8px;padding:0 0 8px;color:var(--mhs-muted);font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--mhs-border)}
+.mhs-sidebar-nav{flex:1;padding:10px 22px;overflow:hidden}
+.mhs-nav-section{margin-bottom:5px;padding:0 0 5px;color:var(--mhs-muted);font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--mhs-border)}
 
-.mhs-nav-link{display:flex;align-items:center;gap:12px;padding:10px 0;color:#64748b;text-decoration:none;font-size:.89rem;font-weight:600;transition:var(--mhs-transition)}
+.mhs-nav-link{display:flex;align-items:center;gap:12px;padding:7px 0;color:#64748b;text-decoration:none;font-size:.89rem;font-weight:600;transition:var(--mhs-transition)}
 .mhs-nav-link:hover,.mhs-nav-link.active{color:var(--mhs-primary)}
 .mhs-nav-link i{width:20px;text-align:center}
 
