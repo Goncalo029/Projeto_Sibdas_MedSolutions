@@ -17,6 +17,37 @@ try {
     $rows = $wpdo->query("SELECT chave, valor FROM website_config") ?: [];
     foreach ($rows as $r) { $wcfg[$r->chave] = $r->valor; }
 } catch (Exception $e) { /* tabela ainda não existe — usa defaults */ }
+
+// Processamento do formulário de contacto
+$contacto_msg  = '';
+$contacto_tipo = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email'], $_POST['mensagem'])) {
+    $nome     = trim($_POST['nome']);
+    $email    = trim($_POST['email']);
+    $mensagem = trim($_POST['mensagem']);
+
+    if ($nome === '' || $email === '' || $mensagem === '') {
+        $contacto_msg  = 'Por favor preencha todos os campos obrigatórios.';
+        $contacto_tipo = 'erro';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $contacto_msg  = 'Por favor introduza um endereço de email válido.';
+        $contacto_tipo = 'erro';
+    } else {
+        try {
+            $stmt = $wpdo->prepare(
+                "INSERT INTO mensagens_contacto (nome, email, mensagem, lida, created_at, updated_at)
+                 VALUES (?, ?, ?, 0, NOW(), NOW())"
+            );
+            $stmt->execute([$nome, $email, $mensagem]);
+            $contacto_msg  = 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.';
+            $contacto_tipo = 'sucesso';
+        } catch (Exception $e) {
+            $contacto_msg  = 'Erro ao enviar a mensagem. Por favor tente novamente.';
+            $contacto_tipo = 'erro';
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt">
@@ -199,23 +230,32 @@ try {
             <p><?= website_cfg($wcfg, 'contacto_descricao', 'Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.') ?></p>
         </div>
 
-        <form class="mhs-form" method="post" action="#contacto" novalidate>
+        <?php if ($contacto_msg !== ''): ?>
+        <div class="mhs-form-alert mhs-form-alert--<?= $contacto_tipo === 'sucesso' ? 'success' : 'danger' ?>">
+            <i class="fa-solid <?= $contacto_tipo === 'sucesso' ? 'fa-circle-check' : 'fa-circle-exclamation' ?> me-2"></i>
+            <?= htmlspecialchars($contacto_msg) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($contacto_tipo !== 'sucesso'): ?>
+        <form class="mhs-form" method="post" action="index.php#contacto" novalidate>
             <div class="mhs-form-row">
                 <div class="mhs-form-group">
-                    <label for="nome">Nome</label>
-                    <input type="text" id="nome" name="nome" placeholder="O seu nome" required>
+                    <label for="nome">Nome <span class="mhs-required">*</span></label>
+                    <input type="text" id="nome" name="nome" placeholder="O seu nome" value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" required>
                 </div>
                 <div class="mhs-form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="email@exemplo.pt" required>
+                    <label for="email">Email <span class="mhs-required">*</span></label>
+                    <input type="email" id="email" name="email" placeholder="email@exemplo.pt" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
                 </div>
             </div>
             <div class="mhs-form-group">
-                <label for="mensagem">Mensagem</label>
-                <textarea id="mensagem" name="mensagem" rows="4" placeholder="Descreva o que pretende..." required></textarea>
+                <label for="mensagem">Mensagem <span class="mhs-required">*</span></label>
+                <textarea id="mensagem" name="mensagem" rows="4" placeholder="Descreva o que pretende..." required><?= htmlspecialchars($_POST['mensagem'] ?? '') ?></textarea>
             </div>
             <button type="submit" class="mhs-btn-primary">Enviar Mensagem</button>
         </form>
+        <?php endif; ?>
     </section>
 
     <footer class="mhs-footer">
