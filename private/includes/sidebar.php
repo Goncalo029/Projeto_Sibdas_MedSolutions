@@ -48,7 +48,6 @@ function mhs_active(string $segment): string
         <div class="mhs-nav-section">Administração</div>
         <a href="<?= BASE_URL ?>/private/views/utilizadores/lista.php" class="mhs-nav-link<?= mhs_active('utilizadores'); ?>"><i class="fa-solid fa-users fa-fw"></i><span>Utilizadores</span></a>
         <a href="<?= BASE_URL ?>/private/views/website/editar.php" class="mhs-nav-link<?= mhs_active('website'); ?>"><i class="fa-solid fa-globe fa-fw"></i><span>Website Público</span></a>
-        <a href="<?= BASE_URL ?>/private/views/logs/index.php" class="mhs-nav-link<?= mhs_active('logs'); ?>"><i class="fa-solid fa-history fa-fw"></i><span>Logs</span></a>
         <?php endif; ?>
     </nav>
 </aside>
