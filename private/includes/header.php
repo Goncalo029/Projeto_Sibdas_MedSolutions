@@ -8,7 +8,7 @@ $mhs_css_version = filemtime(__DIR__ . '/../assets/css/1220673.css');
 $mhs_page_file = basename($_SERVER['SCRIPT_NAME'] ?? '');
 $mhs_body_page_class = '';
 
-if ($mhs_page_file === 'detalhes.php') {
+if (in_array($mhs_page_file, ['detalhes.php', 'perfil.php'])) {
     $mhs_body_page_class = ' mhs-detail-page';
 } elseif ($mhs_page_file === 'editar.php') {
     $mhs_body_page_class = ' mhs-edit-page';
