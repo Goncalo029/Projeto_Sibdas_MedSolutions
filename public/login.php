@@ -32,6 +32,11 @@ if (!empty($validation_errors)) {
     <div class="mhs-auth-blob mhs-auth-blob--3"></div>
 
     <main class="mhs-auth-main">
+        <div class="mhs-auth-back-top">
+            <a class="mhs-auth-back" href="index.php">
+                <i class="fa-solid fa-arrow-left"></i> Voltar ao website
+            </a>
+        </div>
         <section class="mhs-auth-card">
             <div class="mhs-auth-brand">
                 <span class="mhs-auth-brand-mark">
@@ -94,11 +99,6 @@ if (!empty($validation_errors)) {
                 </div>
             </div>
 
-            <div class="mhs-auth-footer-link">
-                <a class="mhs-auth-back" href="index.php">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar ao website
-                </a>
-            </div>
         </section>
     </main>
 

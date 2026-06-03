@@ -131,6 +131,7 @@
 .mhs-auth-trust{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1.15rem;color:var(--ms-muted);font-size:.82rem;font-weight:700}.mhs-auth-trust span{display:inline-flex;align-items:center;gap:.4rem}
 
 .mhs-auth-footer-link{margin-top:.7rem;padding-top:.65rem;border-top:1px solid rgba(148,163,184,.2);text-align:center}
+.mhs-auth-back-top{margin-bottom:.75rem;text-align:left}
 
 .mhs-auth-back{display:inline-flex;align-items:center;gap:.45rem;color:var(--ms-muted);font-weight:700;font-size:.88rem;transition:gap var(--ms-transition),color var(--ms-transition)}.mhs-auth-back:hover{gap:.7rem;color:var(--ms-primary)}
 
