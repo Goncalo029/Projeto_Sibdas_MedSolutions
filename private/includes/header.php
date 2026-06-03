@@ -4,7 +4,7 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 header('Content-Type: text/html; charset=utf-8');
-$mhs_css_version = filemtime(__DIR__ . '/../assets/css/medsolutions.css');
+$mhs_css_version = filemtime(__DIR__ . '/../assets/css/1220673.css');
 $mhs_page_file = basename($_SERVER['SCRIPT_NAME'] ?? '');
 $mhs_body_page_class = '';
 
@@ -31,7 +31,7 @@ if ($mhs_page_file === 'detalhes.php') {
     <link rel="stylesheet" href="/MedSolutions/private/assets/datatables/datatables.min.css">
     <link rel="stylesheet" href="/MedSolutions/private/assets/flatpickr/flatpickr.min.css">
     <link rel="stylesheet" href="/MedSolutions/private/assets/fontawesome/all.min.css">
-    <link rel="stylesheet" href="/MedSolutions/private/assets/css/medsolutions.css?v=<?= $mhs_css_version ?>">
+    <link rel="stylesheet" href="/MedSolutions/private/assets/css/1220673.css?v=<?= $mhs_css_version ?>">
     <!-- Scripts -->
     <script src="/MedSolutions/private/assets/jQuery/jquery-3.6.0.min.js"></script>
     <script src="/MedSolutions/private/assets/datatables/datatables.min.js"></script>

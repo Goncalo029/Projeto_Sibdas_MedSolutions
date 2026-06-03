@@ -24,9 +24,9 @@
     </div>
 </div>
 
-<?php $mhs_js_version = filemtime(__DIR__ . '/js/funcoes.js'); ?>
+<?php $mhs_js_version = filemtime(__DIR__ . '/../assets/js/1220673.js'); ?>
 <script src="/MedSolutions/private/assets/bootstrap/bootstrap.bundle.min.js"></script>
-<script src="/MedSolutions/private/includes/js/funcoes.js?v=<?= $mhs_js_version ?>"></script>
+<script src="/MedSolutions/private/assets/js/1220673.js?v=<?= $mhs_js_version ?>"></script>
 
 </body>
 </html>
