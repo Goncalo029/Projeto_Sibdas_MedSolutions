@@ -2,9 +2,12 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/notifications.php';
 $nome = $_SESSION['user_email'] ?? 'MedSolutions';
 $iniciais = strtoupper(substr($nome, 0, 2));
 $hoje = date('d/m/Y');
+$notificacoes = get_notificacoes();
+$total_notifs = array_sum(array_column($notificacoes, 'count'));
 ?>
 <header class="mhs-topbar">
     <div class="mhs-topbar-inner">
@@ -23,11 +26,45 @@ $hoje = date('d/m/Y');
             </a>
         </div>
         <div class="mhs-topbar-right">
-            <span class="mhs-topbar-meta">
+            <span class="mhs-topbar-meta d-none d-md-flex">
                 <i class="fa-regular fa-calendar"></i>
                 <?php echo htmlspecialchars($hoje); ?>
             </span>
-            
+
+            <?php if (in_array($_SESSION['profile'] ?? '', ['admin', 'tecnico'])): ?>
+            <div class="mhs-notif-dropdown" id="notifDropdown">
+                <button class="mhs-notif-btn<?= $total_notifs > 0 ? ' mhs-notif-btn--active' : '' ?>" onclick="toggleNotifMenu(event)" type="button" title="Notificações">
+                    <i class="fa-regular fa-bell"></i>
+                    <?php if ($total_notifs > 0): ?>
+                    <span class="mhs-notif-badge"><?= $total_notifs > 99 ? '99+' : $total_notifs ?></span>
+                    <?php endif; ?>
+                </button>
+                <div class="mhs-notif-menu" id="notifMenu">
+                    <div class="mhs-notif-menu-header">
+                        <i class="fa-regular fa-bell"></i>
+                        Notificações
+                        <?php if ($total_notifs > 0): ?>
+                        <span class="mhs-notif-menu-count"><?= $total_notifs ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (empty($notificacoes)): ?>
+                    <div class="mhs-notif-empty">
+                        <i class="fa-regular fa-bell-slash"></i>
+                        <span>Sem notificações de momento</span>
+                    </div>
+                    <?php else: ?>
+                    <?php foreach ($notificacoes as $n): ?>
+                    <a href="<?= esc($n['link']) ?>" class="mhs-notif-item mhs-notif-item--<?= $n['color'] ?>">
+                        <span class="mhs-notif-item-icon"><i class="fa-solid <?= $n['icon'] ?>"></i></span>
+                        <span class="mhs-notif-item-text"><?= esc($n['label']) ?></span>
+                        <span class="mhs-notif-item-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+                    </a>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="mhs-avatar-dropdown" id="avatarDropdown">
                 <button class="mhs-avatar-btn" onclick="toggleAvatarMenu(event)" type="button">
                     <span class="mhs-avatar"><?php echo $iniciais; ?></span>
