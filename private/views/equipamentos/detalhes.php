@@ -8,151 +8,254 @@ include __DIR__ . '/../../includes/header.php';
 
 <div class="mhs-page-header">
   <div>
-    <span class="mhs-page-kicker">Ficha técnica</span>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-stethoscope fa-fw"></i></span>
     <h1 class="mhs-page-title">Monitor multiparamétrico</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href="#" class="btn btn-outline-dark"><i class="fa-solid fa-print me-2"></i>Etiqueta / QR</a>
     <a href="editar.php" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-2"></i>Editar</a>
-    <a href="lista.php" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-md-8">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-barcode me-1"></i>Dados gerais</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Código inventário</dt><dd class="col-sm-8">EQ-001</dd>
-          <dt class="col-sm-4">Designação</dt><dd class="col-sm-8">Monitor multiparamétrico</dd>
-          <dt class="col-sm-4">Categoria</dt><dd class="col-sm-8">Monitorização</dd>
-          <dt class="col-sm-4">Marca / Modelo</dt><dd class="col-sm-8">Philips / IntelliVue MX450</dd>
-          <dt class="col-sm-4">Número de série</dt><dd class="col-sm-8">SN-450-2026</dd>
-          <dt class="col-sm-4">Fabricante</dt><dd class="col-sm-8">Philips Healthcare</dd>
-        </dl>
-      </div>
+<!-- Resumo rápido -->
+<div class="mhs-detail-summary card mhs-data-card mb-4">
+  <div class="mhs-detail-summary-inner">
+    <div class="mhs-detail-summary-item">
+      <span class="mhs-detail-summary-label">Código</span>
+      <span class="mhs-code">EQ-001</span>
     </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-heart-pulse me-1"></i>Estado operacional</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-5">Estado</dt><dd class="col-7"><span class="badge bg-success">Ativo</span></dd>
-          <dt class="col-5">Criticidade</dt><dd class="col-7">Média</dd>
-          <dt class="col-5">Localização</dt><dd class="col-7">Urgência / Sala 204</dd>
-          <dt class="col-5">Entrada</dt><dd class="col-7">Compra</dd>
-        </dl>
-      </div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item">
+      <span class="mhs-detail-summary-label">Categoria</span>
+      <span class="mhs-detail-summary-val">Monitorização</span>
     </div>
-  </div>
-</div>
-
-<div class="row g-4 mb-4">
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-receipt me-1"></i>Aquisição</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-5">Data aquisição</dt><dd class="col-7">15/01/2026</dd>
-          <dt class="col-5">Ano fabrico</dt><dd class="col-7">2025</dd>
-          <dt class="col-5">Custo</dt><dd class="col-7">12 500,00 €</dd>
-          <dt class="col-5">Tipo entrada</dt><dd class="col-7">Compra</dd>
-        </dl>
-      </div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item">
+      <span class="mhs-detail-summary-label">Estado</span>
+      <span class="mhs-detail-summary-val mhs-detail-summary-val--ok">Ativo</span>
     </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-shield-halved me-1"></i>Garantia / contrato</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-5">Data início</dt><dd class="col-7">10/01/2026</dd>
-          <dt class="col-5">Data fim</dt><dd class="col-7">10/01/2028</dd>
-          <dt class="col-5">Contrato</dt><dd class="col-7">Sim</dd>
-          <dt class="col-5">Entidade</dt><dd class="col-7">MedTech Portugal</dd>
-        </dl>
-      </div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item">
+      <span class="mhs-detail-summary-label">Criticidade</span>
+      <span class="mhs-detail-summary-val">Média</span>
+    </div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item">
+      <span class="mhs-detail-summary-label">Localização</span>
+      <span class="mhs-detail-summary-val">Urgência / Sala 204</span>
     </div>
   </div>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-truck me-1"></i>Fornecedores associados</div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0">
-        <thead class="table-light"><tr><th>Fornecedor</th><th>Tipo relação</th><th>Telefone</th></tr></thead>
+<!-- Tabs -->
+<div class="card mhs-data-card">
+  <div class="mhs-detail-tabs">
+    <button class="mhs-detail-tab active" data-tab="ficha">
+      <i class="fa-solid fa-barcode"></i> Ficha Técnica
+    </button>
+    <button class="mhs-detail-tab" data-tab="aquisicao">
+      <i class="fa-solid fa-receipt"></i> Aquisição
+    </button>
+    <button class="mhs-detail-tab" data-tab="garantia">
+      <i class="fa-solid fa-shield-halved"></i> Garantia / Contrato
+    </button>
+    <button class="mhs-detail-tab" data-tab="fornecedores">
+      <i class="fa-solid fa-truck"></i> Fornecedores
+    </button>
+    <button class="mhs-detail-tab" data-tab="documentos">
+      <i class="fa-solid fa-file-lines"></i> Documentos
+    </button>
+    <button class="mhs-detail-tab" data-tab="manutencoes">
+      <i class="fa-solid fa-wrench"></i> Manutenções
+    </button>
+    <button class="mhs-detail-tab" data-tab="emprestimos">
+      <i class="fa-solid fa-boxes-packing"></i> Empréstimos
+    </button>
+    <button class="mhs-detail-tab" data-tab="movimentacoes">
+      <i class="fa-solid fa-clock-rotate-left"></i> Movimentações
+    </button>
+  </div>
+
+  <!-- Ficha Técnica -->
+  <div class="mhs-tab-pane active" id="tab-ficha">
+    <div class="mhs-tab-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="mhs-info-group">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-barcode"></i> Identificação</div>
+            <dl class="mhs-info-dl">
+              <dt>Código de inventário</dt><dd>EQ-001</dd>
+              <dt>Designação</dt><dd>Monitor multiparamétrico</dd>
+              <dt>Marca / Modelo</dt><dd>Philips / IntelliVue MX450</dd>
+              <dt>Número de série</dt><dd>SN-450-2026</dd>
+              <dt>Fabricante</dt><dd>Philips Healthcare</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mhs-info-group">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-heart-pulse"></i> Estado operacional</div>
+            <dl class="mhs-info-dl">
+              <dt>Estado</dt><dd>Ativo</dd>
+              <dt>Criticidade</dt><dd>Média</dd>
+              <dt>Localização</dt><dd>Urgência / Sala 204</dd>
+              <dt>Tipo de entrada</dt><dd>Compra</dd>
+            </dl>
+          </div>
+          <div class="mhs-info-group mt-3">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-comment"></i> Observações</div>
+            <p class="mhs-info-obs">Equipamento operacional e associado ao serviço de urgência.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aquisição -->
+  <div class="mhs-tab-pane" id="tab-aquisicao">
+    <div class="mhs-tab-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="mhs-info-group">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-receipt"></i> Dados de aquisição</div>
+            <dl class="mhs-info-dl">
+              <dt>Data de aquisição</dt><dd>15/01/2026</dd>
+              <dt>Ano de fabrico</dt><dd>2025</dd>
+              <dt>Custo</dt><dd>12 500,00 €</dd>
+              <dt>Tipo de entrada</dt><dd>Compra</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Garantia / Contrato -->
+  <div class="mhs-tab-pane" id="tab-garantia">
+    <div class="mhs-tab-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="mhs-info-group">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-shield-halved"></i> Garantia e contrato</div>
+            <dl class="mhs-info-dl">
+              <dt>Data de início</dt><dd>10/01/2026</dd>
+              <dt>Data de fim</dt><dd>10/01/2028</dd>
+              <dt>Tem contrato</dt><dd>Sim</dd>
+              <dt>Entidade responsável</dt><dd>MedTech Portugal</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fornecedores -->
+  <div class="mhs-tab-pane" id="tab-fornecedores">
+    <div class="mhs-tab-body">
+      <table class="table mhs-datatable mb-0">
+        <thead>
+          <tr><th>Fornecedor</th><th>Tipo de relação</th><th>Telefone</th><th>Email</th></tr>
+        </thead>
         <tbody>
-          <tr><td>MedTech Portugal</td><td>Fabricante</td><td>210 000 000</td></tr>
-          <tr><td>Clinicare Equipamentos</td><td>Assistência técnica</td><td>211 000 000</td></tr>
+          <tr>
+            <td class="mhs-td-primary">MedTech Portugal</td>
+            <td>Fabricante</td>
+            <td>210 000 000</td>
+            <td>geral@medtech.pt</td>
+          </tr>
+          <tr>
+            <td class="mhs-td-primary">Clinicare Equipamentos</td>
+            <td>Assistência técnica</td>
+            <td>211 000 000</td>
+            <td>suporte@clinicare.pt</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
-</div>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-comment me-1"></i>Observações</div>
-  <div class="card-body">
-    <p class="mb-0">Equipamento operacional e associado ao serviço de urgência.</p>
-  </div>
-</div>
-
-<div class="row g-4 mb-4">
-  <div class="col-xl-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Histórico de movimentações</span>
-        <span class="mhs-card-meta">6 registo(s)</span>
-      </div>
-      <div class="card-body">
-        <div class="mhs-history-list">
-          <article class="mhs-history-item">
-            <div class="mhs-history-dot"></div>
-            <div class="mhs-history-copy">
-              <div class="mhs-history-head"><strong>Manutenção preventiva</strong><small>24/03/2026 19:38</small></div>
-              <p>Última 25/03/2026 | próxima 27/03/2026 | periodicidade semanal | estado em curso <i class="fa-solid fa-arrow-right-long mx-2"></i> concluída</p>
-              <small>Alterado por tecnico@hospital.pt</small>
-            </div>
-          </article>
-          <article class="mhs-history-item">
-            <div class="mhs-history-dot"></div>
-            <div class="mhs-history-copy">
-              <div class="mhs-history-head"><strong>Empréstimo</strong><small>24/03/2026 19:37</small></div>
-              <p>Emprestado para Laboratório de Análises <i class="fa-solid fa-arrow-right-long mx-2"></i> devolvido a Fisioterapia em 24/03/2026</p>
-              <small>Alterado por tecnico@hospital.pt</small>
-            </div>
-          </article>
-        </div>
+  <!-- Documentos -->
+  <div class="mhs-tab-pane" id="tab-documentos">
+    <div class="mhs-tab-body">
+      <div class="mhs-empty-state">
+        <i class="fa-solid fa-file-circle-xmark"></i>
+        <p>Sem documentos associados a este equipamento.</p>
+        <a href="#" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Adicionar documento</a>
       </div>
     </div>
   </div>
-  <div class="col-xl-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-list-check me-2 text-primary"></i>Histórico de empréstimos</span>
-        <span class="mhs-card-meta">1 registo(s)</span>
-      </div>
-      <div class="card-body">
-        <div class="mhs-loan-history-list">
-          <article class="mhs-loan-history-item">
-            <div>
-              <strong>Fisioterapia - Edifício B / Piso 0 / Sala de Tratamentos</strong>
-              <p><i class="fa-solid fa-arrow-right-long me-2 text-muted"></i>Laboratório de Análises - Edifício C / Piso -1 / Lab. Hematologia</p>
-              <div class="mhs-loan-history-meta">
-                <span>Saída: 24/03/2026</span>
-                <span>Prevista: 26/03/2026</span>
-                <span>Devolução: 24/03/2026</span>
-              </div>
-            </div>
-            <span class="badge bg-success-subtle text-success px-3 py-2">Concluído</span>
-          </article>
-        </div>
+
+  <!-- Manutenções -->
+  <div class="mhs-tab-pane" id="tab-manutencoes">
+    <div class="mhs-tab-body">
+      <div class="mhs-empty-state">
+        <i class="fa-solid fa-wrench"></i>
+        <p>Sem manutenções registadas para este equipamento.</p>
+        <a href="#" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Registar manutenção</a>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Empréstimos -->
+  <div class="mhs-tab-pane" id="tab-emprestimos">
+    <div class="mhs-tab-body">
+      <div class="mhs-history-list">
+        <article class="mhs-history-item">
+          <div class="mhs-history-dot"></div>
+          <div class="mhs-history-copy">
+            <div class="mhs-history-head">
+              <strong>Empréstimo — Laboratório de Análises</strong>
+              <small>24/03/2026</small>
+            </div>
+            <p>Fisioterapia <i class="fa-solid fa-arrow-right-long mx-2"></i> Laboratório de Análises — Devolvido em 24/03/2026</p>
+            <small>Por tecnico@hospital.pt</small>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movimentações -->
+  <div class="mhs-tab-pane" id="tab-movimentacoes">
+    <div class="mhs-tab-body">
+      <div class="mhs-history-list">
+        <article class="mhs-history-item">
+          <div class="mhs-history-dot"></div>
+          <div class="mhs-history-copy">
+            <div class="mhs-history-head">
+              <strong>Manutenção preventiva</strong>
+              <small>24/03/2026 19:38</small>
+            </div>
+            <p>Estado <i class="fa-solid fa-arrow-right-long mx-2"></i> Em curso → Concluída | Próxima: 27/03/2026</p>
+            <small>Por tecnico@hospital.pt</small>
+          </div>
+        </article>
+        <article class="mhs-history-item">
+          <div class="mhs-history-dot"></div>
+          <div class="mhs-history-copy">
+            <div class="mhs-history-head">
+              <strong>Empréstimo concluído</strong>
+              <small>24/03/2026 19:37</small>
+            </div>
+            <p>Devolvido a Fisioterapia <i class="fa-solid fa-arrow-right-long mx-2"></i> proveniente de Laboratório de Análises</p>
+            <small>Por tecnico@hospital.pt</small>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+</div><!-- card -->
+
+<script>
+document.querySelectorAll('.mhs-detail-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.mhs-detail-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.mhs-tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

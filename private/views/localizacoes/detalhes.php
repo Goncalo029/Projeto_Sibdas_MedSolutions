@@ -5,8 +5,55 @@ redirect_if_not_logged();
 $page_title = 'Localizações - Detalhes';
 include __DIR__ . '/../../includes/header.php';
 ?>
-
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3"><h2 class="fw-bold mb-0"><i class="fa-solid fa-location-dot me-2"></i>Urgência / Sala 204</h2><div class="d-flex gap-2"><a href="editar.php" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-1"></i> Editar</a><a href="lista.php" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</a></div></div><hr>
-<div class="row g-4"><div class="col-md-5"><div class="card border-0 shadow-sm h-100"><div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-location-dot me-1"></i>Informação geral</div><div class="card-body"><dl class="row mb-0"><dt class="col-5">Edifício</dt><dd class="col-7">Bloco Central</dd><dt class="col-5">Piso</dt><dd class="col-7">Piso 2</dd><dt class="col-5">Serviço</dt><dd class="col-7">Urgência</dd><dt class="col-5">Sala</dt><dd class="col-7">Sala 204</dd></dl><hr><p class="mb-0 text-muted small">Zona com prioridade para equipamentos críticos.</p></div></div></div><div class="col-md-7"><div class="card border-0 shadow-sm h-100"><div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-stethoscope me-1"></i>Equipamentos nesta localização</div><div class="card-body"><table class="table table-sm table-hover mb-0"><thead class="table-light"><tr><th>Código</th><th>Designação</th><th>Estado</th><th>Criticidade</th></tr></thead><tbody><tr><td>EQ-001</td><td>Monitor multiparamétrico</td><td>Ativo</td><td>Média</td></tr><tr><td>EQ-002</td><td>Bomba de infusão</td><td>Ativo</td><td>Alta</td></tr></tbody></table></div></div></div></div>
-
+<div class="mhs-page-header">
+  <div><span class="mhs-page-kicker"><i class="fa-solid fa-location-dot fa-fw"></i></span><h1 class="mhs-page-title">Urgência / Sala 204</h1></div>
+  <div class="mhs-page-actions">
+    <a href="editar.php" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-2"></i>Editar</a>
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+  </div>
+</div>
+<div class="mhs-detail-summary card mhs-data-card mb-4">
+  <div class="mhs-detail-summary-inner">
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Edifício</span><span class="mhs-detail-summary-val">Bloco Central</span></div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Piso</span><span class="mhs-detail-summary-val">Piso 2</span></div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Serviço</span><span class="mhs-detail-summary-val">Urgência</span></div>
+    <div class="mhs-detail-summary-sep"></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Sala</span><span class="mhs-detail-summary-val">Sala 204</span></div>
+  </div>
+</div>
+<div class="card mhs-data-card">
+  <div class="mhs-detail-tabs">
+    <button class="mhs-detail-tab active" data-tab="info"><i class="fa-solid fa-location-dot"></i> Informação</button>
+    <button class="mhs-detail-tab" data-tab="equipamentos"><i class="fa-solid fa-stethoscope"></i> Equipamentos</button>
+  </div>
+  <div class="mhs-tab-pane active" id="tab-info">
+    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-5">
+      <div class="mhs-info-group">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-location-dot"></i> Dados da localização</div>
+        <dl class="mhs-info-dl">
+          <dt>Edifício</dt><dd>Bloco Central</dd>
+          <dt>Piso</dt><dd>Piso 2</dd>
+          <dt>Serviço</dt><dd>Urgência</dd>
+          <dt>Sala</dt><dd>Sala 204</dd>
+        </dl>
+      </div>
+      <div class="mhs-info-group mt-3">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-comment"></i> Observações</div>
+        <p class="mhs-info-obs">Zona com prioridade para equipamentos críticos.</p>
+      </div>
+    </div></div></div>
+  </div>
+  <div class="mhs-tab-pane" id="tab-equipamentos">
+    <div class="mhs-tab-body">
+      <table class="table mhs-datatable mb-0"><thead><tr><th>Código</th><th>Designação</th><th>Estado</th><th>Criticidade</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mhs-code">EQ-001</span></td><td class="mhs-td-primary">Monitor multiparamétrico</td><td>Ativo</td><td>Média</td></tr>
+        <tr><td><span class="mhs-code">EQ-002</span></td><td class="mhs-td-primary">Bomba de infusão</td><td>Ativo</td><td>Alta</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+<script>document.querySelectorAll('.mhs-detail-tab').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.mhs-detail-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.mhs-tab-pane').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});</script>
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

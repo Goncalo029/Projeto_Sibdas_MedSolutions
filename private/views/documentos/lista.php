@@ -23,19 +23,24 @@ try {
 include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="mhs-page-header mhs-page-header--dashboard">
+<div class="mhs-page-header">
   <div>
     <span class="mhs-page-kicker"><i class="fa-solid fa-file-lines fa-fw"></i></span>
     <h1 class="mhs-page-title">Documentos</h1>
   </div>
-  <div class="mhs-page-actions">
-    <a href="novo.php" class="btn btn-primary"><i class="fa-solid fa-plus me-2"></i>Novo</a>
-  </div>
 </div>
 
-<?php if ($erro_bd) : ?><div class="alert alert-warning"><?= esc($erro_bd) ?></div><?php endif; ?>
+<?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
 
 <div class="card mhs-data-card">
+  <div class="mhs-table-toolbar">
+    <div class="mhs-table-toolbar-left">
+      <i class="fa-solid fa-file-lines mhs-table-toolbar-icon"></i>
+      <span class="mhs-table-toolbar-label">Lista de Documentos</span>
+      <span class="mhs-table-toolbar-count"><?= count($documentos) ?> registos</span>
+    </div>
+    <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Novo Documento</a>
+  </div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover mhs-datatable mb-0" id="documentosTable">
