@@ -24,7 +24,6 @@ function mhs_active(string $segment): string
                 <strong>MedSolutions</strong>
             </span>
         </a>
-        <p class="mhs-sidebar-copy">Operações, equipamentos, contratos e documentação num único painel.</p>
     </div>
 
     <nav class="mhs-sidebar-nav">

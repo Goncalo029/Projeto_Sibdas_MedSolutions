@@ -41,8 +41,8 @@ if (in_array($mhs_page_file, ['detalhes.php', 'perfil.php'])) {
 <body class="mhs-app<?= $mhs_body_page_class ?>">
 
 <?php
-include __DIR__ . '/nav.php';
 include __DIR__ . '/sidebar.php';
+include __DIR__ . '/nav.php';
 ?>
 
 <div class="mhs-main-content">
