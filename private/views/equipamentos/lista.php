@@ -9,7 +9,8 @@ $erro_bd = '';
 
 try {
     $equipamentos = mhs_pdo()->query("
-        SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.estado, e.criticidade,
+        SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
+               e.estado, e.criticidade,
                c.nome AS categoria, l.servico,
                COUNT(d.id) AS total_documentos
         FROM equipamentos e
@@ -17,7 +18,8 @@ try {
         LEFT JOIN localizacoes l ON l.id = e.id_localizacao
         LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.deleted_at IS NULL
         WHERE e.deleted_at IS NULL
-        GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.estado, e.criticidade, c.nome, l.servico
+        GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
+                 e.estado, e.criticidade, c.nome, l.servico
         ORDER BY e.codigo_inventario
     ")->fetchAll();
 } catch (PDOException $e) {
@@ -43,10 +45,18 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-label">Lista de Equipamentos</span>
       <span class="mhs-table-toolbar-count"><?= count($equipamentos) ?> registos</span>
     </div>
-    <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn">
-      <i class="fa-solid fa-plus"></i>
-      Novo Equipamento
-    </a>
+    <div class="d-flex gap-2 align-items-center">
+      <a href="exportar_csv.php" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-file-csv me-1"></i>Exportar CSV
+      </a>
+      <button onclick="mhsExportarPDF()" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
+      </button>
+      <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn">
+        <i class="fa-solid fa-plus"></i>
+        Novo Equipamento
+      </a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -89,5 +99,34 @@ include __DIR__ . '/../../includes/header.php';
     </div>
   </div>
 </div>
+
+<script>
+function mhsExportarPDF() {
+    var w = window.open('', '_blank', 'width=1100,height=800');
+    var rows = '';
+    document.querySelectorAll('#equipamentosTable tbody tr').forEach(function(tr) {
+        var tds = tr.querySelectorAll('td');
+        if (tds.length < 8) return;
+        rows += '<tr>';
+        rows += '<td>' + (tds[0].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[1].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[2].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[3].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[4].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[5].textContent.trim()) + '</td>';
+        rows += '<td>' + (tds[6].textContent.trim()) + '</td>';
+        rows += '</tr>';
+    });
+    w.document.write('<html><head><title>Equipamentos</title>');
+    w.document.write('<style>*{font-family:Arial,sans-serif;font-size:11px}body{padding:20px}h2{font-size:14px;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#0d6ea8;color:#fff;padding:7px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px}td{padding:6px 8px;border-bottom:1px solid #e2e8f0}tr:nth-child(even) td{background:#f8fafc}.foot{margin-top:10px;font-size:10px;color:#94a3b8}</style>');
+    w.document.write('</head><body>');
+    w.document.write('<h2>Lista de Equipamentos &mdash; ' + new Date().toLocaleDateString('pt-PT') + '</h2>');
+    w.document.write('<table><thead><tr><th>Código</th><th>Designação</th><th>Marca</th><th>Categoria</th><th>Serviço</th><th>Estado</th><th>Criticidade</th></tr></thead><tbody>' + rows + '</tbody></table>');
+    w.document.write('<p class="foot">Total: <?= count($equipamentos) ?> equipamentos</p>');
+    w.document.write('<script>window.onload=function(){window.print();window.close()}<\/script>');
+    w.document.write('</body></html>');
+    w.document.close();
+}
+</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>
