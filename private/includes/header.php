@@ -21,21 +21,21 @@ if (in_array($mhs_page_file, ['detalhes.php', 'perfil.php'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>" />
     <title><?php echo APP_NAME; ?></title>
-    <link rel="shortcut icon" href="/MedSolutions/public/assets/images/logo-medsoft.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="<?= BASE_URL ?>/public/assets/images/logo-medsoft.svg" type="image/svg+xml">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
     <!-- CSS globais -->
-    <link rel="stylesheet" href="/MedSolutions/private/assets/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="/MedSolutions/private/assets/datatables/datatables.min.css">
-    <link rel="stylesheet" href="/MedSolutions/private/assets/flatpickr/flatpickr.min.css">
-    <link rel="stylesheet" href="/MedSolutions/private/assets/fontawesome/all.min.css">
-    <link rel="stylesheet" href="/MedSolutions/private/assets/css/1220673.css?v=<?= $mhs_css_version ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/private/assets/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/private/assets/datatables/datatables.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/private/assets/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/private/assets/fontawesome/all.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/private/assets/css/1220673.css?v=<?= $mhs_css_version ?>">
     <!-- Scripts -->
-    <script src="/MedSolutions/private/assets/jQuery/jquery-3.6.0.min.js"></script>
-    <script src="/MedSolutions/private/assets/datatables/datatables.min.js"></script>
-    <script src="/MedSolutions/private/assets/flatpickr/flatpickr.js"></script>
+    <script src="<?= BASE_URL ?>/private/assets/jQuery/jquery-3.6.0.min.js"></script>
+    <script src="<?= BASE_URL ?>/private/assets/datatables/datatables.min.js"></script>
+    <script src="<?= BASE_URL ?>/private/assets/flatpickr/flatpickr.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="mhs-app<?= $mhs_body_page_class ?>">

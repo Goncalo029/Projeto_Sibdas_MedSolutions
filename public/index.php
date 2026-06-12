@@ -1,24 +1,23 @@
-﻿<?php
+<?php
 session_start();
 require_once __DIR__ . '/../config/config.php';
 
-// Carrega conteúdo configurável da BD (com fallback para valores padrão)
 function website_cfg(array &$cfg, string $chave, string $default): string {
     return htmlspecialchars($cfg[$chave] ?? $default, ENT_QUOTES, 'UTF-8');
 }
 
 $wcfg = [];
+$wpdo = null;
 try {
     $wpdo = new PDO(
-        'mysql:host=' . MYSQL_HOST . ';dbname=' . MYSQL_DATABASE . ';charset=utf8mb4',
+        'mysql:host=' . MYSQL_HOST . ';port=' . MYSQL_PORT . ';dbname=' . MYSQL_DATABASE . ';charset=utf8mb4',
         MYSQL_USERNAME, MYSQL_PASSWORD,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ]
     );
     $rows = $wpdo->query("SELECT chave, valor FROM website_config") ?: [];
     foreach ($rows as $r) { $wcfg[$r->chave] = $r->valor; }
-} catch (Exception $e) { /* tabela ainda não existe — usa defaults */ }
+} catch (Exception $e) {}
 
-// Processamento do formulário de contacto
 $contacto_msg  = '';
 $contacto_tipo = '';
 
@@ -32,6 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
         $contacto_tipo = 'erro';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $contacto_msg  = 'Por favor introduza um endereço de email válido.';
+        $contacto_tipo = 'erro';
+    } elseif ($wpdo === null) {
+        $contacto_msg  = 'Erro ao enviar a mensagem. Por favor tente novamente.';
         $contacto_tipo = 'erro';
     } else {
         try {
@@ -54,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedSolutions &mdash; Inventário Hospitalar</title>
+    <meta name="description" content="MedSolutions — Plataforma de inventário hospitalar com rastreabilidade, contratos, manutenções e alertas em tempo real.">
+    <title>MedSolutions — Inventário Hospitalar</title>
     <link rel="shortcut icon" href="assets/images/logo-medsoft.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,374 +67,376 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 </head>
 <body>
 
-    <div class="mhs-mobile-nav-backdrop" id="mobileNavBackdrop"></div>
+<div class="mhs-mobile-nav-backdrop" id="mobileNavBackdrop"></div>
 
-    <header class="mhs-topbar">
-        <div class="mhs-topbar-inner">
-            <a href="#" class="mhs-logo-link">
-                <img src="assets/images/logo-medsoft.svg" alt="Logotipo MedSolutions">
-                <span>MedSolutions</span>
-            </a>
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="mhs-topbar">
+    <div class="mhs-topbar-inner">
+        <a href="#" class="mhs-logo-link">
+            <img src="assets/images/logo-medsoft.svg" alt="MedSolutions">
+            <span>MedSolutions</span>
+        </a>
 
-            <nav class="mhs-nav" id="mainNav">
-                <a href="#quem-somos">Quem Somos</a>
-                <a href="#produto">O Produto</a>
-                <a href="#funcionalidades">Funcionalidades</a>
-                <a href="#setor-saude">Setor Saúde</a>
-                <a href="#contacto">Contacto</a>
-            </nav>
+        <nav class="mhs-nav" id="mainNav">
+            <a href="#quem-somos"    data-i18n="nav-about">Quem Somos</a>
+            <a href="#produto"       data-i18n="nav-product">O Produto</a>
+            <a href="#funcionalidades" data-i18n="nav-features">Funcionalidades</a>
+            <a href="#setor-saude"   data-i18n="nav-sector">Setor Saúde</a>
+            <a href="#contacto"      data-i18n="nav-contact">Contacto</a>
+        </nav>
 
-            <div class="mhs-lang-switch" aria-label="Selecionar idioma">
-                <button class="mhs-lang-btn is-active" type="button" data-lang="pt">PT</button>
-                <button class="mhs-lang-btn" type="button" data-lang="en">EN</button>
-            </div>
-
+        <div class="mhs-topbar-right">
             <a href="login.php" class="mhs-btn-outline">Entrar na Plataforma</a>
-
             <button class="mhs-burger" id="burgerBtn" aria-label="Menu">
                 <span></span><span></span><span></span>
             </button>
         </div>
-    </header>
+    </div>
+</header>
 
-    <section class="mhs-hero" id="quem-somos">
-        <div class="mhs-hero-content">
-            <p class="mhs-overline"><?= website_cfg($wcfg, 'hero_overline', 'Tecnologia para hospitais') ?></p>
-            <h1><?= website_cfg($wcfg, 'hero_titulo', 'Inventário hospitalar com') ?> <strong><?= website_cfg($wcfg, 'hero_titulo_strong', 'visão clara e operação rápida') ?></strong></h1>
-            <p class="mhs-hero-sub"><?= website_cfg($wcfg, 'hero_subtitulo', 'Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.') ?></p>
-            <div class="mhs-hero-actions">
-                <a href="#produto" class="mhs-btn-primary">Conhecer o Produto</a>
-                <a href="login.php" class="mhs-btn-ghost">Aceder ao Painel <i class="fa-solid fa-arrow-right"></i></a>
+<!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+<div class="mhs-hero-wrap" id="quem-somos">
+<section class="mhs-hero">
+    <div class="mhs-hero-content">
+        <p class="mhs-overline"><i class="fa-solid fa-circle-dot"></i> <span data-i18n="hero-overline">Tecnologia para hospitais</span></p>
+        <h1>
+            <span data-i18n="hero-h1-pre">Inventário hospitalar com</span><br>
+            <strong data-i18n="hero-h1-strong">visão clara e operação rápida</strong>
+        </h1>
+        <p class="mhs-hero-sub" data-i18n="hero-sub">
+            Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.
+        </p>
+        <div class="mhs-hero-actions">
+            <a href="#produto" class="mhs-btn-primary" data-i18n="hero-cta1">Conhecer o Produto</a>
+            <a href="login.php" class="mhs-btn-ghost">
+                <span data-i18n="hero-cta2">Aceder ao Painel</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+        <div class="mhs-hero-metrics">
+            <div class="mhs-hero-metric">
+                <strong data-i18n="metric-1-title">Dashboard</strong>
+                <span data-i18n="metric-1-sub">KPIs e alertas em tempo real</span>
             </div>
-            <div class="mhs-hero-metrics">
-                <div class="mhs-hero-metric">
-                    <strong>Dashboard</strong>
-                    <span>KPIs e alertas em tempo real</span>
-                </div>
-                <div class="mhs-hero-metric">
-                    <strong>Inventário</strong>
-                    <span>Estados, localização e criticidade</span>
-                </div>
-                <div class="mhs-hero-metric">
-                    <strong>Contratos</strong>
-                    <span>Gestão preventiva de garantias</span>
-                </div>
+            <div class="mhs-hero-metric">
+                <strong data-i18n="metric-2-title">Inventário</strong>
+                <span data-i18n="metric-2-sub">Estados, localização e criticidade</span>
             </div>
-        </div>
-
-    </section>
-
-    <section class="mhs-section" id="produto">
-        <div class="mhs-section-header">
-            <p class="mhs-overline">O produto</p>
-            <h2>MedInventar</h2>
-            <p><?= website_cfg($wcfg, 'produto_descricao', 'Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.') ?></p>
-        </div>
-
-        <div class="mhs-grid-3">
-            <article class="mhs-info-card">
-                <div class="mhs-info-icon"><i class="fa-solid fa-chart-pie"></i></div>
-                <h4>Visão Global</h4>
-                <p>Dashboard com indicadores de equipamentos por estado, criticidade e serviço hospitalar.</p>
-            </article>
-            <article class="mhs-info-card">
-                <div class="mhs-info-icon"><i class="fa-solid fa-route"></i></div>
-                <h4>Rastreabilidade</h4>
-                <p>Cada equipamento com localização, fornecedor, documentação e histórico completo.</p>
-            </article>
-            <article class="mhs-info-card">
-                <div class="mhs-info-icon"><i class="fa-solid fa-user-shield"></i></div>
-                <h4>Governança</h4>
-                <p>Perfis admin e técnico com controlo de acesso por sessão PHP e encriptação AES.</p>
-            </article>
-        </div>
-    </section>
-
-    <section class="mhs-section mhs-section--alt" id="funcionalidades">
-        <div class="mhs-section-header">
-            <p class="mhs-overline">Funcionalidades</p>
-            <h2>Módulos do sistema</h2>
-            <p>Cada módulo segue o padrão CRUD com validação dupla, indicadores claros e operação orientada a equipas hospitalares.</p>
-        </div>
-
-        <div class="mhs-grid-4">
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                <h4>Equipamentos</h4>
-                <p>Código de inventário, estado clínico, criticidade e ficha detalhada completa.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-location-dot"></i></div>
-                <h4>Localizações</h4>
-                <p>Mapa lógico por edifício, piso, serviço e sala do hospital.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-truck-field"></i></div>
-                <h4>Fornecedores</h4>
-                <p>Fabricantes, distribuidores e assistência técnica com relação N:N.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-folder-open"></i></div>
-                <h4>Documentação</h4>
-                <p>Manuais, certificados e contratos com validade e alertas.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-file-contract"></i></div>
-                <h4>Garantias</h4>
-                <p>Contratos de manutenção com prazos e alertas de expiração.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
-                <h4>Pesquisa Avançada</h4>
-                <p>Filtros combinados por código, estado, criticidade, fornecedor e mais.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-tags"></i></div>
-                <h4>Categorias</h4>
-                <p>Classificação funcional de equipamentos por tipo clínico.</p>
-            </article>
-            <article class="mhs-feat-card">
-                <div class="mhs-feat-icon"><i class="fa-solid fa-gauge-high"></i></div>
-                <h4>Dashboard</h4>
-                <p>KPIs: totais, ativos, em manutenção, garantias expiradas e visão por serviço.</p>
-            </article>
-        </div>
-    </section>
-
-    <section class="mhs-section" id="setor-saude">
-        <div class="mhs-split">
-            <div class="mhs-split-text">
-                <p class="mhs-overline">Contexto hospitalar</p>
-                <h2><?= website_cfg($wcfg, 'setor_titulo', 'Desenhado para o setor da saúde') ?></h2>
-                <p><?= website_cfg($wcfg, 'setor_descricao', 'Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.') ?></p>
-                <ul class="mhs-checks">
-                    <li><i class="fa-solid fa-circle-check"></i> <?= website_cfg($wcfg, 'setor_check_1', 'Informação sempre atualizada e consistente') ?></li>
-                    <li><i class="fa-solid fa-circle-check"></i> <?= website_cfg($wcfg, 'setor_check_2', 'Apoio à decisão operacional das equipas clínicas') ?></li>
-                    <li><i class="fa-solid fa-circle-check"></i> <?= website_cfg($wcfg, 'setor_check_3', 'Classificação por criticidade incluindo suporte de vida') ?></li>
-                </ul>
+            <div class="mhs-hero-metric">
+                <strong data-i18n="metric-3-title">Contratos</strong>
+                <span data-i18n="metric-3-sub">Gestão preventiva de garantias</span>
             </div>
-            <div class="mhs-split-visual">
-                <div class="mhs-badge-stack">
-                    <span class="mhs-badge mhs-badge--green">Ativo</span>
-                    <span class="mhs-badge mhs-badge--amber">Em manutenção</span>
-                    <span class="mhs-badge mhs-badge--red">Inativo</span>
-                    <span class="mhs-badge mhs-badge--dark">Suporte de vida</span>
-                    <span class="mhs-badge mhs-badge--blue">Em calibração</span>
-                    <span class="mhs-badge mhs-badge--gray">Abatido</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="mhs-section mhs-section--alt" id="contacto">
-        <div class="mhs-section-header">
-            <p class="mhs-overline">Contacto</p>
-            <h2>Fale connosco</h2>
-            <p><?= website_cfg($wcfg, 'contacto_descricao', 'Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.') ?></p>
-        </div>
-
-        <?php if ($contacto_msg !== ''): ?>
-        <div class="mhs-form-alert mhs-form-alert--<?= $contacto_tipo === 'sucesso' ? 'success' : 'danger' ?>">
-            <i class="fa-solid <?= $contacto_tipo === 'sucesso' ? 'fa-circle-check' : 'fa-circle-exclamation' ?> me-2"></i>
-            <?= htmlspecialchars($contacto_msg) ?>
-        </div>
-        <?php endif; ?>
-
-        <?php if ($contacto_tipo !== 'sucesso'): ?>
-        <form class="mhs-form" method="post" action="index.php#contacto" novalidate>
-            <div class="mhs-form-row">
-                <div class="mhs-form-group">
-                    <label for="nome">Nome <span class="mhs-required">*</span></label>
-                    <input type="text" id="nome" name="nome" placeholder="O seu nome" value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" required>
-                </div>
-                <div class="mhs-form-group">
-                    <label for="email">Email <span class="mhs-required">*</span></label>
-                    <input type="email" id="email" name="email" placeholder="email@exemplo.pt" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
-                </div>
-            </div>
-            <div class="mhs-form-group">
-                <label for="mensagem">Mensagem <span class="mhs-required">*</span></label>
-                <textarea id="mensagem" name="mensagem" rows="4" placeholder="Descreva o que pretende..." required><?= htmlspecialchars($_POST['mensagem'] ?? '') ?></textarea>
-            </div>
-            <button type="submit" class="mhs-btn-primary">Enviar Mensagem</button>
-        </form>
-        <?php endif; ?>
-    </section>
-
-    <footer class="mhs-footer">
-        <div class="mhs-footer-inner">
-            <div class="mhs-footer-brand">
-                <img src="assets/images/logo-medsoft-white.svg" alt="MedSolutions">
-                <span>MedSolutions</span>
-            </div>
-            <div class="mhs-footer-cols">
-                <div>
-                    <strong>Empresa</strong>
-                    <p>MedSolutions</p>
-                    <p><?= website_cfg($wcfg, 'footer_morada', 'Porto, Portugal') ?></p>
-                </div>
-                <div>
-                    <strong>Contactos</strong>
-                    <p><?= website_cfg($wcfg, 'footer_email', 'geral@medsolutions.pt') ?></p>
-                    <p><?= website_cfg($wcfg, 'footer_telefone', '+351 220 600 700') ?></p>
-                </div>
-                <div>
-                    <strong>Produto</strong>
-                    <p>MedInventar v1.0</p>
-                    <p>&copy; 2026 MedSolutions</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <div class="mhs-mobile-sheet" id="mobileSheet" aria-hidden="true">
-        <a href="#quem-somos" class="mhs-mobile-sheet-link">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="#produto" class="mhs-mobile-sheet-link">
-            <i class="fa-solid fa-box-open"></i>
-            <span>Produto</span>
-        </a>
-        <a href="#funcionalidades" class="mhs-mobile-sheet-link">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Funcionalidades</span>
-        </a>
-        <a href="#setor-saude" class="mhs-mobile-sheet-link">
-            <i class="fa-solid fa-hospital"></i>
-            <span>Setor Saúde</span>
-        </a>
-        <a href="#contacto" class="mhs-mobile-sheet-link">
-            <i class="fa-solid fa-headset"></i>
-            <span>Contacto</span>
-        </a>
-        <a href="login.php" class="mhs-mobile-sheet-link">
-            <i class="fa-regular fa-user"></i>
-            <span>Entrar</span>
-        </a>
-        <div class="mhs-mobile-sheet-lang" aria-label="Selecionar idioma">
-            <button class="mhs-lang-btn is-active" type="button" data-lang="pt">PT</button>
-            <button class="mhs-lang-btn" type="button" data-lang="en">EN</button>
         </div>
     </div>
 
-    <nav class="mhs-mobile-tabbar" aria-label="Navegação mobile">
-        <a href="#quem-somos" class="mhs-mobile-tab">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="#funcionalidades" class="mhs-mobile-tab">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Módulos</span>
-        </a>
-        <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileSheet">
-            <i class="fa-solid fa-bars"></i>
+    <!-- Screenshot da dashboard real -->
+    <div class="mhs-hero-visual" aria-hidden="true">
+        <div class="mhs-screenshot-wrap">
+            <img src="assets/images/dashboard-preview.png" alt="MedSolutions — Painel de Controlo">
+        </div>
+        <div class="mhs-hero-float mhs-hero-float--tl">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Dados protegidos</span>
+        </div>
+        <div class="mhs-hero-float mhs-hero-float--br">
+            <i class="fa-solid fa-bell"></i>
+            <span>Alertas automáticos</span>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- Trust bar -->
+<div class="mhs-trust-bar">
+    <div class="mhs-trust-inner">
+        <span data-i18n="trust-label">Desenvolvido para</span>
+        <div class="mhs-trust-items">
+            <span><i class="fa-solid fa-hospital"></i> <span data-i18n="trust-1">Hospitais</span></span>
+            <span><i class="fa-solid fa-clinic-medical"></i> <span data-i18n="trust-2">Clínicas</span></span>
+            <span><i class="fa-solid fa-house-medical"></i> <span data-i18n="trust-3">Centros de Saúde</span></span>
+            <span><i class="fa-solid fa-microscope"></i> <span data-i18n="trust-4">Laboratórios</span></span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════ PRODUTO ═══════════════════════════════ -->
+<section class="mhs-section" id="produto">
+    <div class="mhs-section-header">
+        <p class="mhs-overline"><i class="fa-solid fa-box-open"></i> <span data-i18n="prod-overline">O produto</span></p>
+        <h2>MedSolutions</h2>
+        <p data-i18n="prod-desc">Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.</p>
+    </div>
+
+    <div class="mhs-grid-3">
+        <article class="mhs-info-card">
+            <div class="mhs-info-icon"><i class="fa-solid fa-chart-pie"></i></div>
+            <h4 data-i18n="prod-c1-title">Visão Global</h4>
+            <p data-i18n="prod-c1-desc">Dashboard com indicadores de equipamentos por estado, criticidade e serviço hospitalar.</p>
+        </article>
+        <article class="mhs-info-card">
+            <div class="mhs-info-icon"><i class="fa-solid fa-route"></i></div>
+            <h4 data-i18n="prod-c2-title">Rastreabilidade</h4>
+            <p data-i18n="prod-c2-desc">Cada equipamento com localização, fornecedor, documentação e histórico completo.</p>
+        </article>
+        <article class="mhs-info-card">
+            <div class="mhs-info-icon"><i class="fa-solid fa-lock"></i></div>
+            <h4>Segurança</h4>
+            <p>Controlo de acessos por sessão autenticada e encriptação de dados sensíveis em repouso.</p>
+        </article>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ FUNCIONALIDADES ═══════════════════════════════ -->
+<section class="mhs-section--alt" id="funcionalidades">
+    <div class="mhs-section-header">
+        <p class="mhs-overline"><i class="fa-solid fa-list-check"></i> <span data-i18n="feat-overline">Funcionalidades</span></p>
+        <h2 data-i18n="feat-title">Módulos do sistema</h2>
+        <p data-i18n="feat-desc">Cada módulo segue o padrão CRUD com validação dupla, indicadores claros e operação orientada a equipas hospitalares.</p>
+    </div>
+
+    <div class="mhs-grid-4">
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+            <h4 data-i18n="feat-1-title">Equipamentos</h4>
+            <p data-i18n="feat-1-desc">Código de inventário, estado clínico, criticidade e ficha detalhada completa.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-location-dot"></i></div>
+            <h4 data-i18n="feat-2-title">Localizações</h4>
+            <p data-i18n="feat-2-desc">Mapa lógico por edifício, piso, serviço e sala do hospital.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-truck-field"></i></div>
+            <h4 data-i18n="feat-3-title">Fornecedores</h4>
+            <p data-i18n="feat-3-desc">Fabricantes, distribuidores e assistência técnica com relação N:N.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <h4 data-i18n="feat-4-title">Documentação</h4>
+            <p data-i18n="feat-4-desc">Manuais, certificados e contratos com validade e alertas automáticos.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-file-contract"></i></div>
+            <h4 data-i18n="feat-5-title">Garantias</h4>
+            <p data-i18n="feat-5-desc">Contratos de manutenção com prazos e alertas de expiração.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-wrench"></i></div>
+            <h4 data-i18n="feat-6-title">Manutenções</h4>
+            <p data-i18n="feat-6-desc">Registo de manutenções preventivas e urgências com histórico completo.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-headset"></i></div>
+            <h4 data-i18n="feat-7-title">Assistência Técnica</h4>
+            <p data-i18n="feat-7-desc">Contactos de AT com linha de urgência e acesso rápido por equipamento.</p>
+        </article>
+        <article class="mhs-feat-card">
+            <div class="mhs-feat-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+            <h4 data-i18n="feat-8-title">Pesquisa Avançada</h4>
+            <p data-i18n="feat-8-desc">Filtros combinados por código, estado, criticidade, fornecedor e mais.</p>
+        </article>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ SETOR SAÚDE ═══════════════════════════════ -->
+<section class="mhs-section" id="setor-saude">
+    <div class="mhs-split">
+        <div class="mhs-split-text">
+            <p class="mhs-overline"><i class="fa-solid fa-hospital"></i> <span data-i18n="sector-overline">Contexto hospitalar</span></p>
+            <h2 data-i18n="sector-title">Desenhado para o setor da saúde</h2>
+            <p data-i18n="sector-desc">Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.</p>
+            <ul class="mhs-checks">
+                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c1">Informação sempre atualizada e consistente</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c2">Apoio à decisão operacional das equipas clínicas</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c3">Classificação por criticidade incluindo suporte de vida</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c4">Notificações automáticas por garantias e manutenções</span></li>
+            </ul>
+        </div>
+        <div class="mhs-split-visual">
+            <div class="mhs-sector-stats">
+                <div class="mhs-sector-stat">
+                    <div class="mhs-sector-stat-icon"><i class="fa-solid fa-stethoscope"></i></div>
+                    <div>
+                        <strong>Inventário centralizado</strong>
+                        <span>Todos os equipamentos num único painel, com histórico completo e rastreabilidade.</span>
+                    </div>
+                </div>
+                <div class="mhs-sector-stat">
+                    <div class="mhs-sector-stat-icon"><i class="fa-solid fa-file-contract"></i></div>
+                    <div>
+                        <strong>Contratos e garantias</strong>
+                        <span>Alertas automáticos antes de expiração de contratos, garantias e calibrações.</span>
+                    </div>
+                </div>
+                <div class="mhs-sector-stat">
+                    <div class="mhs-sector-stat-icon"><i class="fa-solid fa-wrench"></i></div>
+                    <div>
+                        <strong>Manutenções planeadas</strong>
+                        <span>Registo preventivo e corretivo com associação direta ao equipamento.</span>
+                    </div>
+                </div>
+                <div class="mhs-sector-stat">
+                    <div class="mhs-sector-stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div>
+                        <strong>Dados encriptados</strong>
+                        <span>Informação sensível protegida por encriptação AES e acessos autenticados.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ CONTACTO ═══════════════════════════════ -->
+<section class="mhs-section--alt" id="contacto">
+    <div class="mhs-section-header">
+        <p class="mhs-overline"><i class="fa-solid fa-envelope"></i> <span data-i18n="contact-overline">Contacto</span></p>
+        <h2 data-i18n="contact-title">Fale connosco</h2>
+        <p data-i18n="contact-desc">Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.</p>
+    </div>
+
+    <?php if ($contacto_msg !== ''): ?>
+    <div class="mhs-form-alert mhs-form-alert--<?= $contacto_tipo === 'sucesso' ? 'success' : 'danger' ?>">
+        <i class="fa-solid <?= $contacto_tipo === 'sucesso' ? 'fa-circle-check' : 'fa-circle-exclamation' ?>"></i>
+        <?= htmlspecialchars($contacto_msg) ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($contacto_tipo !== 'sucesso'): ?>
+    <form class="mhs-form" method="post" action="index.php#contacto" novalidate>
+        <div class="mhs-form-row">
+            <div class="mhs-form-group">
+                <label for="nome"><span data-i18n="form-name">Nome</span> <span class="mhs-required">*</span></label>
+                <div class="mhs-input-wrap">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="nome" name="nome"
+                        data-placeholder-pt="O seu nome"
+                        data-placeholder-en="Your name"
+                        placeholder="O seu nome"
+                        value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" required>
+                </div>
+            </div>
+            <div class="mhs-form-group">
+                <label for="email">Email <span class="mhs-required">*</span></label>
+                <div class="mhs-input-wrap">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" name="email"
+                        data-placeholder-pt="email@exemplo.pt"
+                        data-placeholder-en="email@example.com"
+                        placeholder="email@exemplo.pt"
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+                </div>
+            </div>
+        </div>
+        <div class="mhs-form-group">
+            <label for="mensagem"><span data-i18n="form-message">Mensagem</span> <span class="mhs-required">*</span></label>
+            <textarea id="mensagem" name="mensagem" rows="5"
+                data-placeholder-pt="Descreva o que pretende..."
+                data-placeholder-en="Describe what you need..."
+                placeholder="Descreva o que pretende..." required><?= htmlspecialchars($_POST['mensagem'] ?? '') ?></textarea>
+        </div>
+        <button type="submit" class="mhs-btn-primary mhs-btn-submit">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span data-i18n="form-submit">Enviar Mensagem</span>
         </button>
-        <a href="login.php" class="mhs-mobile-tab">
-            <i class="fa-regular fa-user"></i>
-            <span>Entrar</span>
-        </a>
-        <a href="#contacto" class="mhs-mobile-tab">
-            <i class="fa-solid fa-headset"></i>
-            <span>Contactar</span>
-        </a>
-    </nav>
+    </form>
+    <?php endif; ?>
+</section>
 
-    <script>
-        const mainNav = document.getElementById('mainNav');
-        const burgerBtn = document.getElementById('burgerBtn');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileNavBackdrop = document.getElementById('mobileNavBackdrop');
-        const mobileSheet = document.getElementById('mobileSheet');
-        const langButtons = document.querySelectorAll('.mhs-lang-btn');
+<!-- ═══════════════════════════════ FOOTER ═══════════════════════════════ -->
+<footer class="mhs-footer">
+    <div class="mhs-footer-inner">
+        <div class="mhs-footer-brand">
+            <div class="mhs-footer-logo">
+                <img src="assets/images/logo-medsoft-white.svg" alt="MedSolutions">
+            </div>
+            <div>
+                <strong>MedSolutions</strong>
+                <span data-i18n="footer-tagline">Inventário hospitalar inteligente</span>
+            </div>
+        </div>
+        <div class="mhs-footer-cols">
+            <div>
+                <strong data-i18n="footer-col1">Empresa</strong>
+                <p>MedSolutions</p>
+                <p><?= website_cfg($wcfg, 'footer_morada', 'Porto, Portugal') ?></p>
+            </div>
+            <div>
+                <strong data-i18n="footer-col2">Contactos</strong>
+                <p><?= website_cfg($wcfg, 'footer_email', 'geral@medsolutions.pt') ?></p>
+                <p><?= website_cfg($wcfg, 'footer_telefone', '+351 220 600 700') ?></p>
+            </div>
+            <div>
+                <strong data-i18n="footer-col3">Produto</strong>
+                <p>MedSolutions v1.0</p>
+                <p>&copy; <?= date('Y') ?> MedSolutions</p>
+            </div>
+        </div>
+    </div>
+</footer>
 
-        function setMobileSheetState(isOpen) {
-            if (!mobileSheet) {
-                return;
-            }
+<!-- ═══════════════════════════════ MOBILE NAV ═══════════════════════════════ -->
+<div class="mhs-mobile-sheet" id="mobileSheet" aria-hidden="true">
+    <a href="#quem-somos" class="mhs-mobile-sheet-link"><i class="fa-solid fa-house"></i><span data-i18n="nav-about-short">Home</span></a>
+    <a href="#produto" class="mhs-mobile-sheet-link"><i class="fa-solid fa-box-open"></i><span data-i18n="nav-product">O Produto</span></a>
+    <a href="#funcionalidades" class="mhs-mobile-sheet-link"><i class="fa-solid fa-list-check"></i><span data-i18n="nav-features">Funcionalidades</span></a>
+    <a href="#setor-saude" class="mhs-mobile-sheet-link"><i class="fa-solid fa-hospital"></i><span data-i18n="nav-sector">Setor Saúde</span></a>
+    <a href="#contacto" class="mhs-mobile-sheet-link"><i class="fa-solid fa-envelope"></i><span data-i18n="nav-contact">Contacto</span></a>
+    <a href="login.php" class="mhs-mobile-sheet-link"><i class="fa-regular fa-user"></i><span>Entrar</span></a>
+</div>
 
-            mobileSheet.classList.toggle('is-open', isOpen);
-            mobileSheet.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-            mobileSheet.style.position = 'fixed';
-            mobileSheet.style.left = '1rem';
-            mobileSheet.style.right = '1rem';
-            mobileSheet.style.bottom = '88px';
-            mobileSheet.style.zIndex = '1200';
-            mobileSheet.style.display = isOpen ? 'grid' : 'none';
-            mobileSheet.style.gridTemplateColumns = '1fr 1fr';
-            mobileSheet.style.gap = '.7rem';
-            mobileSheet.style.padding = '1rem';
-            mobileSheet.style.border = '1px solid rgba(255,255,255,.95)';
-            mobileSheet.style.borderRadius = '22px';
-            mobileSheet.style.background = 'rgba(255,255,255,.98)';
-            mobileSheet.style.boxShadow = '0 24px 60px rgba(15,23,42,.22)';
-            mobileSheet.style.visibility = isOpen ? 'visible' : 'hidden';
-            mobileSheet.style.opacity = isOpen ? '1' : '0';
-            mobileSheet.style.pointerEvents = isOpen ? 'auto' : 'none';
-        }
+<nav class="mhs-mobile-tabbar" aria-label="Navegação mobile">
+    <a href="#quem-somos" class="mhs-mobile-tab"><i class="fa-solid fa-house"></i><span data-i18n="nav-about-short">Home</span></a>
+    <a href="#funcionalidades" class="mhs-mobile-tab"><i class="fa-solid fa-list-check"></i><span data-i18n="nav-features-short">Módulos</span></a>
+    <button class="mhs-mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileSheet">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+    <a href="login.php" class="mhs-mobile-tab"><i class="fa-regular fa-user"></i><span data-i18n="nav-login-short">Entrar</span></a>
+    <a href="#contacto" class="mhs-mobile-tab"><i class="fa-solid fa-envelope"></i><span data-i18n="nav-contact-short">Contacto</span></a>
+</nav>
 
-        function toggleMenu() {
-            const isOpen = !document.body.classList.contains('mhs-mobile-nav-open');
-            document.body.classList.toggle('mhs-mobile-nav-open', isOpen);
-            mainNav.classList.toggle('mhs-nav--open', isOpen);
-            setMobileSheetState(isOpen);
-            if (mobileMenuBtn) {
-                mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            }
-        }
+<!-- ═══════════════════════════════ SCRIPTS ═══════════════════════════════ -->
+<script>
+(function() {
+    var mainNav   = document.getElementById('mainNav');
+    var burgerBtn = document.getElementById('burgerBtn');
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNavBackdrop = document.getElementById('mobileNavBackdrop');
+    var mobileSheet = document.getElementById('mobileSheet');
 
-        function closeMenu() {
-            document.body.classList.remove('mhs-mobile-nav-open');
-            mainNav.classList.remove('mhs-nav--open');
-            setMobileSheetState(false);
-            if (mobileMenuBtn) {
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            }
-        }
+    function setSheetOpen(open) {
+        if (!mobileSheet) return;
+        mobileSheet.classList.toggle('is-open', open);
+        mobileSheet.setAttribute('aria-hidden', open ? 'false' : 'true');
+        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function toggleMenu() {
+        var open = !document.body.classList.contains('mhs-mobile-nav-open');
+        document.body.classList.toggle('mhs-mobile-nav-open', open);
+        if (mainNav) mainNav.classList.toggle('mhs-nav--open', open);
+        setSheetOpen(open);
+    }
+    function closeMenu() {
+        document.body.classList.remove('mhs-mobile-nav-open');
+        if (mainNav) mainNav.classList.remove('mhs-nav--open');
+        setSheetOpen(false);
+    }
 
-        setMobileSheetState(false);
+    if (burgerBtn) burgerBtn.addEventListener('click', toggleMenu);
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMenu);
+    if (mobileNavBackdrop) mobileNavBackdrop.addEventListener('click', closeMenu);
 
-        if (burgerBtn) {
-            burgerBtn.addEventListener('click', toggleMenu);
-        }
+    document.querySelectorAll('.mhs-nav a, .mhs-mobile-sheet a').forEach(function(a) {
+        a.addEventListener('click', closeMenu);
+    });
 
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', toggleMenu);
-        }
+    window.addEventListener('resize', function() { if (window.innerWidth > 760) closeMenu(); });
 
-        mainNav.querySelectorAll('a').forEach(function (link) {
-            link.addEventListener('click', function () {
-                closeMenu();
-            });
-        });
-
-        if (mobileSheet) {
-            mobileSheet.querySelectorAll('a').forEach(function (link) {
-                link.addEventListener('click', function () {
-                    closeMenu();
-                });
-            });
-        }
-
-        if (mobileNavBackdrop) {
-            mobileNavBackdrop.addEventListener('click', closeMenu);
-        }
-
-        window.addEventListener('resize', function () {
-            if (window.innerWidth > 760) {
-                closeMenu();
-            }
-        });
-
-        langButtons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                langButtons.forEach(function (item) {
-                    item.classList.remove('is-active');
-                });
-                button.classList.add('is-active');
-                document.documentElement.lang = button.dataset.lang === 'en' ? 'en' : 'pt';
-            });
-        });
-    </script>
+    window.addEventListener('scroll', function() {
+        var tb = document.querySelector('.mhs-topbar');
+        if (tb) tb.classList.toggle('mhs-topbar--scrolled', window.scrollY > 40);
+    }, { passive: true });
+})();
+</script>
 </body>
 </html>

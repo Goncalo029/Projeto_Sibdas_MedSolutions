@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/funcoes.php';
 redirect_if_not_logged();
 
 try {
-    $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
+    $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT);
     if ($mysqli->connect_error) die('Erro na conexão: ' . $mysqli->connect_error);
     $mysqli->set_charset('utf8mb4');
 } catch (Exception $e) {

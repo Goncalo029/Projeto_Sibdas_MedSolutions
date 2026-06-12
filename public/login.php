@@ -62,7 +62,7 @@ if (!empty($validation_errors)) {
             </div>
             <?php endif; ?>
 
-            <form name="mhs_login_form" action="/MedSolutions/private/processa_login.php" method="post" class="mhs-auth-form" autocomplete="off">
+            <form name="mhs_login_form" action="/sibdas/1220673/MedSolutions/private/processa_login.php" method="post" class="mhs-auth-form" autocomplete="off">
                 <div class="mhs-input-group">
                     <label for="text_username">E-mail</label>
                     <div class="mhs-input-wrap">

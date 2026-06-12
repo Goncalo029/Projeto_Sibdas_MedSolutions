@@ -11,20 +11,22 @@ function get_notificacoes(): array {
     try {
         $pdo = mhs_pdo();
 
-        // Mensagens de contacto não lidas (admin + tecnico)
-        $row = $pdo->query(
-            "SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL"
-        )->fetch();
-        if ((int)($row->total ?? 0) > 0) {
-            $n = (int)$row->total;
-            $notifs[] = [
-                'icon'     => 'fa-envelope',
-                'color'    => 'danger',
-                'label'    => $n . ' mensagem' . ($n > 1 ? 'ns' : '') . ' de contacto não ' . ($n > 1 ? 'lidas' : 'lida'),
-                'link'     => BASE_URL . '/private/views/mensagens/lista.php',
-                'count'    => $n,
-                'priority' => 1,
-            ];
+        // Mensagens de contacto não lidas (apenas admin)
+        if ($profile === 'admin') {
+            $row = $pdo->query(
+                "SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL"
+            )->fetch();
+            if ((int)($row->total ?? 0) > 0) {
+                $n = (int)$row->total;
+                $notifs[] = [
+                    'icon'     => 'fa-envelope',
+                    'color'    => 'danger',
+                    'label'    => $n . ' mensagem' . ($n > 1 ? 'ns' : '') . ' de contacto não ' . ($n > 1 ? 'lidas' : 'lida'),
+                    'link'     => BASE_URL . '/private/views/mensagens/lista.php',
+                    'count'    => $n,
+                    'priority' => 1,
+                ];
+            }
         }
 
         // Manutenções em atraso (data vencida e não concluídas)
@@ -40,7 +42,7 @@ function get_notificacoes(): array {
                 'icon'     => 'fa-triangle-exclamation',
                 'color'    => 'danger',
                 'label'    => $n . ' manutenção' . ($n > 1 ? 'ões' : '') . ' em atraso',
-                'link'     => BASE_URL . '/private/views/equipamentos/lista.php',
+                'link'     => BASE_URL . '/private/views/equipamentos/lista.php?filtro=manutencao_atraso',
                 'count'    => $n,
                 'priority' => 2,
             ];
@@ -59,7 +61,7 @@ function get_notificacoes(): array {
                 'icon'     => 'fa-wrench',
                 'color'    => 'warning',
                 'label'    => $n . ' manutenção' . ($n > 1 ? 'ões' : '') . ' prevista' . ($n > 1 ? 's' : '') . ' nos próximos 7 dias',
-                'link'     => BASE_URL . '/private/views/equipamentos/lista.php',
+                'link'     => BASE_URL . '/private/views/equipamentos/lista.php?filtro=manutencao_7dias',
                 'count'    => $n,
                 'priority' => 3,
             ];
@@ -112,7 +114,7 @@ function get_notificacoes(): array {
                 'icon'     => 'fa-screwdriver-wrench',
                 'color'    => 'info',
                 'label'    => $n . ' equipamento' . ($n > 1 ? 's' : '') . ' em manutenção',
-                'link'     => BASE_URL . '/private/views/equipamentos/lista.php',
+                'link'     => BASE_URL . '/private/views/equipamentos/lista.php?estado=' . rawurlencode('Em manutenção'),
                 'count'    => $n,
                 'priority' => 6,
             ];
@@ -129,17 +131,17 @@ function get_notificacoes(): array {
                 'icon'     => 'fa-circle-xmark',
                 'color'    => 'danger',
                 'label'    => $n . ' equipamento' . ($n > 1 ? 's' : '') . ' avariado' . ($n > 1 ? 's' : ''),
-                'link'     => BASE_URL . '/private/views/equipamentos/lista.php',
+                'link'     => BASE_URL . '/private/views/equipamentos/lista.php?estado=Avariado',
                 'count'    => $n,
                 'priority' => 7,
             ];
         }
 
-        // Empréstimos em curso sem data de devolução prevista (mais de 30 dias)
+        // Empréstimos em curso sem devolução (mais de 30 dias)
         $row = $pdo->query(
             "SELECT COUNT(*) AS total FROM emprestimos_equipamentos
              WHERE data_devolucao IS NULL
-             AND data_emprestimo < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+             AND data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
              AND deleted_at IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
@@ -148,7 +150,7 @@ function get_notificacoes(): array {
                 'icon'     => 'fa-boxes-packing',
                 'color'    => 'warning',
                 'label'    => $n . ' empréstimo' . ($n > 1 ? 's' : '') . ' em curso há mais de 30 dias',
-                'link'     => BASE_URL . '/private/views/equipamentos/lista.php',
+                'link'     => BASE_URL . '/private/views/equipamentos/lista.php?filtro=emprestimo_30dias',
                 'count'    => $n,
                 'priority' => 8,
             ];

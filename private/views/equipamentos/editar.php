@@ -21,15 +21,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $estado            = trim($_POST['estado'] ?? '') ?: null;
     $criticidade       = trim($_POST['criticidade'] ?? '') ?: null;
     $observacoes       = trim($_POST['observacoes'] ?? '') ?: null;
+
     if (!$codigo_inventario || !$designacao) {
         $_SESSION['error_message'] = 'Código de Inventário e Designação são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
+
     try {
-        mhs_pdo()->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,updated_at=NOW() WHERE id=?")
+        $pdo = mhs_pdo();
+        $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,updated_at=NOW() WHERE id=?")
             ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes,$id]);
+
+        // Guardar AT
+        $at_empresa = trim($_POST['at_empresa']       ?? '') ?: null;
+        $at_nome    = trim($_POST['at_nome_contacto'] ?? '') ?: null;
+        $at_email   = trim($_POST['at_email']         ?? '') ?: null;
+        $at_tel     = trim($_POST['at_telefone']      ?? '') ?: null;
+        try {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS equipamento_at (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_equipamento INT NOT NULL,
+                empresa VARCHAR(255) DEFAULT NULL,
+                nome_contacto VARCHAR(255) DEFAULT NULL,
+                email VARCHAR(255) DEFAULT NULL,
+                telefone VARCHAR(50) DEFAULT NULL,
+                telefone_urgencia VARCHAR(50) DEFAULT NULL,
+                observacoes TEXT DEFAULT NULL,
+                created_at DATETIME DEFAULT NOW(),
+                updated_at DATETIME DEFAULT NOW(),
+                UNIQUE KEY uq_eq_at (id_equipamento)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $pdo->prepare("
+                INSERT INTO equipamento_at (id_equipamento, empresa, nome_contacto, email, telefone, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    empresa       = VALUES(empresa),
+                    nome_contacto = VALUES(nome_contacto),
+                    email         = VALUES(email),
+                    telefone      = VALUES(telefone),
+                    updated_at    = NOW()
+            ")->execute([$id, $at_empresa, $at_nome, $at_email, $at_tel]);
+        } catch (PDOException) {}
+
         $_SESSION['success_message'] = 'Equipamento atualizado com sucesso.';
-        header('Location: lista.php'); exit;
+        header('Location: detalhes.php?id=' . $id); exit;
     } catch (PDOException $e) {
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header("Location: editar.php?id=$id"); exit;
@@ -48,9 +83,43 @@ $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quare
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
 
+// Carregar AT
+$at = null;
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS equipamento_at (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        id_equipamento INT NOT NULL,
+        empresa VARCHAR(255) DEFAULT NULL,
+        nome_contacto VARCHAR(255) DEFAULT NULL,
+        email VARCHAR(255) DEFAULT NULL,
+        telefone VARCHAR(50) DEFAULT NULL,
+        telefone_urgencia VARCHAR(50) DEFAULT NULL,
+        observacoes TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT NOW(),
+        updated_at DATETIME DEFAULT NOW(),
+        UNIQUE KEY uq_eq_at (id_equipamento)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $s = $pdo->prepare("SELECT * FROM equipamento_at WHERE id_equipamento = ? LIMIT 1");
+    $s->execute([$id]);
+    $at = $s->fetch();
+} catch (PDOException) {}
+
 $page_title = 'Equipamentos - Editar';
 include __DIR__ . '/../../includes/header.php';
 ?>
+
+<?php if (!empty($_SESSION['success_message'])): ?>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <i class="fa-solid fa-circle-check me-2"></i><?= htmlspecialchars($_SESSION['success_message']) ?>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php unset($_SESSION['success_message']); endif; ?>
+<?php if (!empty($_SESSION['error_message'])): ?>
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <i class="fa-solid fa-circle-exclamation me-2"></i><?= htmlspecialchars($_SESSION['error_message']) ?>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php unset($_SESSION['error_message']); endif; ?>
 
 <div class="mhs-page-header">
   <div>
@@ -95,6 +164,9 @@ include __DIR__ . '/../../includes/header.php';
     </button>
     <button type="button" class="mhs-detail-tab" data-tab="localizacao">
       <i class="fa-solid fa-location-dot"></i> Localização e Estado
+    </button>
+    <button type="button" class="mhs-detail-tab" data-tab="assistencia">
+      <i class="fa-solid fa-headset"></i> Assistência Técnica
     </button>
   </div>
 
@@ -218,24 +290,54 @@ include __DIR__ . '/../../includes/header.php';
     </div>
   </div>
 
+  <!-- Assistência Técnica -->
+  <div class="mhs-tab-pane" id="tab-assistencia">
+    <div class="mhs-tab-body">
+      <div class="mhs-form-section">
+        <div class="mhs-form-section-title"><i class="fa-solid fa-headset"></i> Contacto de assistência técnica</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Empresa / Marca</label>
+            <input type="text" name="at_empresa" class="form-control"
+              value="<?= $at ? esc($at->empresa) : '' ?>"
+              placeholder="Ex: MedTech SA" maxlength="255" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nome do contacto</label>
+            <input type="text" name="at_nome_contacto" class="form-control"
+              value="<?= $at ? esc($at->nome_contacto) : '' ?>"
+              placeholder="Ex: João Silva" maxlength="255" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Telefone</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+              <input type="text" name="at_telefone" class="form-control"
+                value="<?= $at ? esc($at->telefone) : '' ?>"
+                placeholder="222 XXX XXX" maxlength="50" />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+              <input type="email" name="at_email" class="form-control"
+                value="<?= $at ? esc($at->email) : '' ?>"
+                placeholder="assistencia@empresa.pt" maxlength="255" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- card -->
 
 <div class="mhs-form-actions">
   <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Guardar alterações</button>
-  <a href="lista.php" class="btn btn-outline-secondary">Cancelar</a>
+  <a href="detalhes.php?id=<?= $id ?>" class="btn btn-outline-secondary">Cancelar</a>
 </div>
 
 </form>
-
-<script>
-document.querySelectorAll('.mhs-detail-tab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.mhs-detail-tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.mhs-tab-pane').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    });
-});
-</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

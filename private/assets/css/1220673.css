@@ -630,3 +630,57 @@ table.dataTable.stripe tbody tr.odd:hover td{background:#f6fdf9!important}
 .mhs-datatable .btn-outline-primary:hover{background:#dff0f8!important;border-color:#0d6ea8!important}
 .mhs-datatable .btn-outline-danger{border-color:#fecaca!important;color:#dc2626!important;background:#fff!important}
 .mhs-datatable .btn-outline-danger:hover{background:#fef2f2!important;border-color:#f87171!important}
+
+/* ── Mensagens — linha não lida ─────────────────────────────────────── */
+.mhs-row-unread{background:#fffbeb}
+.mhs-row-unread:hover{background:#fef3c7!important}
+
+/* ── AT card (view-only) ─────────────────────────────────────────────── */
+.mhs-at-card{border:1.5px solid #e2e8f0;border-radius:16px;background:#f8fafc;overflow:hidden;max-width:520px}
+.mhs-at-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.1rem 1.25rem .75rem;border-bottom:1px solid #e2e8f0}
+.mhs-at-card-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 .25rem}
+.mhs-at-card-empresa{font-size:1.05rem;font-weight:700;color:#1e293b;margin:0 0 .15rem}
+.mhs-at-card-nome{font-size:.85rem;color:#64748b;margin:0}
+.mhs-at-card-contacts{display:flex;flex-direction:column;gap:0}
+.mhs-at-contact-item{display:flex;align-items:center;gap:.85rem;padding:.75rem 1.25rem;text-decoration:none;color:#1e293b;border-bottom:1px solid #f1f5f9;transition:background .16s}
+.mhs-at-contact-item:last-child{border-bottom:0}
+.mhs-at-contact-item:hover{background:#eff6ff}
+.mhs-at-contact-item small{display:block;font-size:.68rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.mhs-at-contact-item strong{display:block;font-size:.92rem;font-weight:700}
+.mhs-at-contact-icon{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-size:.85rem}
+.mhs-at-contact-item--tel .mhs-at-contact-icon{background:#dcfce7;color:#16a34a}
+
+/* ── Banner próxima manutenção ───────────────────────────────────────── */
+.mhs-next-maint-banner{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-radius:14px;border:1.5px solid}
+.mhs-next-maint-banner--ok{background:#f0fdf4;border-color:#86efac}
+.mhs-next-maint-banner--late{background:#fef2f2;border-color:#fca5a5}
+.mhs-next-maint-banner--none{background:#f8fafc;border-color:#e2e8f0}
+.mhs-next-maint-icon{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:1.1rem}
+.mhs-next-maint-banner--ok .mhs-next-maint-icon{background:#dcfce7;color:#16a34a}
+.mhs-next-maint-banner--late .mhs-next-maint-icon{background:#fef2f2;color:#dc2626}
+.mhs-next-maint-banner--none .mhs-next-maint-icon{background:#f1f5f9;color:#94a3b8}
+.mhs-next-maint-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin:0 0 .2rem}
+.mhs-next-maint-date{font-size:1.05rem;font-weight:700;color:#1e293b;margin:0;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.mhs-next-maint-tag{font-size:.7rem;font-weight:800;padding:.15rem .55rem;border-radius:999px;background:#dc2626;color:#fff;text-transform:uppercase}
+
+/* ── Calendário de manutenções ───────────────────────────────────────── */
+.mhs-cal-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.6rem}
+@media(max-width:640px){.mhs-cal-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:380px){.mhs-cal-grid{grid-template-columns:repeat(3,1fr)}}
+.mhs-cal-month{border-radius:12px;border:1.5px solid #e2e8f0;padding:.65rem .4rem .5rem;text-align:center;background:#f8fafc;transition:transform .15s,box-shadow .15s;cursor:default}
+.mhs-cal-month-name{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:.25rem}
+.mhs-cal-month-day{font-size:1.15rem;font-weight:800;line-height:1;color:#94a3b8}
+.mhs-cal-month-day small{display:block;font-size:.6rem;font-weight:600;margin-top:.2rem}
+.mhs-cal-month--done{background:#f0fdf4;border-color:#86efac}
+.mhs-cal-month--done .mhs-cal-month-name{color:#16a34a}
+.mhs-cal-month--done .mhs-cal-month-day{color:#15803d}
+.mhs-cal-month--planned{background:#eff6ff;border-color:#93c5fd}
+.mhs-cal-month--planned .mhs-cal-month-name{color:#1d4ed8}
+.mhs-cal-month--planned .mhs-cal-month-day{color:#1e40af}
+.mhs-cal-month--overdue{background:#fef2f2;border-color:#fca5a5}
+.mhs-cal-month--overdue .mhs-cal-month-name{color:#dc2626}
+.mhs-cal-month--overdue .mhs-cal-month-day{color:#b91c1c}
+.mhs-cal-legend{display:inline-block;width:10px;height:10px;border-radius:50%}
+.mhs-cal-legend--done{background:#16a34a}
+.mhs-cal-legend--planned{background:#1d4ed8}
+.mhs-cal-legend--overdue{background:#dc2626}

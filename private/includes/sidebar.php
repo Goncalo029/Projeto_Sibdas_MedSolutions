@@ -24,7 +24,7 @@ function mhs_mensagens_nao_lidas(): int
     try {
         $row = mhs_pdo()->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL")->fetch();
         return (int)($row->total ?? 0);
-    } catch (Exception $e) {
+    } catch (Exception) {
         return 0;
     }
 }
@@ -53,10 +53,6 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
         <a href="<?= BASE_URL ?>/private/views/fornecedores/lista.php" class="mhs-nav-link<?= mhs_active('fornecedores'); ?>"><i class="fa-solid fa-truck fa-fw"></i><span>Fornecedores</span></a>
         <a href="<?= BASE_URL ?>/private/views/documentos/lista.php" class="mhs-nav-link<?= mhs_active('documentos'); ?>"><i class="fa-solid fa-file-lines fa-fw"></i><span>Documentos</span></a>
         <a href="<?= BASE_URL ?>/private/views/garantias-contrato/lista.php" class="mhs-nav-link<?= mhs_active('garantias'); ?>"><i class="fa-solid fa-shield-halved fa-fw"></i><span>Garantias-Contrato</span></a>
-
-        <div class="mhs-nav-section">Manutenção</div>
-        <a href="<?= BASE_URL ?>/private/views/manutencoes/lista.php" class="mhs-nav-link<?= mhs_active('manutencoes'); ?>"><i class="fa-solid fa-wrench fa-fw"></i><span>Manutenções</span></a>
-        <a href="<?= BASE_URL ?>/private/views/assistencia-tecnica/lista.php" class="mhs-nav-link<?= mhs_active('assistencia-tecnica'); ?>"><i class="fa-solid fa-headset fa-fw"></i><span>Assistência Técnica</span></a>
 
         <div class="mhs-nav-section">Ferramentas</div>
         <a href="<?= BASE_URL ?>/private/views/pesquisa/pesquisa.php" class="mhs-nav-link<?= mhs_active('pesquisa'); ?>"><i class="fa-solid fa-magnifying-glass fa-fw"></i><span>Pesquisa</span></a>

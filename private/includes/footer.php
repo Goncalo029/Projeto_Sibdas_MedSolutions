@@ -25,8 +25,8 @@
 </div>
 
 <?php $mhs_js_version = filemtime(__DIR__ . '/../assets/js/1220673.js'); ?>
-<script src="/MedSolutions/private/assets/bootstrap/bootstrap.bundle.min.js"></script>
-<script src="/MedSolutions/private/assets/js/1220673.js?v=<?= $mhs_js_version ?>"></script>
+<script src="<?= BASE_URL ?>/private/assets/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="<?= BASE_URL ?>/private/assets/js/1220673.js?v=<?= $mhs_js_version ?>"></script>
 
 </body>
 </html>

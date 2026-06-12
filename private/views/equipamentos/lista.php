@@ -7,8 +7,42 @@ $page_title = 'Equipamentos - Lista';
 $equipamentos = [];
 $erro_bd = '';
 
+// Filtros vindos das notificações (ou de links diretos)
+$f_estado = trim($_GET['estado'] ?? '');
+$f_filtro = trim($_GET['filtro'] ?? '');
+
+$where  = "e.deleted_at IS NULL";
+$params = [];
+
+if ($f_estado !== '') {
+    $where .= " AND e.estado = ?";
+    $params[] = $f_estado;
+}
+if ($f_filtro === 'manutencao_atraso') {
+    $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
+                WHERE mp.id_equipamento = e.id AND mp.proxima_manutencao < CURDATE()
+                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.deleted_at IS NULL)";
+} elseif ($f_filtro === 'manutencao_7dias') {
+    $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
+                WHERE mp.id_equipamento = e.id
+                AND mp.proxima_manutencao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.deleted_at IS NULL)";
+} elseif ($f_filtro === 'emprestimo_30dias') {
+    $where .= " AND EXISTS (SELECT 1 FROM emprestimos_equipamentos ee
+                WHERE ee.id_equipamento = e.id AND ee.data_devolucao IS NULL
+                AND ee.data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND ee.deleted_at IS NULL)";
+}
+
+$filtro_label = match(true) {
+    $f_estado !== ''                   => 'Estado: ' . $f_estado,
+    $f_filtro === 'manutencao_atraso'  => 'Manutenções em atraso',
+    $f_filtro === 'manutencao_7dias'   => 'Manutenção prevista nos próximos 7 dias',
+    $f_filtro === 'emprestimo_30dias'  => 'Empréstimos em curso há mais de 30 dias',
+    default                            => '',
+};
+
 try {
-    $equipamentos = mhs_pdo()->query("
+    $stmt = mhs_pdo()->prepare("
         SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
                e.estado, e.criticidade,
                c.nome AS categoria, l.servico,
@@ -17,13 +51,51 @@ try {
         LEFT JOIN categorias c ON c.id = e.id_categoria
         LEFT JOIN localizacoes l ON l.id = e.id_localizacao
         LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.deleted_at IS NULL
-        WHERE e.deleted_at IS NULL
+        WHERE $where
         GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
                  e.estado, e.criticidade, c.nome, l.servico
         ORDER BY e.codigo_inventario
-    ")->fetchAll();
+    ");
+    $stmt->execute($params);
+    $equipamentos = $stmt->fetchAll();
 } catch (PDOException $e) {
     $erro_bd = 'Nao foi possivel carregar equipamentos.';
+}
+
+// ── Exportação inline ──────────────────────────────────────────────────
+$export = $_GET['export'] ?? '';
+if ($export === 'csv' && !$erro_bd) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputcsv($out, ['Código', 'Designação', 'Marca', 'Modelo', 'Nº Série', 'Categoria', 'Serviço', 'Estado', 'Criticidade', 'Documentos']);
+    foreach ($equipamentos as $eq) {
+        fputcsv($out, [
+            $eq->codigo_inventario, $eq->designacao, $eq->marca,
+            $eq->modelo, $eq->numero_serie, $eq->categoria,
+            $eq->servico, $eq->estado, $eq->criticidade, (int)$eq->total_documentos,
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+if ($export === 'json' && !$erro_bd) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.json"');
+    echo json_encode(array_map(fn($eq) => [
+        'codigo_inventario' => $eq->codigo_inventario,
+        'designacao'        => $eq->designacao,
+        'marca'             => $eq->marca,
+        'modelo'            => $eq->modelo,
+        'numero_serie'      => $eq->numero_serie,
+        'categoria'         => $eq->categoria,
+        'servico'           => $eq->servico,
+        'estado'            => $eq->estado,
+        'criticidade'       => $eq->criticidade,
+        'total_documentos'  => (int)$eq->total_documentos,
+    ], $equipamentos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 include __DIR__ . '/../../includes/header.php';
@@ -38,6 +110,13 @@ include __DIR__ . '/../../includes/header.php';
 
 <?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
 
+<?php if ($filtro_label !== '') : ?>
+<div class="alert alert-info d-flex align-items-center justify-content-between mb-3">
+  <span><i class="fa-solid fa-filter me-2"></i>Filtro ativo: <strong><?= esc($filtro_label) ?></strong> — <?= count($equipamentos) ?> resultado<?= count($equipamentos) !== 1 ? 's' : '' ?></span>
+  <a href="lista.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-xmark me-1"></i>Limpar filtro</a>
+</div>
+<?php endif; ?>
+
 <div class="card mhs-data-card">
   <div class="mhs-table-toolbar">
     <div class="mhs-table-toolbar-left">
@@ -46,8 +125,12 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-count"><?= count($equipamentos) ?> registos</span>
     </div>
     <div class="d-flex gap-2 align-items-center">
-      <a href="exportar_csv.php" class="btn btn-outline-secondary btn-sm">
+      <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'filtro' => $f_filtro])); ?>
+      <a href="?export=csv<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-csv me-1"></i>Exportar CSV
+      </a>
+      <a href="?export=json<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-brackets-curly me-1"></i>Exportar JSON
       </a>
       <button onclick="mhsExportarPDF()" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
@@ -60,7 +143,7 @@ include __DIR__ . '/../../includes/header.php';
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table mhs-datatable mb-0" id="equipamentosTable">
+      <table class="table mhs-datatable mb-0" id="equipamentosTable" data-total="<?= count($equipamentos) ?>">
         <thead>
           <tr>
             <th>Código</th>
@@ -99,34 +182,5 @@ include __DIR__ . '/../../includes/header.php';
     </div>
   </div>
 </div>
-
-<script>
-function mhsExportarPDF() {
-    var w = window.open('', '_blank', 'width=1100,height=800');
-    var rows = '';
-    document.querySelectorAll('#equipamentosTable tbody tr').forEach(function(tr) {
-        var tds = tr.querySelectorAll('td');
-        if (tds.length < 8) return;
-        rows += '<tr>';
-        rows += '<td>' + (tds[0].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[1].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[2].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[3].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[4].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[5].textContent.trim()) + '</td>';
-        rows += '<td>' + (tds[6].textContent.trim()) + '</td>';
-        rows += '</tr>';
-    });
-    w.document.write('<html><head><title>Equipamentos</title>');
-    w.document.write('<style>*{font-family:Arial,sans-serif;font-size:11px}body{padding:20px}h2{font-size:14px;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#0d6ea8;color:#fff;padding:7px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px}td{padding:6px 8px;border-bottom:1px solid #e2e8f0}tr:nth-child(even) td{background:#f8fafc}.foot{margin-top:10px;font-size:10px;color:#94a3b8}</style>');
-    w.document.write('</head><body>');
-    w.document.write('<h2>Lista de Equipamentos &mdash; ' + new Date().toLocaleDateString('pt-PT') + '</h2>');
-    w.document.write('<table><thead><tr><th>Código</th><th>Designação</th><th>Marca</th><th>Categoria</th><th>Serviço</th><th>Estado</th><th>Criticidade</th></tr></thead><tbody>' + rows + '</tbody></table>');
-    w.document.write('<p class="foot">Total: <?= count($equipamentos) ?> equipamentos</p>');
-    w.document.write('<script>window.onload=function(){window.print();window.close()}<\/script>');
-    w.document.write('</body></html>');
-    w.document.close();
-}
-</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

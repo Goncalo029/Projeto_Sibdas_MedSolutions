@@ -1,24 +1,16 @@
 <?php
-// Configurações globais da aplicação MedSolutions
-define('BASE_URL', '/MedSolutions');
+define('BASE_URL', '/sibdas/1220673/MedSolutions');
 define('APP_NAME', 'MedSolutions');
-
-// Versão e Copyright
 define('APP_VERSION', '1.0.0');
 define('APP_COPYRIGHT', '© 2026 MedSolutions');
-
-// Base de Dados
-define('MYSQL_HOST', 'localhost');
-define('MYSQL_DATABASE', 'MedSolutions');
-define('MYSQL_USERNAME', 'root');
-define('MYSQL_PASSWORD', '');
-
-// Segurança – Encriptação com OpenSSL (IDs em URLs)
+define('MYSQL_HOST', 'vsgate-s1.dei.isep.ipp.pt');
+define('MYSQL_PORT', 10464);
+define('MYSQL_DATABASE', 'db1220673');
+define('MYSQL_USERNAME', '1220673');
+define('MYSQL_PASSWORD', 'pires_673');
 define('OPENSSL_METHOD', 'AES-256-CBC');
 define('OPENSSL_KEY', 'M3dSol_K3y32CharsSecr3tK3y!');  // 32 caracteres
 define('OPENSSL_IV',  'M3dSol_IV16CharK!');             // 16 caracteres
-
-// Chave AES usada pelo MySQL para encriptar dados sensíveis (AES_ENCRYPT/AES_DECRYPT)
 define('MYSQL_AES_KEY', 'M3dSol_MySQL_AES_2026!');
 
 /**

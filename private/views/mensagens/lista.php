@@ -120,9 +120,4 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
-<style>
-.mhs-row-unread { background: #fffbeb; }
-.mhs-row-unread:hover { background: #fef3c7 !important; }
-</style>
-
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

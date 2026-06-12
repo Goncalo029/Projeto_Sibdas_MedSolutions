@@ -12,6 +12,8 @@ $proxima_manutencao = null;
 $manutencao_info = null;
 $contacto_at = null;
 $fornecedores_at = [];
+$at_contact = null;
+$mans_eq = [];
 
 if ($id > 0) {
     try {
@@ -29,7 +31,8 @@ if ($id > 0) {
 
         if ($eq) {
             $fornecedores = $pdo->prepare("
-                SELECT f.nome, ef.tipo_relacao, f.telefone, f.email
+                SELECT f.nome, ef.tipo_relacao, f.telefone, f.email,
+                       f.pessoa_contacto, f.tel_contacto, f.tipo_fornecedor
                 FROM equipamentos_fornecedores ef
                 JOIN fornecedores f ON f.id = ef.id_fornecedor
                 WHERE ef.id_equipamento = ?
@@ -38,10 +41,22 @@ if ($id > 0) {
             $fornecedores = $fornecedores->fetchAll();
 
             foreach ($fornecedores as $f) {
-                if (stripos($f->tipo_relacao ?? '', 'assist') !== false || stripos($f->tipo_relacao ?? '', 'tecni') !== false) {
+                $rel = ($f->tipo_relacao ?? '') . ' ' . ($f->tipo_fornecedor ?? '');
+                if (stripos($rel, 'assist') !== false || stripos($rel, 'tecni') !== false) {
                     $fornecedores_at[] = $f;
                     if (!$contacto_at) $contacto_at = $f;
                 }
+            }
+
+            // Sem fornecedor de AT associado: usar o fornecedor global de assistência técnica
+            if (!$contacto_at) {
+                $s = $pdo->query("
+                    SELECT nome, telefone, email, pessoa_contacto, tel_contacto, tipo_fornecedor
+                    FROM fornecedores
+                    WHERE tipo_fornecedor LIKE '%assist%' AND deleted_at IS NULL
+                    ORDER BY id LIMIT 1
+                ");
+                $contacto_at = $s ? $s->fetch() : null;
             }
 
             $documentos = $pdo->prepare("
@@ -68,15 +83,57 @@ if ($id > 0) {
             $man->execute([$id]);
             $manutencao_info = $man->fetch();
             $proxima_manutencao = $manutencao_info ? $manutencao_info->proxima_manutencao : null;
+
+            // AT por equipamento
+            try {
+                $pdo->exec("CREATE TABLE IF NOT EXISTS equipamento_at (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    id_equipamento INT NOT NULL,
+                    empresa VARCHAR(255) DEFAULT NULL,
+                    nome_contacto VARCHAR(255) DEFAULT NULL,
+                    email VARCHAR(255) DEFAULT NULL,
+                    telefone VARCHAR(50) DEFAULT NULL,
+                    telefone_urgencia VARCHAR(50) DEFAULT NULL,
+                    observacoes TEXT DEFAULT NULL,
+                    created_at DATETIME DEFAULT NOW(),
+                    updated_at DATETIME DEFAULT NOW(),
+                    UNIQUE KEY uq_eq_at (id_equipamento)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                $s = $pdo->prepare("SELECT * FROM equipamento_at WHERE id_equipamento = ? LIMIT 1");
+                $s->execute([$id]);
+                $at_contact = $s->fetch();
+            } catch (PDOException) {}
+
+            // Manutenções deste equipamento
+            try {
+                $s2 = $pdo->prepare("
+                    SELECT * FROM manutencoes
+                    WHERE id_equipamento = ? AND deleted_at IS NULL
+                    ORDER BY data_manutencao DESC
+                ");
+                $s2->execute([$id]);
+                $mans_eq = $s2->fetchAll();
+            } catch (PDOException) {}
         }
-    } catch (PDOException $e) {
-        // falha silenciosa — dados ficam null
-    }
+    } catch (PDOException) {}
 }
 
 $page_title = 'Equipamentos - Detalhes';
 include __DIR__ . '/../../includes/header.php';
 ?>
+
+<?php if (!empty($_SESSION['success_message'])): ?>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fa-solid fa-circle-check me-2"></i><?= htmlspecialchars($_SESSION['success_message']) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php unset($_SESSION['success_message']); endif; ?>
+<?php if (!empty($_SESSION['error_message'])): ?>
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fa-solid fa-circle-exclamation me-2"></i><?= htmlspecialchars($_SESSION['error_message']) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php unset($_SESSION['error_message']); endif; ?>
 
 <div class="mhs-page-header">
   <div>
@@ -147,6 +204,9 @@ include __DIR__ . '/../../includes/header.php';
     </button>
     <button class="mhs-detail-tab" data-tab="assistencia">
       <i class="fa-solid fa-headset"></i> Assistência Técnica
+    </button>
+    <button class="mhs-detail-tab" data-tab="manutencoes">
+      <i class="fa-solid fa-wrench"></i> Manutenções
     </button>
     <button class="mhs-detail-tab" data-tab="documentos">
       <i class="fa-solid fa-file-lines"></i> Documentos
@@ -294,100 +354,208 @@ include __DIR__ . '/../../includes/header.php';
         <i class="fa-solid fa-triangle-exclamation fa-lg"></i>
         <div><strong>Equipamento avariado.</strong> Contacte a assistência técnica com urgência.</div>
       </div>
-      <?php elseif ($eq && $eq->estado === 'Em manutenção'): ?>
-      <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
-        <i class="fa-solid fa-screwdriver-wrench fa-lg"></i>
-        <div><strong>Equipamento em manutenção.</strong></div>
-      </div>
       <?php endif; ?>
 
-      <div class="row g-4">
-        <!-- Atalhos -->
-        <div class="col-12">
-          <div class="d-flex gap-2 flex-wrap">
-            <a href="../assistencia-tecnica/lista.php" class="btn btn-outline-primary">
-              <i class="fa-solid fa-headset me-1"></i>Ver todos os contactos de AT
-            </a>
-            <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Urgência" class="btn btn-danger">
-              <i class="fa-solid fa-triangle-exclamation me-1"></i>Pedir assistência de urgência
-            </a>
-            <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Preventiva" class="btn btn-outline-secondary">
-              <i class="fa-solid fa-calendar-plus me-1"></i>Agendar manutenção preventiva
-            </a>
+      <?php if ($at_contact && ($at_contact->empresa || $at_contact->nome_contacto || $at_contact->email || $at_contact->telefone)): ?>
+      <div class="mhs-at-card">
+        <div class="mhs-at-card-header">
+          <div>
+            <p class="mhs-at-card-label">Assistência Técnica</p>
+            <h5 class="mhs-at-card-empresa"><?= $at_contact->empresa ? esc($at_contact->empresa) : '—' ?></h5>
+            <?php if ($at_contact->nome_contacto): ?>
+            <p class="mhs-at-card-nome"><?= esc($at_contact->nome_contacto) ?></p>
+            <?php endif; ?>
           </div>
+          <a href="editar.php?id=<?= $id ?>&tab=assistencia" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-pen me-1"></i>Editar
+          </a>
         </div>
-
-        <!-- Histórico de manutenções deste equipamento -->
-        <div class="col-12">
-          <div class="mhs-info-group">
-            <div class="mhs-info-group-title d-flex justify-content-between align-items-center">
-              <span><i class="fa-solid fa-wrench"></i> Histórico de Manutenções</span>
-              <a href="../manutencoes/lista.php" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+        <div class="mhs-at-card-contacts">
+          <?php if ($at_contact->telefone): ?>
+          <a href="tel:<?= esc($at_contact->telefone) ?>" class="mhs-at-contact-item mhs-at-contact-item--tel">
+            <span class="mhs-at-contact-icon"><i class="fa-solid fa-phone"></i></span>
+            <div>
+              <small>Telefone</small>
+              <strong><?= esc($at_contact->telefone) ?></strong>
             </div>
-            <?php
-            $mans_eq = [];
-            if ($id > 0) {
-                try {
-                    $stmt = mhs_pdo()->prepare("
-                        SELECT * FROM manutencoes
-                        WHERE id_equipamento = ? AND deleted_at IS NULL
-                        ORDER BY data_manutencao DESC
-                        LIMIT 10
-                    ");
-                    $stmt->execute([$id]);
-                    $mans_eq = $stmt->fetchAll();
-                } catch (PDOException) {}
-            }
-            ?>
-            <?php if (count($mans_eq) > 0): ?>
-              <table class="table mhs-datatable mb-0 mt-2">
-                <thead>
-                  <tr><th>Tipo</th><th>Data</th><th>Próxima</th><th>Estado</th><th>Responsável</th><th></th></tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($mans_eq as $m): ?>
-                    <tr>
-                      <td>
-                        <?= $m->tipo === 'Urgência'
-                          ? '<span class="badge bg-danger">Urgência</span>'
-                          : '<span class="badge bg-primary">Preventiva</span>' ?>
-                      </td>
-                      <td><?= $m->data_manutencao ? date('d/m/Y', strtotime($m->data_manutencao)) : '—' ?></td>
-                      <td>
-                        <?php if ($m->proxima_manutencao):
-                          $v = $m->proxima_manutencao < date('Y-m-d') && $m->estado !== 'Concluída'; ?>
-                          <span class="<?= $v ? 'text-danger fw-semibold' : '' ?>"><?= date('d/m/Y', strtotime($m->proxima_manutencao)) ?></span>
-                        <?php else: ?>—<?php endif; ?>
-                      </td>
-                      <td>
-                        <?php
-                        $cls = match($m->estado) {
-                            'Concluída' => 'bg-success', 'Em curso' => 'bg-info text-dark',
-                            'Planeada'  => 'bg-primary',  default    => 'bg-secondary',
-                        };
-                        echo "<span class='badge $cls'>{$m->estado}</span>";
-                        ?>
-                      </td>
-                      <td><?= $m->tecnico_responsavel ? esc($m->tecnico_responsavel) : '—' ?></td>
-                      <td>
-                        <a href="../manutencoes/detalhes.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            <?php else: ?>
-              <div class="mhs-empty-state py-4">
-                <i class="fa-solid fa-wrench"></i>
-                <p>Sem manutenções registadas para este equipamento.</p>
-                <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>" class="btn btn-primary btn-sm">
-                  <i class="fa-solid fa-plus me-1"></i>Registar manutenção
-                </a>
-              </div>
+          </a>
+          <?php endif; ?>
+          <?php if ($at_contact->email): ?>
+          <a href="mailto:<?= esc($at_contact->email) ?>" class="mhs-at-contact-item">
+            <span class="mhs-at-contact-icon"><i class="fa-solid fa-envelope"></i></span>
+            <div>
+              <small>Email</small>
+              <strong><?= esc($at_contact->email) ?></strong>
+            </div>
+          </a>
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php elseif ($contacto_at): ?>
+      <div class="mhs-at-card">
+        <div class="mhs-at-card-header">
+          <div>
+            <p class="mhs-at-card-label">Assistência Técnica</p>
+            <h5 class="mhs-at-card-empresa"><?= esc($contacto_at->nome) ?></h5>
+            <?php if (!empty($contacto_at->pessoa_contacto)): ?>
+            <p class="mhs-at-card-nome"><?= esc($contacto_at->pessoa_contacto) ?></p>
             <?php endif; ?>
           </div>
         </div>
+        <div class="mhs-at-card-contacts">
+          <?php if (!empty($contacto_at->telefone)): ?>
+          <a href="tel:<?= esc($contacto_at->telefone) ?>" class="mhs-at-contact-item mhs-at-contact-item--tel">
+            <span class="mhs-at-contact-icon"><i class="fa-solid fa-phone"></i></span>
+            <div>
+              <small>Telefone</small>
+              <strong><?= esc($contacto_at->telefone) ?></strong>
+            </div>
+          </a>
+          <?php endif; ?>
+          <?php if (!empty($contacto_at->tel_contacto)): ?>
+          <a href="tel:<?= esc($contacto_at->tel_contacto) ?>" class="mhs-at-contact-item mhs-at-contact-item--tel">
+            <span class="mhs-at-contact-icon"><i class="fa-solid fa-phone-volume"></i></span>
+            <div>
+              <small>Linha direta</small>
+              <strong><?= esc($contacto_at->tel_contacto) ?></strong>
+            </div>
+          </a>
+          <?php endif; ?>
+          <?php if (!empty($contacto_at->email)): ?>
+          <a href="mailto:<?= esc($contacto_at->email) ?>" class="mhs-at-contact-item">
+            <span class="mhs-at-contact-icon"><i class="fa-solid fa-envelope"></i></span>
+            <div>
+              <small>Email</small>
+              <strong><?= esc($contacto_at->email) ?></strong>
+            </div>
+          </a>
+          <?php endif; ?>
+        </div>
       </div>
+      <?php else: ?>
+      <div class="mhs-empty-state">
+        <i class="fa-solid fa-headset"></i>
+        <p>Sem contacto de assistência técnica registado.</p>
+      </div>
+      <?php endif; ?>
+
+    </div>
+  </div>
+
+  <!-- Manutenções -->
+  <div class="mhs-tab-pane" id="tab-manutencoes">
+    <div class="mhs-tab-body">
+
+      <!-- Acções -->
+      <div class="d-flex gap-2 flex-wrap mb-4">
+        <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Preventiva" class="btn btn-primary">
+          <i class="fa-solid fa-calendar-plus me-1"></i>Registar Manutenção Preventiva
+        </a>
+        <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Urgência" class="btn btn-danger">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i>Urgência
+        </a>
+      </div>
+
+      <!-- Próxima manutenção em destaque -->
+      <?php
+        $proxima_prev = null;
+        foreach ($mans_eq as $_m) {
+            if ($_m->tipo === 'Preventiva' && $_m->proxima_manutencao) {
+                if (!$proxima_prev || $_m->proxima_manutencao > $proxima_prev) {
+                    $proxima_prev = $_m->proxima_manutencao;
+                }
+            }
+        }
+        $prev_atrasada = $proxima_prev && $proxima_prev < date('Y-m-d');
+      ?>
+      <div class="mhs-next-maint-banner <?= $prev_atrasada ? 'mhs-next-maint-banner--late' : ($proxima_prev ? 'mhs-next-maint-banner--ok' : 'mhs-next-maint-banner--none') ?> mb-4">
+        <span class="mhs-next-maint-icon">
+          <i class="fa-regular fa-calendar-check"></i>
+        </span>
+        <div>
+          <p class="mhs-next-maint-label">Próxima manutenção preventiva</p>
+          <p class="mhs-next-maint-date">
+            <?php if ($proxima_prev): ?>
+              <?= date('d \d\e F \d\e Y', strtotime($proxima_prev)) ?>
+              <?php if ($prev_atrasada): ?><span class="mhs-next-maint-tag">Em atraso</span><?php endif; ?>
+            <?php else: ?>
+              Sem data definida
+            <?php endif; ?>
+          </p>
+        </div>
+      </div>
+
+      <!-- Calendário Preventivo (semestral) -->
+      <div class="mhs-info-group mb-4">
+        <div class="mhs-info-group-title d-flex align-items-center justify-content-between gap-2">
+          <span><i class="fa-regular fa-calendar"></i> Calendário — periodicidade semestral</span>
+          <div class="d-flex align-items-center gap-1">
+            <button type="button" class="btn btn-sm btn-outline-secondary px-2" id="calPrevYear">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="fw-bold" id="calYearLabel" style="min-width:46px;text-align:center;font-size:.95rem"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary px-2" id="calNextYear">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mhs-cal-grid mt-3" id="mhsCalGrid" data-maints="<?= htmlspecialchars(json_encode(array_values(array_map(fn($m) => ['date' => $m->data_manutencao, 'estado' => $m->estado, 'proxima' => $m->proxima_manutencao], array_filter($mans_eq, fn($m) => $m->tipo === 'Preventiva')))), ENT_QUOTES, 'UTF-8') ?>"></div>
+
+        <div class="d-flex gap-4 mt-3 flex-wrap" style="font-size:.78rem;color:#64748b">
+          <span class="d-flex align-items-center gap-1"><span class="mhs-cal-legend mhs-cal-legend--done"></span> Concluída</span>
+          <span class="d-flex align-items-center gap-1"><span class="mhs-cal-legend mhs-cal-legend--planned"></span> Planeada</span>
+          <span class="d-flex align-items-center gap-1"><span class="mhs-cal-legend mhs-cal-legend--overdue"></span> Em atraso</span>
+        </div>
+      </div>
+
+      <!-- Tabela de registos -->
+      <?php
+      $preventivas = array_filter($mans_eq, fn($m) => $m->tipo === 'Preventiva');
+      $urgencias   = array_filter($mans_eq, fn($m) => $m->tipo !== 'Preventiva');
+      ?>
+
+      <?php if (count($mans_eq) > 0): ?>
+      <div class="mhs-info-group">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-list-check"></i> Histórico de registos</div>
+        <table class="table table-sm mhs-datatable mb-0 mt-2">
+          <thead>
+            <tr><th>Tipo</th><th>Data realizada</th><th>Próxima prevista</th><th>Estado</th><th>Responsável</th><th></th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($mans_eq as $m): ?>
+              <tr>
+                <td><?= $m->tipo === 'Urgência' ? '<span class="badge bg-danger">Urgência</span>' : '<span class="badge bg-primary">Preventiva</span>' ?></td>
+                <td><?= $m->data_manutencao ? date('d/m/Y', strtotime($m->data_manutencao)) : '—' ?></td>
+                <td>
+                  <?php if ($m->proxima_manutencao):
+                    $v = $m->proxima_manutencao < date('Y-m-d') && $m->estado !== 'Concluída'; ?>
+                    <span class="<?= $v ? 'text-danger fw-semibold' : '' ?>"><?= date('d/m/Y', strtotime($m->proxima_manutencao)) ?></span>
+                  <?php else: ?>—<?php endif; ?>
+                </td>
+                <td><?php
+                  $cls = match($m->estado) {
+                    'Concluída' => 'bg-success', 'Em curso' => 'bg-info text-dark',
+                    'Planeada'  => 'bg-primary',  default    => 'bg-secondary',
+                  };
+                  echo "<span class='badge $cls'>{$m->estado}</span>"; ?>
+                </td>
+                <td><?= $m->tecnico_responsavel ? esc($m->tecnico_responsavel) : '—' ?></td>
+                <td class="text-nowrap">
+                  <a href="../manutencoes/detalhes.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                  <a href="../manutencoes/editar.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-primary ms-1"><i class="fa-solid fa-pen"></i></a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php else: ?>
+        <div class="mhs-empty-state py-3">
+          <i class="fa-solid fa-wrench"></i>
+          <p>Sem manutenções registadas. Use os botões acima para adicionar.</p>
+        </div>
+      <?php endif; ?>
 
     </div>
   </div>
@@ -465,7 +633,7 @@ include __DIR__ . '/../../includes/header.php';
                   LEFT JOIN localizacoes l1 ON l1.id = ee.id_localizacao_origem
                   LEFT JOIN localizacoes l2 ON l2.id = ee.id_localizacao_destino
                   WHERE ee.id_equipamento = ? AND ee.deleted_at IS NULL
-                  ORDER BY ee.data_emprestimo DESC
+                  ORDER BY ee.data_saida DESC
               ");
               $stmt->execute([$id]);
               $emprestimos = $stmt->fetchAll();
@@ -479,15 +647,27 @@ include __DIR__ . '/../../includes/header.php';
               <div class="mhs-history-dot"></div>
               <div class="mhs-history-copy">
                 <div class="mhs-history-head">
-                  <strong>Empréstimo — <?= esc($emp->destino ?? '—') ?></strong>
-                  <small><?= $emp->data_emprestimo ? date('d/m/Y', strtotime($emp->data_emprestimo)) : '—' ?></small>
+                  <strong>
+                    Empréstimo — <?= esc($emp->destino ?? '—') ?>
+                    <span class="badge <?= $emp->estado === 'Ativo' ? 'bg-info text-dark' : 'bg-success' ?> ms-1"><?= esc($emp->estado) ?></span>
+                  </strong>
+                  <small><?= $emp->data_saida ? date('d/m/Y', strtotime($emp->data_saida)) : '—' ?></small>
                 </div>
                 <p>
                   <?= esc($emp->origem ?? '—') ?>
                   <i class="fa-solid fa-arrow-right-long mx-2"></i>
                   <?= esc($emp->destino ?? '—') ?>
-                  <?= $emp->data_devolucao ? ' — Devolvido em ' . date('d/m/Y', strtotime($emp->data_devolucao)) : ' — Em curso' ?>
+                  <?php if ($emp->data_devolucao): ?>
+                    — Devolvido em <?= date('d/m/Y', strtotime($emp->data_devolucao)) ?>
+                  <?php elseif ($emp->data_prevista_devolucao): ?>
+                    — Devolução prevista a <?= date('d/m/Y', strtotime($emp->data_prevista_devolucao)) ?>
+                  <?php else: ?>
+                    — Em curso
+                  <?php endif; ?>
                 </p>
+                <?php if ($emp->observacoes): ?>
+                  <small><?= esc($emp->observacoes) ?></small>
+                <?php endif; ?>
               </div>
             </article>
           <?php endforeach; ?>
@@ -509,10 +689,9 @@ include __DIR__ . '/../../includes/header.php';
       if ($id > 0) {
           try {
               $stmt = mhs_pdo()->prepare("
-                  SELECT em.*, u.email AS utilizador
+                  SELECT em.*
                   FROM equipamentos_movimentacoes em
-                  LEFT JOIN utilizadores u ON u.id = em.id_utilizador
-                  WHERE em.id_equipamento = ?
+                  WHERE em.id_equipamento = ? AND em.deleted_at IS NULL
                   ORDER BY em.created_at DESC
               ");
               $stmt->execute([$id]);
@@ -527,14 +706,22 @@ include __DIR__ . '/../../includes/header.php';
               <div class="mhs-history-dot"></div>
               <div class="mhs-history-copy">
                 <div class="mhs-history-head">
-                  <strong><?= esc($mov->tipo_movimentacao ?? $mov->tipo ?? 'Movimentação') ?></strong>
+                  <strong><?php
+                    echo match($mov->campo) {
+                        'localizacao' => 'Mudança de localização',
+                        'estado'      => 'Alteração de estado',
+                        default       => 'Alteração de ' . esc($mov->campo),
+                    };
+                  ?></strong>
                   <small><?= $mov->created_at ? date('d/m/Y H:i', strtotime($mov->created_at)) : '—' ?></small>
                 </div>
-                <?php if ($mov->descricao ?? $mov->observacoes ?? null): ?>
-                  <p><?= esc($mov->descricao ?? $mov->observacoes) ?></p>
-                <?php endif; ?>
-                <?php if ($mov->utilizador): ?>
-                  <small>Por <?= esc($mov->utilizador) ?></small>
+                <p>
+                  <?= esc($mov->valor_anterior ?? '—') ?>
+                  <i class="fa-solid fa-arrow-right-long mx-2"></i>
+                  <?= esc($mov->valor_novo ?? '—') ?>
+                </p>
+                <?php if ($mov->alterado_por): ?>
+                  <small>Por <?= esc($mov->alterado_por) ?></small>
                 <?php endif; ?>
               </div>
             </article>
@@ -554,31 +741,5 @@ include __DIR__ . '/../../includes/header.php';
 <!-- Modal de impressão de secção -->
 <div id="mhsPrintModal" style="display:none;position:fixed;inset:0;z-index:9999;background:#fff;padding:2rem;overflow:auto"></div>
 
-<script>
-document.querySelectorAll('.mhs-detail-tab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.mhs-detail-tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.mhs-tab-pane').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    });
-});
-
-function mhsPrintSection(sectionId) {
-    var content = document.getElementById(sectionId);
-    if (!content) return;
-    var title = document.querySelector('.mhs-page-title') ? document.querySelector('.mhs-page-title').textContent : 'Equipamento';
-    var w = window.open('', '_blank', 'width=900,height=700');
-    w.document.write('<html><head><title>' + title + '</title>');
-    w.document.write('<link rel="stylesheet" href="/MedSolutions/private/assets/bootstrap/bootstrap.min.css">');
-    w.document.write('<style>body{font-family:Inter,sans-serif;padding:2rem;font-size:13px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #e2e8f0;padding:8px 10px;text-align:left}th{background:#f8fafc;font-weight:600}dl{display:grid;grid-template-columns:160px 1fr;gap:4px 8px;margin:0}dt{font-weight:600;color:#64748b}dd{margin:0;color:#1e293b}.mhs-info-group{margin-bottom:1.5rem}.mhs-info-group-title{font-weight:700;margin-bottom:.5rem;padding-bottom:.25rem;border-bottom:2px solid #e2e8f0}h2{font-size:1.1rem;margin-bottom:1rem;color:#1e293b}</style>');
-    w.document.write('</head><body>');
-    w.document.write('<h2>' + title + ' — ' + new Date().toLocaleDateString('pt-PT') + '</h2>');
-    w.document.write(content.innerHTML);
-    w.document.write('<script>window.onload=function(){window.print();window.close()}<\/script>');
-    w.document.write('</body></html>');
-    w.document.close();
-}
-</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>
