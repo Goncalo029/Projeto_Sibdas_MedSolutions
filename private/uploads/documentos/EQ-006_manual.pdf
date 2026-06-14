@@ -1,0 +1,43 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 442 >>
+stream
+0.114 0.161 0.302 rg 40 780 515 40 re f 1 1 1 rg
+BT /F2 20 Tf 54 792 Td (Manual Tecnico - EQ-006) Tj ET
+0 0 0 rg
+BT /F1 12 Tf 54 730 Td (Ecografo Portatil \(Siemens Acuson P500\)) Tj ET
+BT /F1 11 Tf 54 695 Td (MedSolutions - Gestao de Equipamentos Medicos) Tj ET
+BT /F1 10 Tf 54 675 Td (Documento de amostra gerado para demonstracao.) Tj ET
+BT /F1 10 Tf 54 655 Td (Data de emissao: 14/06/2026) Tj ET
+0.8 w 0.7 0.7 0.7 RG 54 645 m 541 645 l S
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000743 00000 n 
+0000000840 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+942
+%%EOF

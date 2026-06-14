@@ -54,6 +54,7 @@ function mhs_hist_entidade_label(string $e): string {
         'fornecedor'        => 'Fornecedor',
         'documento'         => 'Documento',
         'garantia-contrato' => 'Garantia/Contrato',
+        'emprestimo'        => 'Empréstimo',
         'utilizador'        => 'Utilizador',
         'website'           => 'Website Público',
         'mensagem'          => 'Mensagem',

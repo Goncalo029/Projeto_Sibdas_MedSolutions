@@ -16,9 +16,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'Equipamento e Tipo de documento são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
+    // Upload opcional de novo ficheiro (substitui o anterior)
+    $cod = mhs_pdo()->query("SELECT codigo_inventario FROM equipamentos WHERE id = " . $id_equipamento)->fetchColumn() ?: 'doc';
+    $erro_upload = null;
+    $novo_ficheiro = mhs_guardar_pdf('ficheiro', $cod, $erro_upload);
+    if ($erro_upload) {
+        $_SESSION['error_message'] = $erro_upload;
+        header("Location: editar.php?id=$id"); exit;
+    }
+
     try {
-        mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,observacoes=?,updated_at=NOW() WHERE id=?")
-            ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $observacoes ?: null, $id]);
+        if ($novo_ficheiro) {
+            // apagar o ficheiro antigo, se existir
+            $antigo = mhs_pdo()->query("SELECT nome_ficheiro FROM documentos WHERE id = " . (int)$id)->fetchColumn();
+            if ($antigo) {
+                $p = __DIR__ . '/../../uploads/documentos/' . basename($antigo);
+                if (is_file($p)) { @unlink($p); }
+            }
+            mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,nome_ficheiro=?,observacoes=?,updated_at=NOW() WHERE id=?")
+                ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $novo_ficheiro, $observacoes ?: null, $id]);
+        } else {
+            mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,observacoes=?,updated_at=NOW() WHERE id=?")
+                ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $observacoes ?: null, $id]);
+        }
         mhs_historico('documento', $id, ($nome_documento ?: $tipo_documento), 'editar');
         $_SESSION['success_message'] = 'Documento atualizado com sucesso.';
         header('Location: lista.php'); exit;
@@ -51,7 +71,7 @@ include __DIR__ . '/../../includes/header.php';
 <div class="card mhs-data-card">
     <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-file-lines me-1"></i>Informação do documento</div>
     <div class="card-body">
-        <form method="POST" action="" style="max-width:640px">
+        <form method="POST" action="" enctype="multipart/form-data" style="max-width:640px">
             <input type="hidden" name="id" value="<?= $row->id ?>">
             <div class="row g-3">
                 <div class="col-12">
@@ -85,6 +105,17 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Data de Validade</label>
                     <input type="text" name="data_validade" class="form-control mhs-datepicker" value="<?= htmlspecialchars($row->data_validade ?? '') ?>" placeholder="AAAA-MM-DD" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Ficheiro PDF</label>
+                    <?php if (!empty($row->nome_ficheiro)): ?>
+                      <div class="mb-2">
+                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= htmlspecialchars($row->nome_ficheiro) ?></span>
+                        <a href="download.php?id=<?= (int)$row->id ?>" class="small ms-2">Descarregar atual</a>
+                      </div>
+                    <?php endif; ?>
+                    <input type="file" name="ficheiro" class="form-control" accept="application/pdf,.pdf" />
+                    <div class="form-text">Deixe vazio para manter o ficheiro atual. Carregar um novo substitui o anterior (máx. 10 MB).</div>
                 </div>
                 <div class="col-12">
                     <label class="form-label fw-semibold">Observações</label>

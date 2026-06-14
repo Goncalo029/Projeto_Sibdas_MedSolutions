@@ -567,11 +567,6 @@ include __DIR__ . '/../../includes/header.php';
         <a href="../documentos/novo.php?id_equipamento=<?= $id ?>" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-plus me-1"></i>Adicionar documento
         </a>
-        <?php if (count($documentos) > 0): ?>
-          <a href="../equipamentos/ficha_pdf.php?id=<?= $id ?>" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-file-pdf me-1"></i>Ficha do equipamento (PDF)
-          </a>
-        <?php endif; ?>
       </div>
 
       <div id="documentos-print-area">
@@ -600,11 +595,8 @@ include __DIR__ . '/../../includes/header.php';
                     <?php else: ?>—<?php endif; ?>
                   </td>
                   <td class="text-nowrap">
-                    <a href="../documentos/ver.php?id=<?= (int)$doc->id ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver">
-                      <i class="fa-solid fa-eye"></i>
-                    </a>
                     <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-primary" title="Descarregar PDF">
-                      <i class="fa-solid fa-download"></i>
+                      <i class="fa-solid fa-download me-1"></i>PDF
                     </a>
                   </td>
                 </tr>
@@ -668,6 +660,24 @@ include __DIR__ . '/../../includes/header.php';
                 </p>
                 <?php if ($emp->observacoes): ?>
                   <small><?= esc($emp->observacoes) ?></small>
+                <?php endif; ?>
+
+                <?php if ($emp->estado === 'Ativo' && !$emp->data_devolucao): ?>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <form method="post" action="emprestimo_acao.php" onsubmit="return confirm('Terminar este empréstimo agora (devolução antecipada)?');" class="d-inline">
+                    <input type="hidden" name="id_emprestimo" value="<?= (int)$emp->id ?>">
+                    <input type="hidden" name="id_equipamento" value="<?= $id ?>">
+                    <input type="hidden" name="accao" value="terminar">
+                    <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Terminar agora</button>
+                  </form>
+                  <form method="post" action="emprestimo_acao.php" class="d-inline d-flex align-items-center gap-1">
+                    <input type="hidden" name="id_emprestimo" value="<?= (int)$emp->id ?>">
+                    <input type="hidden" name="id_equipamento" value="<?= $id ?>">
+                    <input type="hidden" name="accao" value="estender">
+                    <input type="date" name="nova_data" class="form-control form-control-sm" style="width:auto" value="<?= $emp->data_prevista_devolucao ?: date('Y-m-d') ?>" required>
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-calendar-plus me-1"></i>Estender</button>
+                  </form>
+                </div>
                 <?php endif; ?>
               </div>
             </article>

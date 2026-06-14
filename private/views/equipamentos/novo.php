@@ -65,7 +65,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException) {}
         }
 
-        $_SESSION['success_message'] = 'Equipamento criado com sucesso.';
+        // Guardar documentos anexados (PDF) e associá-los ao equipamento
+        $docs = mhs_guardar_pdfs_multi('documentos', $codigo_inventario);
+        if ($docs) {
+            $doc_tipo = trim($_POST['doc_tipo'] ?? '') ?: 'Outro';
+            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,nome_ficheiro,created_at) VALUES (?,?,?,?,?,NOW())");
+            foreach ($docs as $d) {
+                $nome_doc = pathinfo($d['original'], PATHINFO_FILENAME) ?: $doc_tipo;
+                $ins->execute([$new_id, $doc_tipo, $nome_doc, date('Y-m-d'), $d['ficheiro']]);
+                mhs_historico('documento', (int)$pdo->lastInsertId(), $nome_doc, 'criar');
+            }
+        }
+
+        $_SESSION['success_message'] = 'Equipamento criado com sucesso.'
+            . ($docs ? ' (' . count($docs) . ' documento(s) anexado(s))' : '');
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
@@ -102,7 +115,7 @@ include __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<form method="POST" action="">
+<form method="POST" action="" enctype="multipart/form-data">
 
     <!-- Identificação -->
     <div class="card mhs-data-card mb-3">
@@ -235,6 +248,26 @@ include __DIR__ . '/../../includes/header.php';
                     <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
                     <input type="email" name="at_email" class="form-control" placeholder="assistencia@empresa.pt" maxlength="255" />
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentação -->
+    <div class="card mhs-data-card mb-3">
+        <div class="card-header fw-bold text-white" style="background:#475569"><i class="fa-solid fa-file-pdf me-1"></i>Documentação <small class="fw-normal opacity-75">(opcional)</small></div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de documento</label>
+                <select name="doc_tipo" class="form-select">
+                    <?php foreach (['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'] as $t): ?>
+                    <option><?= $t ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label fw-semibold">Ficheiros PDF</label>
+                <input type="file" name="documentos[]" class="form-control" accept="application/pdf,.pdf" multiple />
+                <div class="form-text">Pode anexar um ou mais PDF (máx. 10 MB cada). Ficam associados a este equipamento.</div>
             </div>
         </div>
     </div>

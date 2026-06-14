@@ -45,7 +45,7 @@ include __DIR__ . '/../../includes/header.php';
     <div class="table-responsive">
       <table class="table table-hover mhs-datatable mb-0" id="documentosTable">
         <thead class="mhs-thead">
-          <tr><th>Equipamento</th><th>Tipo</th><th>Nome</th><th>Data</th><th>Validade</th><th>Ficheiro</th><th>Acoes</th></tr>
+          <tr><th>Equipamento</th><th>Tipo</th><th>Nome</th><th>Data</th><th>Validade</th><th>PDF</th><th>Acoes</th></tr>
         </thead>
         <tbody>
           <?php foreach ($documentos as $documento) : ?>
@@ -55,7 +55,9 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= esc($documento->nome_documento) ?></td>
               <td><?= $documento->data_documento ? esc(date('d/m/Y', strtotime($documento->data_documento))) : '' ?></td>
               <td><?= $documento->data_validade ? esc(date('d/m/Y', strtotime($documento->data_validade))) : '' ?></td>
-              <td><?= esc($documento->nome_ficheiro) ?></td>
+              <td>
+                <a href="download.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-primary" title="Descarregar PDF"><i class="fa-solid fa-download me-1"></i>PDF</a>
+              </td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="detalhes.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>

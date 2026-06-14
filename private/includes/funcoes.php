@@ -64,6 +64,72 @@ function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): stri
 }
 
 /**
+ * Guardar um PDF carregado na pasta uploads/documentos.
+ * Devolve o nome do ficheiro guardado, ou null se não houve upload válido.
+ *
+ * @param string $campo    nome do campo do formulário (ex: 'ficheiro')
+ * @param string $prefixo  prefixo para o nome do ficheiro (ex: código do equipamento)
+ * @param string $erro     (saída) mensagem de erro, se aplicável
+ */
+function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null): ?string {
+    if (empty($_FILES[$campo]['name']) || ($_FILES[$campo]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return null; // sem ficheiro — não é erro
+    }
+    if ($_FILES[$campo]['error'] !== UPLOAD_ERR_OK) {
+        $erro = 'Falha no carregamento do ficheiro.';
+        return null;
+    }
+    if ($_FILES[$campo]['size'] > 10 * 1024 * 1024) {
+        $erro = 'O ficheiro excede o limite de 10 MB.';
+        return null;
+    }
+    $ext = strtolower(pathinfo($_FILES[$campo]['name'], PATHINFO_EXTENSION));
+    if ($ext !== 'pdf') {
+        $erro = 'Apenas são aceites ficheiros PDF.';
+        return null;
+    }
+
+    $dir = __DIR__ . '/../uploads/documentos';
+    if (!is_dir($dir)) { mkdir($dir, 0775, true); }
+
+    $base = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $prefixo)) ?: 'doc';
+    $nome = $base . '_' . date('Ymd_His') . '_' . substr(bin2hex(random_bytes(3)), 0, 6) . '.pdf';
+
+    if (!move_uploaded_file($_FILES[$campo]['tmp_name'], $dir . '/' . $nome)) {
+        $erro = 'Não foi possível guardar o ficheiro no servidor.';
+        return null;
+    }
+    return $nome;
+}
+
+/**
+ * Guardar vários PDFs carregados (campo com name="campo[]").
+ * Devolve um array de nomes de ficheiro guardados (apenas os PDF válidos).
+ */
+function mhs_guardar_pdfs_multi(string $campo, string $prefixo): array {
+    $guardados = [];
+    if (empty($_FILES[$campo]) || !is_array($_FILES[$campo]['name'])) {
+        return $guardados;
+    }
+    $dir = __DIR__ . '/../uploads/documentos';
+    if (!is_dir($dir)) { mkdir($dir, 0775, true); }
+
+    $base = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $prefixo)) ?: 'doc';
+    $total = count($_FILES[$campo]['name']);
+    for ($i = 0; $i < $total; $i++) {
+        if (($_FILES[$campo]['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { continue; }
+        if (($_FILES[$campo]['size'][$i] ?? 0) > 10 * 1024 * 1024) { continue; }
+        if (strtolower(pathinfo($_FILES[$campo]['name'][$i], PATHINFO_EXTENSION)) !== 'pdf') { continue; }
+
+        $nome = $base . '_' . date('Ymd_His') . '_' . substr(bin2hex(random_bytes(3)), 0, 6) . '.pdf';
+        if (move_uploaded_file($_FILES[$campo]['tmp_name'][$i], $dir . '/' . $nome)) {
+            $guardados[] = ['ficheiro' => $nome, 'original' => $_FILES[$campo]['name'][$i]];
+        }
+    }
+    return $guardados;
+}
+
+/**
  * Verificar se utilizador está autenticado
  */
 function is_logged_in() {
