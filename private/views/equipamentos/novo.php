@@ -93,6 +93,7 @@ $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
+$tipos_doc    = ['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'];
 
 $page_title = 'Equipamentos - Novo';
 include __DIR__ . '/../../includes/header.php';
@@ -105,177 +106,206 @@ include __DIR__ . '/../../includes/header.php';
 </div>
 <?php unset($_SESSION['error_message']); endif; ?>
 
-<div class="mhs-page-header mhs-page-header--dashboard">
-    <div>
-        <span class="mhs-page-kicker"><i class="fa-solid fa-plus fa-fw"></i></span>
-        <h1 class="mhs-page-title">Equipamentos - Novo</h1>
-    </div>
-    <div class="mhs-page-actions">
-        <a href="lista.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Voltar</a>
-    </div>
+<div class="mhs-page-header">
+  <div>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-plus fa-fw"></i></span>
+    <h1 class="mhs-page-title">Novo Equipamento</h1>
+  </div>
+  <div class="mhs-page-actions">
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+  </div>
 </div>
 
 <form method="POST" action="" enctype="multipart/form-data">
+  <div class="card mhs-data-card">
+    <div class="mhs-detail-tabs">
+      <button type="button" class="mhs-detail-tab active" data-tab="ficha"><i class="fa-solid fa-barcode"></i> Ficha Técnica</button>
+      <button type="button" class="mhs-detail-tab" data-tab="aquisicao"><i class="fa-solid fa-receipt"></i> Aquisição</button>
+      <button type="button" class="mhs-detail-tab" data-tab="localizacao"><i class="fa-solid fa-location-dot"></i> Localização e Estado</button>
+      <button type="button" class="mhs-detail-tab" data-tab="assistencia"><i class="fa-solid fa-headset"></i> Assistência Técnica</button>
+      <button type="button" class="mhs-detail-tab" data-tab="documentos"><i class="fa-solid fa-file-lines"></i> Documentos</button>
+    </div>
 
-    <!-- Identificação -->
-    <div class="card mhs-data-card mb-3">
-        <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-barcode me-1"></i>Identificação</div>
-        <div class="card-body row g-3">
+    <!-- Ficha Técnica -->
+    <div class="mhs-tab-pane active" id="tab-ficha">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-barcode"></i> Identificação</div>
+          <div class="row g-3 mt-1">
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Código Inventário <span class="text-danger">*</span></label>
-                <input type="text" name="codigo_inventario" class="form-control" placeholder="Ex.: EQ-001" required maxlength="50" />
+              <label class="form-label fw-semibold">Código Inventário <span class="text-danger">*</span></label>
+              <input type="text" name="codigo_inventario" class="form-control" placeholder="Ex.: EQ-001" required maxlength="50" value="<?= htmlspecialchars($_POST['codigo_inventario'] ?? '') ?>" />
             </div>
             <div class="col-md-8">
-                <label class="form-label fw-semibold">Designação <span class="text-danger">*</span></label>
-                <input type="text" name="designacao" class="form-control" placeholder="Nome do equipamento" required maxlength="200" />
+              <label class="form-label fw-semibold">Designação <span class="text-danger">*</span></label>
+              <input type="text" name="designacao" class="form-control" placeholder="Nome do equipamento" required maxlength="200" value="<?= htmlspecialchars($_POST['designacao'] ?? '') ?>" />
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Categoria</label>
-                <select name="id_categoria" class="form-select">
-                    <option value="">-- Selecione --</option>
-                    <?php foreach ($categorias as $cat): ?>
-                    <option value="<?= $cat->id ?>"><?= htmlspecialchars($cat->nome) ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Categoria</label>
+              <select name="id_categoria" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach ($categorias as $cat): ?>
+                <option value="<?= $cat->id ?>"><?= htmlspecialchars($cat->nome) ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Marca</label>
-                <input type="text" name="marca" class="form-control" placeholder="Marca" maxlength="100" />
+              <label class="form-label fw-semibold">Marca</label>
+              <input type="text" name="marca" class="form-control" placeholder="Marca" maxlength="100" />
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Modelo</label>
-                <input type="text" name="modelo" class="form-control" placeholder="Modelo" maxlength="100" />
+              <label class="form-label fw-semibold">Modelo</label>
+              <input type="text" name="modelo" class="form-control" placeholder="Modelo" maxlength="100" />
             </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Número de Série</label>
-                <input type="text" name="numero_serie" class="form-control" placeholder="Número de série" maxlength="100" />
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Número de Série</label>
+              <input type="text" name="numero_serie" class="form-control" placeholder="Número de série" maxlength="100" />
             </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Fabricante</label>
-                <input type="text" name="fabricante" class="form-control" placeholder="Fabricante" maxlength="150" />
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fabricante</label>
+              <input type="text" name="fabricante" class="form-control" placeholder="Fabricante" maxlength="150" />
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Aquisição -->
-    <div class="card mhs-data-card mb-3">
-        <div class="card-header fw-bold bg-secondary text-white"><i class="fa-solid fa-receipt me-1"></i>Aquisição</div>
-        <div class="card-body row g-3">
+    <div class="mhs-tab-pane" id="tab-aquisicao">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-receipt"></i> Dados de Aquisição</div>
+          <div class="row g-3 mt-1">
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Data Aquisição</label>
-                <input type="text" name="data_aquisicao" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+              <label class="form-label fw-semibold">Data Aquisição</label>
+              <input type="text" name="data_aquisicao" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Ano Fabrico</label>
-                <input type="number" name="ano_fabrico" class="form-control" min="1900" max="2099" placeholder="<?= date('Y') ?>" />
+              <label class="form-label fw-semibold">Ano Fabrico</label>
+              <input type="number" name="ano_fabrico" class="form-control" min="1900" max="2099" placeholder="<?= date('Y') ?>" />
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Custo Aquisição (€)</label>
-                <input type="text" name="custo_aquisicao" class="form-control" placeholder="0.00" />
+              <label class="form-label fw-semibold">Custo Aquisição (€)</label>
+              <input type="text" name="custo_aquisicao" class="form-control" placeholder="0.00" />
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Tipo de Entrada</label>
-                <select name="tipo_entrada" class="form-select">
-                    <option value="">-- Selecione --</option>
-                    <?php foreach ($tipos_entrada as $t): ?>
-                    <option><?= $t ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Tipo de Entrada</label>
+              <select name="tipo_entrada" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach ($tipos_entrada as $t): ?>
+                <option><?= $t ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Localização e Estado -->
-    <div class="card mhs-data-card mb-3">
-        <div class="card-header fw-bold bg-dark text-white"><i class="fa-solid fa-location-dot me-1"></i>Localização e Estado</div>
-        <div class="card-body row g-3">
+    <div class="mhs-tab-pane" id="tab-localizacao">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-location-dot"></i> Localização e Estado</div>
+          <div class="row g-3 mt-1">
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Localização</label>
-                <select name="id_localizacao" class="form-select">
-                    <option value="">-- Selecione --</option>
-                    <?php foreach ($localizacoes as $loc): ?>
-                    <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Localização</label>
+              <select name="id_localizacao" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach ($localizacoes as $loc): ?>
+                <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Estado</label>
-                <select name="estado" class="form-select">
-                    <option value="">-- Selecione --</option>
-                    <?php foreach ($estados as $e): ?>
-                    <option><?= $e ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Estado</label>
+              <select name="estado" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach ($estados as $e): ?>
+                <option><?= $e ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Criticidade</label>
-                <select name="criticidade" class="form-select">
-                    <option value="">-- Selecione --</option>
-                    <?php foreach ($criticidades as $c): ?>
-                    <option><?= $c ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Criticidade</label>
+              <select name="criticidade" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach ($criticidades as $c): ?>
+                <option><?= $c ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
             <div class="col-12">
-                <label class="form-label fw-semibold">Observações</label>
-                <textarea name="observacoes" class="form-control" rows="2" placeholder="Notas sobre o equipamento"></textarea>
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas sobre o equipamento"></textarea>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Assistência Técnica -->
-    <div class="card mhs-data-card mb-3">
-        <div class="card-header fw-bold text-white" style="background:#0284c7"><i class="fa-solid fa-headset me-1"></i>Assistência Técnica <small class="fw-normal opacity-75">(opcional)</small></div>
-        <div class="card-body row g-3">
+    <div class="mhs-tab-pane" id="tab-assistencia">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-headset"></i> Assistência Técnica <small class="fw-normal text-muted">(opcional)</small></div>
+          <div class="row g-3 mt-1">
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Empresa / Marca</label>
-                <input type="text" name="at_empresa" class="form-control" placeholder="Ex: MedTech SA" maxlength="255" />
+              <label class="form-label fw-semibold">Empresa / Marca</label>
+              <input type="text" name="at_empresa" class="form-control" placeholder="Ex: MedTech SA" maxlength="255" />
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Nome do contacto</label>
-                <input type="text" name="at_nome_contacto" class="form-control" placeholder="Ex: João Silva" maxlength="255" />
+              <label class="form-label fw-semibold">Nome do contacto</label>
+              <input type="text" name="at_nome_contacto" class="form-control" placeholder="Ex: João Silva" maxlength="255" />
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Telefone</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
-                    <input type="text" name="at_telefone" class="form-control" placeholder="222 XXX XXX" maxlength="50" />
-                </div>
+              <label class="form-label fw-semibold">Telefone</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                <input type="text" name="at_telefone" class="form-control" placeholder="222 XXX XXX" maxlength="50" />
+              </div>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Email</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                    <input type="email" name="at_email" class="form-control" placeholder="assistencia@empresa.pt" maxlength="255" />
-                </div>
+              <label class="form-label fw-semibold">Email</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" name="at_email" class="form-control" placeholder="assistencia@empresa.pt" maxlength="255" />
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Documentação -->
-    <div class="card mhs-data-card mb-3">
-        <div class="card-header fw-bold text-white" style="background:#475569"><i class="fa-solid fa-file-pdf me-1"></i>Documentação <small class="fw-normal opacity-75">(opcional)</small></div>
-        <div class="card-body row g-3">
+    <!-- Documentos -->
+    <div class="mhs-tab-pane" id="tab-documentos">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-file-lines"></i> Documentação <small class="fw-normal text-muted">(opcional)</small></div>
+          <div class="row g-3 mt-1">
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Tipo de documento</label>
-                <select name="doc_tipo" class="form-select">
-                    <?php foreach (['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'] as $t): ?>
-                    <option><?= $t ?></option>
-                    <?php endforeach; ?>
-                </select>
+              <label class="form-label fw-semibold">Tipo de documento</label>
+              <select name="doc_tipo" class="form-select">
+                <?php foreach ($tipos_doc as $t): ?>
+                <option><?= $t ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
             <div class="col-md-8">
-                <label class="form-label fw-semibold">Ficheiros PDF</label>
-                <input type="file" name="documentos[]" class="form-control" accept="application/pdf,.pdf" multiple />
-                <div class="form-text">Pode anexar um ou mais PDF (máx. 10 MB cada). Ficam associados a este equipamento.</div>
+              <label class="form-label fw-semibold">Ficheiros PDF</label>
+              <input type="file" name="documentos[]" class="form-control" accept="application/pdf,.pdf" multiple />
+              <div class="form-text">Pode anexar um ou mais PDF (máx. 10 MB cada). Ficam associados a este equipamento.</div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <div class="d-flex gap-2 mb-4">
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
-        <a href="lista.php" class="btn btn-secondary">Cancelar</a>
-    </div>
+  <div class="d-flex gap-2 my-4">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar Equipamento</button>
+    <a href="lista.php" class="btn btn-secondary">Cancelar</a>
+  </div>
 </form>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

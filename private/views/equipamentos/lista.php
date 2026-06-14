@@ -97,6 +97,79 @@ if ($export === 'json' && !$erro_bd) {
     ], $equipamentos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
+if ($export === 'pdf' && !$erro_bd) {
+    // Geração de PDF descarregável (inline, sem dependências externas)
+    $W = 595.28; $H = 841.89; $M = 36;
+    $encf = function (string $s): string {
+        $s = iconv('UTF-8', 'Windows-1252//TRANSLIT', $s);
+        return str_replace(['\\', '(', ')', "\r", "\n"], ['\\\\', '\\(', '\\)', '', ''], $s ?: '');
+    };
+    $headers = ['Código', 'Designação', 'Marca', 'Serviço', 'Estado', 'Criticidade'];
+    $colX    = [40, 108, 256, 334, 422, 494];
+
+    $pageHeader = function () use ($W, $H, $M, $encf, $headers, $colX, $filtro_label, $equipamentos) {
+        $c  = "0.114 0.161 0.302 rg " . $M . " " . ($H - $M - 44) . " " . ($W - 2 * $M) . " 44 re f 1 1 1 rg\n";
+        $c .= "BT /F2 16 Tf " . ($M + 12) . " " . ($H - $M - 20) . " Td (" . $encf('Inventario de Equipamentos') . ") Tj ET\n";
+        $sub = 'MedSolutions  -  ' . ($filtro_label !== '' ? $filtro_label : 'Lista completa')
+             . '  -  ' . count($equipamentos) . ' equipamento(s)  -  ' . date('d/m/Y H:i');
+        $c .= "BT /F1 9 Tf " . ($M + 12) . " " . ($H - $M - 36) . " Td (" . $encf($sub) . ") Tj ET\n0 0 0 rg\n";
+        $hy = $H - $M - 64;
+        $c .= "0.90 0.93 0.98 rg " . $M . " " . ($hy - 5) . " " . ($W - 2 * $M) . " 18 re f 0 0 0 rg\n";
+        foreach ($headers as $i => $h) {
+            $c .= "BT /F2 8 Tf " . $colX[$i] . " " . $hy . " Td (" . $encf($h) . ") Tj ET\n";
+        }
+        return [$c, $hy - 18];
+    };
+
+    $pages = [];
+    [$content, $y] = $pageHeader();
+    foreach ($equipamentos as $eq) {
+        if ($y < $M + 24) { $pages[] = $content; [$content, $y] = $pageHeader(); }
+        $vals = [
+            mb_strimwidth((string)$eq->codigo_inventario, 0, 14, '', 'UTF-8'),
+            mb_strimwidth((string)$eq->designacao, 0, 32, '...', 'UTF-8'),
+            mb_strimwidth((string)($eq->marca ?? ''), 0, 16, '...', 'UTF-8'),
+            mb_strimwidth((string)($eq->servico ?? ''), 0, 18, '...', 'UTF-8'),
+            mb_strimwidth((string)$eq->estado, 0, 14, '...', 'UTF-8'),
+            mb_strimwidth((string)$eq->criticidade, 0, 14, '...', 'UTF-8'),
+        ];
+        foreach ($vals as $i => $v) {
+            $content .= "BT /F1 8 Tf " . $colX[$i] . " " . $y . " Td (" . $encf((string)$v) . ") Tj ET\n";
+        }
+        $content .= "0.86 0.86 0.86 RG 0.5 w " . $M . " " . ($y - 6) . " m " . ($W - $M) . " " . ($y - 6) . " l S\n";
+        $y -= 18;
+    }
+    $pages[] = $content;
+
+    // Montagem dos objetos PDF
+    $n = count($pages);
+    $objs = [];
+    $objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+    $kids = [];
+    for ($i = 0; $i < $n; $i++) { $kids[] = (3 + $i) . ' 0 R'; }
+    $objs[2] = "<< /Type /Pages /Kids [" . implode(' ', $kids) . "] /Count $n >>";
+    $cStart = 3 + $n; $fReg = $cStart + $n; $fBold = $fReg + 1;
+    for ($i = 0; $i < $n; $i++) {
+        $objs[3 + $i] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 $W $H] /Resources << /Font << /F1 $fReg 0 R /F2 $fBold 0 R >> >> /Contents " . ($cStart + $i) . " 0 R >>";
+        $objs[$cStart + $i] = "<< /Length " . strlen($pages[$i]) . " >>\nstream\n" . $pages[$i] . "endstream";
+    }
+    $objs[$fReg]  = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+    $objs[$fBold] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+    ksort($objs);
+
+    $pdf = "%PDF-1.4\n"; $off = [];
+    foreach ($objs as $num => $body) { $off[$num] = strlen($pdf); $pdf .= "$num 0 obj\n$body\nendobj\n"; }
+    $xref = strlen($pdf); $cnt = count($objs) + 1;
+    $pdf .= "xref\n0 $cnt\n0000000000 65535 f \n";
+    for ($i = 1; $i < $cnt; $i++) { $pdf .= sprintf("%010d 00000 n \n", $off[$i]); }
+    $pdf .= "trailer\n<< /Size $cnt /Root 1 0 R >>\nstartxref\n$xref\n%%EOF";
+
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.pdf"');
+    header('Content-Length: ' . strlen($pdf));
+    echo $pdf;
+    exit;
+}
 
 include __DIR__ . '/../../includes/header.php';
 ?>
@@ -132,9 +205,9 @@ include __DIR__ . '/../../includes/header.php';
       <a href="?export=json<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-brackets-curly me-1"></i>Exportar JSON
       </a>
-      <button onclick="mhsExportarPDF()" class="btn btn-outline-secondary btn-sm">
+      <a href="?export=pdf<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
-      </button>
+      </a>
       <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn">
         <i class="fa-solid fa-plus"></i>
         Novo Equipamento
