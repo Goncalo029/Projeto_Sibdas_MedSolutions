@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+require_admin(); // apenas admin pode apagar
 
 try {
     $pdo = new PDO(

@@ -151,6 +151,32 @@ function redirect_if_not_logged() {
 }
 
 /**
+ * Perfil do utilizador autenticado.
+ */
+function mhs_profile(): string {
+    return $_SESSION['profile'] ?? '';
+}
+
+/**
+ * É administrador?
+ */
+function is_admin(): bool {
+    return mhs_profile() === 'admin';
+}
+
+/**
+ * Bloquear acesso a quem não for administrador (ações sensíveis: apagar, mensagens, etc.).
+ * Redireciona para o dashboard com mensagem de erro.
+ */
+function require_admin(): void {
+    if (!is_admin()) {
+        $_SESSION['error_message'] = 'Sem permissões. Apenas administradores podem executar esta ação.';
+        header('Location: ' . BASE_URL . '/private/home.php');
+        exit;
+    }
+}
+
+/**
  * Redirecionar se estiver autenticado
  */
 function redirect_if_logged() {

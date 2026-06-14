@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
-if (!in_array($_SESSION['profile'] ?? '', ['admin', 'tecnico'])) {
+if (!is_admin()) {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
 }

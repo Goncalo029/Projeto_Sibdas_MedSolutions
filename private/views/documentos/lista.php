@@ -62,7 +62,9 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="detalhes.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
                   <a href="editar.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                  <?php if (is_admin()): ?>
                   <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $documento->id ?>" data-delete-name="<?= esc($documento->nome_documento) ?>"><i class="fa-solid fa-trash"></i></button>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>

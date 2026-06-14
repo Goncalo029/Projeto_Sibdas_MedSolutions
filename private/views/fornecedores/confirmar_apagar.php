@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../includes/funcoes.php';
 redirect_if_not_logged();
+require_admin(); // apenas admin pode apagar
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo '<script>window.location.href = "' . BASE_URL . '/private/views/fornecedores/lista.php";</script>';

@@ -14,30 +14,29 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS `website_config` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `chave` varchar(100) NOT NULL,
     `valor` text DEFAULT NULL,
-    `secao` varchar(50) NOT NULL DEFAULT 'geral',
-    `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `updated_at` datetime DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `chave` (`chave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 $defaults = [
-    ['hero_overline',       'Tecnologia para hospitais',                                                                                                            'hero'],
-    ['hero_titulo',         'Inventário hospitalar com',                                                                                                            'hero'],
-    ['hero_titulo_strong',  'visão clara e operação rápida',                                                                                                        'hero'],
-    ['hero_subtitulo',      'Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.',               'hero'],
-    ['produto_descricao',   'Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.',       'produto'],
-    ['setor_titulo',        'Desenhado para o setor da saúde',                                                                                                      'setor'],
-    ['setor_descricao',     'Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.', 'setor'],
-    ['setor_check_1',       'Informação sempre atualizada e consistente',                                                                                           'setor'],
-    ['setor_check_2',       'Apoio à decisão operacional das equipas clínicas',                                                                                     'setor'],
-    ['setor_check_3',       'Classificação por criticidade incluindo suporte de vida',                                                                              'setor'],
-    ['contacto_descricao',  'Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.',                                               'contacto'],
-    ['footer_morada',       'Porto, Portugal',                                                                                                                      'footer'],
-    ['footer_email',        'geral@medsolutions.pt',                                                                                                                'footer'],
-    ['footer_telefone',     '+351 220 600 700',                                                                                                                     'footer'],
+    ['hero_overline',       'Tecnologia para hospitais'],
+    ['hero_titulo',         'Inventário hospitalar com'],
+    ['hero_titulo_strong',  'visão clara e operação rápida'],
+    ['hero_subtitulo',      'Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.'],
+    ['produto_descricao',   'Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.'],
+    ['setor_titulo',        'Desenhado para o setor da saúde'],
+    ['setor_descricao',     'Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.'],
+    ['setor_check_1',       'Informação sempre atualizada e consistente'],
+    ['setor_check_2',       'Apoio à decisão operacional das equipas clínicas'],
+    ['setor_check_3',       'Classificação por criticidade incluindo suporte de vida'],
+    ['contacto_descricao',  'Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.'],
+    ['footer_morada',       'Porto, Portugal'],
+    ['footer_email',        'geral@medsolutions.pt'],
+    ['footer_telefone',     '+351 220 600 700'],
 ];
 
-$ins = $pdo->prepare("INSERT IGNORE INTO website_config (chave, valor, secao) VALUES (?, ?, ?)");
+$ins = $pdo->prepare("INSERT IGNORE INTO website_config (chave, valor, updated_at) VALUES (?, ?, NOW())");
 foreach ($defaults as $d) {
     $ins->execute($d);
 }

@@ -98,13 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 <div class="mhs-hero-wrap" id="quem-somos">
 <section class="mhs-hero">
     <div class="mhs-hero-content">
-        <p class="mhs-overline"><i class="fa-solid fa-circle-dot"></i> <span data-i18n="hero-overline">Tecnologia para hospitais</span></p>
+        <p class="mhs-overline"><i class="fa-solid fa-circle-dot"></i> <span><?= website_cfg($wcfg, 'hero_overline', 'Tecnologia para hospitais') ?></span></p>
         <h1>
-            <span data-i18n="hero-h1-pre">Inventário hospitalar com</span><br>
-            <strong data-i18n="hero-h1-strong">visão clara e operação rápida</strong>
+            <span><?= website_cfg($wcfg, 'hero_titulo', 'Inventário hospitalar com') ?></span><br>
+            <strong><?= website_cfg($wcfg, 'hero_titulo_strong', 'visão clara e operação rápida') ?></strong>
         </h1>
-        <p class="mhs-hero-sub" data-i18n="hero-sub">
-            Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.
+        <p class="mhs-hero-sub">
+            <?= website_cfg($wcfg, 'hero_subtitulo', 'Centralize equipamentos, contratos, localizações e documentação técnica num painel desenhado para equipas hospitalares.') ?>
         </p>
         <div class="mhs-hero-actions">
             <a href="#produto" class="mhs-btn-primary" data-i18n="hero-cta1">Conhecer o Produto</a>
@@ -162,9 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 <!-- ═══════════════════════════════ PRODUTO ═══════════════════════════════ -->
 <section class="mhs-section" id="produto">
     <div class="mhs-section-header">
-        <p class="mhs-overline"><i class="fa-solid fa-box-open"></i> <span data-i18n="prod-overline">O produto</span></p>
+        <p class="mhs-overline"><i class="fa-solid fa-box-open"></i> <span>O produto</span></p>
         <h2>MedSolutions</h2>
-        <p data-i18n="prod-desc">Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.</p>
+        <p><?= website_cfg($wcfg, 'produto_descricao', 'Plataforma web de controlo de equipamentos médicos com pesquisa avançada, rastreabilidade e apoio ao planeamento de manutenção.') ?></p>
     </div>
 
     <div class="mhs-grid-3">
@@ -242,14 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 <section class="mhs-section" id="setor-saude">
     <div class="mhs-split">
         <div class="mhs-split-text">
-            <p class="mhs-overline"><i class="fa-solid fa-hospital"></i> <span data-i18n="sector-overline">Contexto hospitalar</span></p>
-            <h2 data-i18n="sector-title">Desenhado para o setor da saúde</h2>
-            <p data-i18n="sector-desc">Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.</p>
+            <p class="mhs-overline"><i class="fa-solid fa-hospital"></i> <span>Contexto hospitalar</span></p>
+            <h2><?= website_cfg($wcfg, 'setor_titulo', 'Desenhado para o setor da saúde') ?></h2>
+            <p><?= website_cfg($wcfg, 'setor_descricao', 'Uma solução pensada para as necessidades reais dos serviços hospitalares, com foco na fiabilidade da informação e na rapidez de operação das equipas técnicas.') ?></p>
             <ul class="mhs-checks">
-                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c1">Informação sempre atualizada e consistente</span></li>
-                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c2">Apoio à decisão operacional das equipas clínicas</span></li>
-                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c3">Classificação por criticidade incluindo suporte de vida</span></li>
-                <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="sector-c4">Notificações automáticas por garantias e manutenções</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span><?= website_cfg($wcfg, 'setor_check_1', 'Informação sempre atualizada e consistente') ?></span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span><?= website_cfg($wcfg, 'setor_check_2', 'Apoio à decisão operacional das equipas clínicas') ?></span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span><?= website_cfg($wcfg, 'setor_check_3', 'Classificação por criticidade incluindo suporte de vida') ?></span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span>Notificações automáticas por garantias e manutenções</span></li>
             </ul>
         </div>
         <div class="mhs-split-visual">
@@ -290,9 +290,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
 <!-- ═══════════════════════════════ CONTACTO ═══════════════════════════════ -->
 <section class="mhs-section--alt" id="contacto">
     <div class="mhs-section-header">
-        <p class="mhs-overline"><i class="fa-solid fa-envelope"></i> <span data-i18n="contact-overline">Contacto</span></p>
-        <h2 data-i18n="contact-title">Fale connosco</h2>
-        <p data-i18n="contact-desc">Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.</p>
+        <p class="mhs-overline"><i class="fa-solid fa-envelope"></i> <span>Contacto</span></p>
+        <h2>Fale connosco</h2>
+        <p><?= website_cfg($wcfg, 'contacto_descricao', 'Entre em contacto para agendar uma demonstração ou esclarecer dúvidas sobre o sistema.') ?></p>
     </div>
 
     <?php if ($contacto_msg !== ''): ?>

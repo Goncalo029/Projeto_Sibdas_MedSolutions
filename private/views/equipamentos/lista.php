@@ -245,7 +245,9 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="detalhes.php?id=<?= (int)$eq->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
                   <a href="editar.php?id=<?= (int)$eq->id ?>"  class="btn btn-sm btn-outline-primary"   title="Editar"><i class="fa-solid fa-pen"></i></a>
+                  <?php if (is_admin()): ?>
                   <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int)$eq->id ?>" data-delete-name="<?= esc($eq->codigo_inventario) ?>" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>

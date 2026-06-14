@@ -18,7 +18,7 @@ function mhs_active(string $segment): string
 
 function mhs_mensagens_nao_lidas(): int
 {
-    if (!in_array($_SESSION['profile'] ?? '', ['admin', 'tecnico'])) {
+    if (($_SESSION['profile'] ?? '') !== 'admin') {
         return 0;
     }
     try {
@@ -56,7 +56,7 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
         <div class="mhs-nav-section">Ferramentas</div>
         <a href="<?= BASE_URL ?>/private/views/pesquisa/pesquisa.php" class="mhs-nav-link<?= mhs_active('pesquisa'); ?>"><i class="fa-solid fa-magnifying-glass fa-fw"></i><span>Pesquisa</span></a>
 
-        <?php if (in_array($_SESSION['profile'] ?? '', ['admin', 'tecnico'])): ?>
+        <?php if (is_admin()): ?>
         <div class="mhs-nav-section">Comunicação</div>
         <a href="<?= BASE_URL ?>/private/views/mensagens/lista.php" class="mhs-nav-link<?= mhs_active('mensagens'); ?>" style="position:relative">
             <i class="fa-solid fa-envelope fa-fw"></i>
