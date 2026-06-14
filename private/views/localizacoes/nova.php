@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("INSERT INTO localizacoes (edificio, piso, servico, sala, observacoes, created_at) VALUES (?,?,?,?,?,NOW())")
             ->execute([$edificio ?: null, $piso ?: null, $servico, $sala ?: null, $observacoes ?: null]);
+        mhs_historico('localizacao', (int)mhs_pdo()->lastInsertId(), $servico . ($sala ? ' · ' . $sala : ''), 'criar');
         $_SESSION['success_message'] = 'Localização criada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

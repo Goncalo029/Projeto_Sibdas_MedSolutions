@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,observacoes=?,updated_at=NOW() WHERE id=?")
             ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $observacoes ?: null, $id]);
+        mhs_historico('documento', $id, ($nome_documento ?: $tipo_documento), 'editar');
         $_SESSION['success_message'] = 'Documento atualizado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

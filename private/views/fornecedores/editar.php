@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("UPDATE fornecedores SET nome=?,nif=?,tipo_fornecedor=?,telefone=?,email=?,morada=?,website=?,pessoa_contacto=?,tel_contacto=?,observacoes=?,updated_at=NOW() WHERE id=?")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null, $id]);
+        mhs_historico('fornecedor', $id, $nome, 'editar');
         $_SESSION['success_message'] = 'Fornecedor atualizado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

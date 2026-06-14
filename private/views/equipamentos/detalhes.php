@@ -568,9 +568,9 @@ include __DIR__ . '/../../includes/header.php';
           <i class="fa-solid fa-plus me-1"></i>Adicionar documento
         </a>
         <?php if (count($documentos) > 0): ?>
-          <button class="btn btn-sm btn-outline-secondary" onclick="mhsPrintSection('documentos-print-area')">
-            <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
-          </button>
+          <a href="../equipamentos/ficha_pdf.php?id=<?= $id ?>" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-file-pdf me-1"></i>Ficha do equipamento (PDF)
+          </a>
         <?php endif; ?>
       </div>
 
@@ -599,12 +599,13 @@ include __DIR__ . '/../../includes/header.php';
                       </span>
                     <?php else: ?>—<?php endif; ?>
                   </td>
-                  <td>
-                    <?php if ($doc->nome_ficheiro): ?>
-                      <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-secondary" title="Descarregar">
-                        <i class="fa-solid fa-download"></i>
-                      </a>
-                    <?php endif; ?>
+                  <td class="text-nowrap">
+                    <a href="../documentos/ver.php?id=<?= (int)$doc->id ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-primary" title="Descarregar PDF">
+                      <i class="fa-solid fa-download"></i>
+                    </a>
                   </td>
                 </tr>
               <?php endforeach; ?>

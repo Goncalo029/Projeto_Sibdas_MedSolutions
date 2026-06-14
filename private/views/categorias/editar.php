@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("UPDATE categorias SET nome=?, descricao=?, updated_at=NOW() WHERE id=?")
             ->execute([$nome, $descricao ?: null, $id]);
+        mhs_historico('categoria', $id, $nome, 'editar');
         $_SESSION['success_message'] = 'Categoria atualizada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

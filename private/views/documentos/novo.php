@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,data_validade,observacoes,created_at) VALUES (?,?,?,?,?,?,NOW())")
             ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $observacoes ?: null]);
+        mhs_historico('documento', (int)mhs_pdo()->lastInsertId(), ($nome_documento ?: $tipo_documento), 'criar');
         $_SESSION['success_message'] = 'Documento criado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

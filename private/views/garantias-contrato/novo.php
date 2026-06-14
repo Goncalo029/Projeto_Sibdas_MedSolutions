@@ -18,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("INSERT INTO garantias_contratos (id_equipamento,data_inicio,data_fim,tem_contrato,tipo_contrato,entidade_responsavel,periodicidade,observacoes,created_at) VALUES (?,?,?,?,?,?,?,?,NOW())")
             ->execute([$id_equipamento, $data_inicio, $data_fim, $tem_contrato, $tipo_contrato ?: null, $entidade_responsavel ?: null, $periodicidade ?: null, $observacoes ?: null]);
+        $g_id = (int)mhs_pdo()->lastInsertId();
+        $eq_cod = mhs_pdo()->query("SELECT codigo_inventario FROM equipamentos WHERE id = " . $id_equipamento)->fetchColumn();
+        mhs_historico('garantia-contrato', $g_id, 'Equipamento ' . ($eq_cod ?: $id_equipamento), 'criar');
         $_SESSION['success_message'] = 'Garantia/Contrato criado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

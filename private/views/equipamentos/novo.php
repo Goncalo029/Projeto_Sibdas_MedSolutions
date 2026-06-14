@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $new_id = (int)$pdo->lastInsertId();
 
+        mhs_historico('equipamento', $new_id, $codigo_inventario . ' — ' . $designacao, 'criar');
+
         // Guardar AT se preenchido
         $at_empresa = trim($_POST['at_empresa']       ?? '') ?: null;
         $at_nome    = trim($_POST['at_nome_contacto'] ?? '') ?: null;

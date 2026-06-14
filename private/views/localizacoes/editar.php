@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("UPDATE localizacoes SET edificio=?, piso=?, servico=?, sala=?, observacoes=?, updated_at=NOW() WHERE id=?")
             ->execute([$edificio ?: null, $piso ?: null, $servico, $sala ?: null, $observacoes ?: null, $id]);
+        mhs_historico('localizacao', $id, $servico . ($sala ? ' · ' . $sala : ''), 'editar');
         $_SESSION['success_message'] = 'Localização atualizada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

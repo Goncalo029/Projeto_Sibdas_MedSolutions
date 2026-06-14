@@ -16,8 +16,17 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
+    $del_id = (int)($_POST['id_enc'] ?? 0);
+    $nome_stmt = $pdo->prepare("SELECT codigo_inventario, designacao FROM equipamentos WHERE id = ?");
+    $nome_stmt->execute([$del_id]);
+    $nome_row = $nome_stmt->fetch(PDO::FETCH_ASSOC);
+
     $stmt = $pdo->prepare("DELETE FROM equipamentos WHERE id = ?");
-    $stmt->execute([$_POST['id_enc'] ?? 0]);
+    $stmt->execute([$del_id]);
+
+    if ($nome_row) {
+        mhs_historico('equipamento', $del_id, $nome_row['codigo_inventario'] . ' — ' . $nome_row['designacao'], 'apagar');
+    }
 
     $_SESSION['success_message'] = 'Equipamento apagado com sucesso!';
     echo '<script>window.location.href = "' . BASE_URL . '/private/views/equipamentos/lista.php";</script>';

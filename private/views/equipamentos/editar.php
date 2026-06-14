@@ -29,8 +29,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $pdo = mhs_pdo();
+
+        // Estado anterior (para registar no histórico o que mudou)
+        $antes_stmt = $pdo->prepare("SELECT codigo_inventario,designacao,marca,modelo,numero_serie,fabricante,data_aquisicao,ano_fabrico,custo_aquisicao,tipo_entrada,estado,criticidade,observacoes FROM equipamentos WHERE id=?");
+        $antes_stmt->execute([$id]);
+        $antes = $antes_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
         $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,updated_at=NOW() WHERE id=?")
             ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes,$id]);
+
+        // Histórico de alterações
+        $depois = [
+            'codigo_inventario' => $codigo_inventario, 'designacao' => $designacao, 'marca' => $marca,
+            'modelo' => $modelo, 'numero_serie' => $numero_serie, 'fabricante' => $fabricante,
+            'data_aquisicao' => $data_aquisicao, 'ano_fabrico' => $ano_fabrico, 'custo_aquisicao' => $custo_aquisicao,
+            'tipo_entrada' => $tipo_entrada, 'estado' => $estado, 'criticidade' => $criticidade, 'observacoes' => $observacoes,
+        ];
+        $rotulos = [
+            'codigo_inventario' => 'Código', 'designacao' => 'Designação', 'marca' => 'Marca', 'modelo' => 'Modelo',
+            'numero_serie' => 'Nº Série', 'fabricante' => 'Fabricante', 'data_aquisicao' => 'Data aquisição',
+            'ano_fabrico' => 'Ano fabrico', 'custo_aquisicao' => 'Custo', 'tipo_entrada' => 'Tipo entrada',
+            'estado' => 'Estado', 'criticidade' => 'Criticidade', 'observacoes' => 'Observações',
+        ];
+        $detalhe = mhs_diff_campos($antes, $depois, $rotulos);
+        mhs_historico('equipamento', $id, $codigo_inventario . ' — ' . $designacao, 'editar', $detalhe);
 
         // Guardar AT
         $at_empresa = trim($_POST['at_empresa']       ?? '') ?: null;

@@ -55,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($campos as $chave) {
         $upd->execute([trim($_POST[$chave] ?? ''), $chave]);
     }
+    mhs_historico('website', null, 'Conteúdo do website público', 'editar');
     $_SESSION['success_message'] = 'Conteúdo do website atualizado com sucesso.';
     header('Location: editar.php');
     exit;

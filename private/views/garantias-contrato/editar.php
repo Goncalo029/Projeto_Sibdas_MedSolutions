@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("UPDATE garantias_contratos SET id_equipamento=?,data_inicio=?,data_fim=?,tem_contrato=?,tipo_contrato=?,entidade_responsavel=?,periodicidade=?,observacoes=?,updated_at=NOW() WHERE id=?")
             ->execute([$id_equipamento, $data_inicio, $data_fim, $tem_contrato, $tipo_contrato ?: null, $entidade_responsavel ?: null, $periodicidade ?: null, $observacoes ?: null, $id]);
+        $eq_cod = mhs_pdo()->query("SELECT codigo_inventario FROM equipamentos WHERE id = " . $id_equipamento)->fetchColumn();
+        mhs_historico('garantia-contrato', $id, 'Equipamento ' . ($eq_cod ?: $id_equipamento), 'editar');
         $_SESSION['success_message'] = 'Garantia/Contrato atualizado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

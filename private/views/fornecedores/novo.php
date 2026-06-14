@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("INSERT INTO fornecedores (nome,nif,tipo_fornecedor,telefone,email,morada,website,pessoa_contacto,tel_contacto,observacoes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,NOW())")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null]);
+        mhs_historico('fornecedor', (int)mhs_pdo()->lastInsertId(), $nome, 'criar');
         $_SESSION['success_message'] = 'Fornecedor criado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

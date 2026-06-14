@@ -46,7 +46,6 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
 
         <div class="mhs-nav-section">Inventário</div>
         <a href="<?= BASE_URL ?>/private/views/equipamentos/lista.php" class="mhs-nav-link<?= mhs_active('equipamentos'); ?>"><i class="fa-solid fa-stethoscope fa-fw"></i><span>Equipamentos</span></a>
-        <a href="<?= BASE_URL ?>/private/views/categorias/lista.php" class="mhs-nav-link<?= mhs_active('categorias'); ?>"><i class="fa-solid fa-tags fa-fw"></i><span>Categorias</span></a>
         <a href="<?= BASE_URL ?>/private/views/localizacoes/lista.php" class="mhs-nav-link<?= mhs_active('localizacoes'); ?>"><i class="fa-solid fa-location-dot fa-fw"></i><span>Localizações</span></a>
 
         <div class="mhs-nav-section">Gestão</div>
@@ -71,6 +70,7 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
         <?php if (isset($_SESSION['profile']) && $_SESSION['profile'] === 'admin'): ?>
         <div class="mhs-nav-section">Administração</div>
         <a href="<?= BASE_URL ?>/private/views/utilizadores/lista.php" class="mhs-nav-link<?= mhs_active('utilizadores'); ?>"><i class="fa-solid fa-users fa-fw"></i><span>Utilizadores</span></a>
+        <a href="<?= BASE_URL ?>/private/views/historico/lista.php" class="mhs-nav-link<?= mhs_active('historico'); ?>"><i class="fa-solid fa-clock-rotate-left fa-fw"></i><span>Histórico de Alterações</span></a>
         <a href="<?= BASE_URL ?>/private/views/website/editar.php" class="mhs-nav-link<?= mhs_active('website'); ?>"><i class="fa-solid fa-globe fa-fw"></i><span>Website Público</span></a>
         <?php endif; ?>
     </nav>

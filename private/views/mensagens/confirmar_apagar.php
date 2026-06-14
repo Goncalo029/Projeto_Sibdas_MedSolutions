@@ -23,10 +23,17 @@ if ($id <= 0) {
 }
 
 try {
+    $nome_stmt = mhs_pdo()->prepare("SELECT nome FROM mensagens_contacto WHERE id = ?");
+    $nome_stmt->execute([$id]);
+    $msg = $nome_stmt->fetch();
+
     $stmt = mhs_pdo()->prepare("
         UPDATE mensagens_contacto SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?
     ");
     $stmt->execute([$id]);
+
+    mhs_historico('mensagem', $id, 'Mensagem de ' . ($msg->nome ?? ('#' . $id)), 'apagar');
+
     $_SESSION['success_message'] = 'Mensagem apagada com sucesso.';
 } catch (PDOException $e) {
     $_SESSION['error_message'] = 'Não foi possível apagar a mensagem.';

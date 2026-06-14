@@ -16,9 +16,16 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
+    $del_id = (int)($_POST['id_enc'] ?? 0);
+    $nome_row = $pdo->prepare("SELECT nome FROM categorias WHERE id = ?");
+    $nome_row->execute([$del_id]);
+    $cat = $nome_row->fetch(PDO::FETCH_ASSOC);
+
     // Fazer DELETE
     $stmt = $pdo->prepare("DELETE FROM categorias WHERE id = ?");
-    $stmt->execute([$_POST['id_enc'] ?? 0]);
+    $stmt->execute([$del_id]);
+
+    if ($cat) { mhs_historico('categoria', $del_id, $cat['nome'], 'apagar'); }
 
     $_SESSION['success_message'] = 'Categoria apagada com sucesso!';
     echo '<script>window.location.href = "' . BASE_URL . '/private/views/categorias/lista.php";</script>';

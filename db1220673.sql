@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS `localizacoes`;
 DROP TABLE IF EXISTS `categorias`;
 DROP TABLE IF EXISTS `mensagens_contacto`;
 DROP TABLE IF EXISTS `agents`;
+DROP TABLE IF EXISTS `historico_alteracoes`;
 DROP TABLE IF EXISTS `website_config`;
 
 CREATE TABLE `agents` (
@@ -237,6 +238,20 @@ CREATE TABLE `manutencoes` (
   PRIMARY KEY (`id`),
   KEY `id_equipamento` (`id_equipamento`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `historico_alteracoes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `entidade` VARCHAR(50) NOT NULL,
+  `entidade_id` INT UNSIGNED DEFAULT NULL,
+  `entidade_nome` VARCHAR(255) DEFAULT NULL,
+  `acao` VARCHAR(20) NOT NULL,
+  `detalhe` TEXT DEFAULT NULL,
+  `utilizador` VARCHAR(190) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_created` (`created_at`),
+  KEY `idx_entidade` (`entidade`, `entidade_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `website_config` (

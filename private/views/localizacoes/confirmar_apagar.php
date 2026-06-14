@@ -16,8 +16,15 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
+    $del_id = (int)($_POST['id_enc'] ?? 0);
+    $loc_stmt = $pdo->prepare("SELECT servico, sala FROM localizacoes WHERE id = ?");
+    $loc_stmt->execute([$del_id]);
+    $loc = $loc_stmt->fetch(PDO::FETCH_ASSOC);
+
     $stmt = $pdo->prepare("DELETE FROM localizacoes WHERE id = ?");
-    $stmt->execute([$_POST['id_enc'] ?? 0]);
+    $stmt->execute([$del_id]);
+
+    if ($loc) { mhs_historico('localizacao', $del_id, $loc['servico'] . ($loc['sala'] ? ' · ' . $loc['sala'] : ''), 'apagar'); }
 
     $_SESSION['success_message'] = 'Localização apagada com sucesso!';
     echo '<script>window.location.href = "' . BASE_URL . '/private/views/localizacoes/lista.php";</script>';

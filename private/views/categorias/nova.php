@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mhs_pdo()->prepare("INSERT INTO categorias (nome, descricao, created_at) VALUES (?,?,NOW())")
             ->execute([$nome, $descricao ?: null]);
+        mhs_historico('categoria', (int)mhs_pdo()->lastInsertId(), $nome, 'criar');
         $_SESSION['success_message'] = 'Categoria criada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {

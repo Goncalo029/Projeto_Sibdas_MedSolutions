@@ -20,6 +20,50 @@ function mhs_pdo() {
 }
 
 /**
+ * Registar uma alteração no histórico global (parte privada).
+ * Nunca interrompe a operação principal: falha em silêncio.
+ *
+ * @param string   $entidade      ex: 'equipamento', 'categoria', 'fornecedor'
+ * @param int|null $entidade_id   id do registo afetado
+ * @param string   $entidade_nome rótulo legível (ex: 'EQ-001 — Monitor')
+ * @param string   $acao          'criar' | 'editar' | 'apagar'
+ * @param string   $detalhe       descrição opcional (campos alterados, etc.)
+ */
+function mhs_historico(string $entidade, ?int $entidade_id, string $entidade_nome, string $acao, string $detalhe = ''): void {
+    try {
+        mhs_pdo()->prepare(
+            "INSERT INTO historico_alteracoes (entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW())"
+        )->execute([
+            $entidade,
+            $entidade_id,
+            $entidade_nome,
+            $acao,
+            $detalhe !== '' ? $detalhe : null,
+            $_SESSION['user_email'] ?? 'sistema',
+        ]);
+    } catch (Exception) {
+        // histórico não é crítico — falha silenciosa
+    }
+}
+
+/**
+ * Comparar dois registos (arrays) e devolver descrição dos campos alterados.
+ * Usado para detalhar edições no histórico.
+ */
+function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): string {
+    $alteracoes = [];
+    foreach ($depois as $campo => $novo) {
+        $velho = $antes[$campo] ?? null;
+        if ((string)$velho !== (string)$novo) {
+            $rotulo = $rotulos[$campo] ?? $campo;
+            $alteracoes[] = $rotulo . ': "' . (string)$velho . '" → "' . (string)$novo . '"';
+        }
+    }
+    return implode(' · ', $alteracoes);
+}
+
+/**
  * Verificar se utilizador está autenticado
  */
 function is_logged_in() {
