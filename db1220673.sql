@@ -141,6 +141,7 @@ CREATE TABLE `garantias_contratos` (
   `entidade_responsavel` VARCHAR(150) DEFAULT NULL,
   `periodicidade` VARCHAR(50) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
+  `nome_ficheiro` VARCHAR(255) DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
   `created_at` DATETIME DEFAULT NULL,
   `updated_at` DATETIME DEFAULT NULL,

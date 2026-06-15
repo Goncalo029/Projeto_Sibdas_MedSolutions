@@ -4,6 +4,107 @@ require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+// ── Processar ações dos formulários da própria ficha (sem ficheiros separados) ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
+    $accao = $_POST['accao'] ?? '';
+    $tab   = $_POST['tab'] ?? 'ficha';
+    try {
+        $pdo = mhs_pdo();
+        $eqRow = $pdo->prepare("SELECT codigo_inventario, designacao, estado, id_localizacao FROM equipamentos WHERE id = ? AND deleted_at IS NULL");
+        $eqRow->execute([$id]);
+        $eqRow = $eqRow->fetch();
+
+        if ($eqRow) {
+            $user = $_SESSION['user_email'] ?? null;
+            $nome_eq = $eqRow->codigo_inventario . ' — ' . $eqRow->designacao;
+
+            // ── Manutenções ──
+            if ($accao === 'concluir_manutencao') {
+                if (mhs_concluir_manutencao($id)) {
+                    $_SESSION['success_message'] = 'Manutenção confirmada. Equipamento marcado como Ativo.';
+                } else {
+                    $_SESSION['error_message'] = 'Não foi possível confirmar a manutenção.';
+                }
+            } elseif ($accao === 'registar_manutencao') {
+                $tipo = ($_POST['tipo'] ?? '') === 'Urgência' ? 'Urgência' : 'Preventiva';
+                $data = trim($_POST['data_manutencao'] ?? '') ?: date('Y-m-d');
+                $desc = trim($_POST['descricao'] ?? '') ?: null;
+                $em_curso = isset($_POST['em_curso']);
+                $pdo->prepare("INSERT INTO manutencoes (id_equipamento, tipo, data_manutencao, estado, tecnico_responsavel, descricao, created_by, created_at) VALUES (?,?,?,?,?,?,?,NOW())")
+                    ->execute([$id, $tipo, $data, $em_curso ? 'Em curso' : 'Concluída', $user, $desc, $user]);
+                mhs_historico('equipamento', $id, $nome_eq, 'editar', 'Registo de manutenção (' . $tipo . ', ' . ($em_curso ? 'Em curso' : 'Concluída') . ')');
+                if ($em_curso && $eqRow->estado !== 'Em manutenção') {
+                    $pdo->prepare("UPDATE equipamentos SET estado='Em manutenção', updated_at=NOW() WHERE id=?")->execute([$id]);
+                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at) VALUES (?, 'estado', ?, 'Em manutenção', ?, NOW())")->execute([$id, $eqRow->estado, $user]);
+                }
+                $_SESSION['success_message'] = 'Manutenção registada com sucesso.' . ($em_curso ? ' Equipamento colocado em manutenção.' : '');
+
+            // ── Empréstimos ──
+            } elseif ($accao === 'registar_emprestimo') {
+                $destino = (int)($_POST['id_localizacao_destino'] ?? 0);
+                $saida   = trim($_POST['data_saida'] ?? '') ?: date('Y-m-d');
+                $prev    = trim($_POST['data_prevista_devolucao'] ?? '') ?: null;
+                $obs     = trim($_POST['observacoes'] ?? '') ?: null;
+                if (!$destino) {
+                    $_SESSION['error_message'] = 'Indique a localização de destino do empréstimo.';
+                } elseif ($prev && strtotime($prev) < strtotime($saida)) {
+                    $_SESSION['error_message'] = 'A devolução prevista não pode ser anterior à data de saída.';
+                } else {
+                    $pdo->prepare("INSERT INTO emprestimos_equipamentos (id_equipamento, id_localizacao_origem, id_localizacao_destino, data_saida, data_prevista_devolucao, estado, observacoes, created_by, created_at, updated_at) VALUES (?,?,?,?,?,'Ativo',?,?,NOW(),NOW())")
+                        ->execute([$id, $eqRow->id_localizacao ?: null, $destino, $saida, $prev, $obs, $user]);
+                    $dn = $pdo->query("SELECT CONCAT(servico, IF(sala IS NOT NULL AND sala<>'', CONCAT(' / ', sala), '')) FROM localizacoes WHERE id = " . $destino)->fetchColumn();
+                    mhs_historico('emprestimo', (int)$pdo->lastInsertId(), 'Empréstimo ' . $eqRow->codigo_inventario . ' → ' . ($dn ?: ('#' . $destino)), 'criar');
+                    $_SESSION['success_message'] = 'Empréstimo registado com sucesso.';
+                }
+            } elseif ($accao === 'emprestimo_terminar' || $accao === 'emprestimo_estender') {
+                $eid = (int)($_POST['id_emprestimo'] ?? 0);
+                $emp = $pdo->prepare("SELECT * FROM emprestimos_equipamentos WHERE id=? AND id_equipamento=? AND deleted_at IS NULL");
+                $emp->execute([$eid, $id]);
+                $emp = $emp->fetch();
+                if ($emp && $emp->estado === 'Ativo' && !$emp->data_devolucao) {
+                    if ($accao === 'emprestimo_terminar') {
+                        $pdo->prepare("UPDATE emprestimos_equipamentos SET data_devolucao=CURDATE(), estado='Devolvido', updated_at=NOW(), updated_by=? WHERE id=?")->execute([$user, $eid]);
+                        mhs_historico('emprestimo', $eid, 'Empréstimo ' . $eqRow->codigo_inventario, 'editar', 'Terminado/devolvido antecipadamente em ' . date('d/m/Y'));
+                        $_SESSION['success_message'] = 'Empréstimo terminado (devolução registada para hoje).';
+                    } else {
+                        $nova = trim($_POST['nova_data'] ?? '');
+                        if (($ts = strtotime($nova)) && $ts >= strtotime($emp->data_saida)) {
+                            $pdo->prepare("UPDATE emprestimos_equipamentos SET data_prevista_devolucao=?, updated_at=NOW(), updated_by=? WHERE id=?")->execute([date('Y-m-d', $ts), $user, $eid]);
+                            mhs_historico('emprestimo', $eid, 'Empréstimo ' . $eqRow->codigo_inventario, 'editar', 'Devolução prevista alterada para ' . date('d/m/Y', $ts));
+                            $_SESSION['success_message'] = 'Prazo de devolução atualizado.';
+                        } else {
+                            $_SESSION['error_message'] = 'Data de devolução inválida.';
+                        }
+                    }
+                } else {
+                    $_SESSION['error_message'] = 'Este empréstimo já não está ativo.';
+                }
+
+            // ── Movimentações (deslocação prolongada — NÃO altera a localização oficial) ──
+            } elseif ($accao === 'registar_movimentacao') {
+                $destino = (int)($_POST['id_localizacao'] ?? 0);
+                $obs     = trim($_POST['observacoes'] ?? '');
+                $dn = $destino ? $pdo->query("SELECT CONCAT(servico, IF(sala IS NOT NULL AND sala<>'', CONCAT(' / ', sala), '')) FROM localizacoes WHERE id = " . $destino)->fetchColumn() : '';
+                $atual = $pdo->query("SELECT CONCAT(l.servico, IF(l.sala IS NOT NULL AND l.sala<>'', CONCAT(' / ', l.sala), '')) FROM localizacoes l WHERE l.id = " . (int)$eqRow->id_localizacao)->fetchColumn();
+                if (!$destino || !$dn) {
+                    $_SESSION['error_message'] = 'Indique a localização de destino.';
+                } else {
+                    $valor_novo = $dn . ($obs !== '' ? ' (' . $obs . ')' : '');
+                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at) VALUES (?, 'localizacao', ?, ?, ?, NOW())")
+                        ->execute([$id, $atual ?: '—', $valor_novo, $user]);
+                    mhs_historico('equipamento', $id, $nome_eq, 'editar', 'Movimentação (temporária) para ' . $dn);
+                    $_SESSION['success_message'] = 'Movimentação registada.';
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        $_SESSION['error_message'] = 'Erro ao processar a ação: ' . $e->getMessage();
+    }
+    header('Location: detalhes.php?id=' . $id . '&tab=' . $tab);
+    exit;
+}
+
 $eq = null;
 $fornecedores = [];
 $documentos = [];
@@ -117,6 +218,12 @@ if ($id > 0) {
         }
     } catch (PDOException) {}
 }
+
+// Localizações para os formulários de empréstimo / movimentação
+$localizacoes_all = [];
+try {
+    $localizacoes_all = mhs_pdo()->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
+} catch (PDOException) {}
 
 $page_title = 'Equipamentos - Detalhes';
 include __DIR__ . '/../../includes/header.php';
@@ -446,15 +553,57 @@ include __DIR__ . '/../../includes/header.php';
   <div class="mhs-tab-pane" id="tab-manutencoes">
     <div class="mhs-tab-body">
 
-      <!-- Acções -->
-      <div class="d-flex gap-2 flex-wrap mb-4">
-        <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Preventiva" class="btn btn-primary">
-          <i class="fa-solid fa-calendar-plus me-1"></i>Registar Manutenção Preventiva
-        </a>
-        <a href="../manutencoes/novo.php?id_equipamento=<?= $id ?>&tipo=Urgência" class="btn btn-danger">
-          <i class="fa-solid fa-triangle-exclamation me-1"></i>Urgência
-        </a>
+      <!-- Banner: equipamento em manutenção -> confirmar conclusão -->
+      <?php if ($eq && in_array($eq->estado, ['Em manutenção', 'Em calibração', 'Em quarentena'], true)): ?>
+      <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <span>
+          <i class="fa-solid fa-screwdriver-wrench me-2"></i>
+          Este equipamento está <strong><?= esc($eq->estado) ?></strong>. Confirme quando a intervenção estiver concluída.
+        </span>
+        <form method="post" action="detalhes.php?id=<?= $id ?>" onsubmit="return confirm('Confirmar que a manutenção foi concluída? O equipamento volta a Ativo.');" class="m-0">
+          <input type="hidden" name="accao" value="concluir_manutencao">
+          <input type="hidden" name="tab" value="manutencoes">
+          <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-circle-check me-1"></i>Confirmar manutenção concluída</button>
+        </form>
       </div>
+      <?php endif; ?>
+
+      <!-- Registar nova manutenção -->
+      <details class="mhs-info-group mb-4">
+        <summary class="mhs-info-group-title" style="cursor:pointer;list-style:none">
+          <i class="fa-solid fa-plus"></i> Registar manutenção
+        </summary>
+        <form method="post" action="detalhes.php?id=<?= $id ?>" class="row g-3 mt-1">
+          <input type="hidden" name="accao" value="registar_manutencao">
+          <input type="hidden" name="tab" value="manutencoes">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Tipo</label>
+            <select name="tipo" class="form-select">
+              <option value="Preventiva">Preventiva</option>
+              <option value="Urgência">Urgência</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Data</label>
+            <input type="date" name="data_manutencao" class="form-control" value="<?= date('Y-m-d') ?>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Descrição</label>
+            <input type="text" name="descricao" class="form-control" placeholder="Breve descrição da intervenção" maxlength="255">
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="em_curso" id="em_curso" value="1">
+              <label class="form-check-label" for="em_curso">
+                Intervenção a decorrer — colocar o equipamento <strong>Em manutenção</strong> (caso contrário fica registada como concluída)
+              </label>
+            </div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Registar</button>
+          </div>
+        </form>
+      </details>
 
       <!-- Próxima manutenção em destaque -->
       <?php
@@ -520,7 +669,7 @@ include __DIR__ . '/../../includes/header.php';
         <div class="mhs-info-group-title"><i class="fa-solid fa-list-check"></i> Histórico de registos</div>
         <table class="table table-sm mhs-datatable mb-0 mt-2">
           <thead>
-            <tr><th>Tipo</th><th>Data realizada</th><th>Próxima prevista</th><th>Estado</th><th>Responsável</th><th></th></tr>
+            <tr><th>Tipo</th><th>Data realizada</th><th>Próxima prevista</th><th>Estado</th><th>Responsável</th></tr>
           </thead>
           <tbody>
             <?php foreach ($mans_eq as $m): ?>
@@ -541,10 +690,6 @@ include __DIR__ . '/../../includes/header.php';
                   echo "<span class='badge $cls'>{$m->estado}</span>"; ?>
                 </td>
                 <td><?= $m->tecnico_responsavel ? esc($m->tecnico_responsavel) : '—' ?></td>
-                <td class="text-nowrap">
-                  <a href="../manutencoes/detalhes.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                  <a href="../manutencoes/editar.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-primary ms-1"><i class="fa-solid fa-pen"></i></a>
-                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -595,8 +740,8 @@ include __DIR__ . '/../../includes/header.php';
                     <?php else: ?>—<?php endif; ?>
                   </td>
                   <td class="text-nowrap">
-                    <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-primary" title="Descarregar PDF">
-                      <i class="fa-solid fa-download me-1"></i>PDF
+                    <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-danger" title="Descarregar PDF">
+                      <i class="fa-solid fa-file-pdf"></i>
                     </a>
                   </td>
                 </tr>
@@ -633,6 +778,42 @@ include __DIR__ . '/../../includes/header.php';
           } catch (PDOException $e) {}
       }
       ?>
+
+      <!-- Registar empréstimo -->
+      <details class="mhs-info-group mb-4">
+        <summary class="mhs-info-group-title" style="cursor:pointer;list-style:none">
+          <i class="fa-solid fa-plus"></i> Registar empréstimo
+        </summary>
+        <form method="post" action="detalhes.php?id=<?= $id ?>" class="row g-3 mt-1">
+          <input type="hidden" name="accao" value="registar_emprestimo">
+          <input type="hidden" name="tab" value="emprestimos">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Destino <span class="text-danger">*</span></label>
+            <select name="id_localizacao_destino" class="form-select" required>
+              <option value="">-- Selecione o serviço/sala --</option>
+              <?php foreach ($localizacoes_all as $loc): ?>
+              <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Data de saída</label>
+            <input type="date" name="data_saida" class="form-control" value="<?= date('Y-m-d') ?>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Devolução prevista</label>
+            <input type="date" name="data_prevista_devolucao" class="form-control" value="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Observações</label>
+            <input type="text" name="observacoes" class="form-control" placeholder="Motivo / notas do empréstimo" maxlength="255">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Registar empréstimo</button>
+          </div>
+        </form>
+      </details>
+
       <?php if (count($emprestimos) > 0): ?>
         <div class="mhs-history-list">
           <?php foreach ($emprestimos as $emp): ?>
@@ -664,16 +845,16 @@ include __DIR__ . '/../../includes/header.php';
 
                 <?php if ($emp->estado === 'Ativo' && !$emp->data_devolucao): ?>
                 <div class="d-flex flex-wrap gap-2 mt-2">
-                  <form method="post" action="emprestimo_acao.php" onsubmit="return confirm('Terminar este empréstimo agora (devolução antecipada)?');" class="d-inline">
+                  <form method="post" action="detalhes.php?id=<?= $id ?>" onsubmit="return confirm('Terminar este empréstimo agora (devolução antecipada)?');" class="d-inline">
+                    <input type="hidden" name="accao" value="emprestimo_terminar">
+                    <input type="hidden" name="tab" value="emprestimos">
                     <input type="hidden" name="id_emprestimo" value="<?= (int)$emp->id ?>">
-                    <input type="hidden" name="id_equipamento" value="<?= $id ?>">
-                    <input type="hidden" name="accao" value="terminar">
                     <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Terminar agora</button>
                   </form>
-                  <form method="post" action="emprestimo_acao.php" class="d-inline d-flex align-items-center gap-1">
+                  <form method="post" action="detalhes.php?id=<?= $id ?>" class="d-inline d-flex align-items-center gap-1">
+                    <input type="hidden" name="accao" value="emprestimo_estender">
+                    <input type="hidden" name="tab" value="emprestimos">
                     <input type="hidden" name="id_emprestimo" value="<?= (int)$emp->id ?>">
-                    <input type="hidden" name="id_equipamento" value="<?= $id ?>">
-                    <input type="hidden" name="accao" value="estender">
                     <input type="date" name="nova_data" class="form-control form-control-sm" style="width:auto" value="<?= $emp->data_prevista_devolucao ?: date('Y-m-d') ?>" required>
                     <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-calendar-plus me-1"></i>Estender</button>
                   </form>
@@ -710,6 +891,34 @@ include __DIR__ . '/../../includes/header.php';
           } catch (PDOException $e) {}
       }
       ?>
+
+      <!-- Registar movimentação -->
+      <details class="mhs-info-group mb-4">
+        <summary class="mhs-info-group-title" style="cursor:pointer;list-style:none">
+          <i class="fa-solid fa-plus"></i> Registar movimentação
+        </summary>
+        <form method="post" action="detalhes.php?id=<?= $id ?>" class="row g-3 mt-1">
+          <input type="hidden" name="accao" value="registar_movimentacao">
+          <input type="hidden" name="tab" value="movimentacoes">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Local de destino <span class="text-danger">*</span></label>
+            <select name="id_localizacao" class="form-select" required>
+              <option value="">-- Selecione o serviço/sala --</option>
+              <?php foreach ($localizacoes_all as $loc): ?>
+              <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Motivo / observações</label>
+            <input type="text" name="observacoes" class="form-control" placeholder="Ex: cedência prolongada a outro serviço" maxlength="255">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Registar movimentação</button>
+          </div>
+        </form>
+      </details>
+
       <?php if (count($movimentacoes) > 0): ?>
         <div class="mhs-history-list">
           <?php foreach ($movimentacoes as $mov): ?>

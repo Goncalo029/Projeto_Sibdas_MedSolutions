@@ -56,7 +56,7 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= $documento->data_documento ? esc(date('d/m/Y', strtotime($documento->data_documento))) : '' ?></td>
               <td><?= $documento->data_validade ? esc(date('d/m/Y', strtotime($documento->data_validade))) : '' ?></td>
               <td>
-                <a href="download.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-primary" title="Descarregar PDF"><i class="fa-solid fa-download me-1"></i>PDF</a>
+                <a href="download.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-danger" title="Descarregar PDF"><i class="fa-solid fa-file-pdf"></i></a>
               </td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">

@@ -3,6 +3,19 @@ require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// Confirmar manutenção a partir da lista (sem ficheiro separado)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accao'] ?? '') === 'concluir_manutencao') {
+    $eq_id = (int)($_POST['id_equipamento'] ?? 0);
+    if ($eq_id && mhs_concluir_manutencao($eq_id)) {
+        $_SESSION['success_message'] = 'Manutenção confirmada. Equipamento marcado como Ativo.';
+    } else {
+        $_SESSION['error_message'] = 'Não foi possível confirmar a manutenção.';
+    }
+    $qs = http_build_query(array_filter(['estado' => $_POST['estado'] ?? '', 'filtro' => $_POST['filtro'] ?? '']));
+    header('Location: lista.php' . ($qs ? '?' . $qs : ''));
+    exit;
+}
+
 $page_title = 'Equipamentos - Lista';
 $equipamentos = [];
 $erro_bd = '';
@@ -243,6 +256,15 @@ include __DIR__ . '/../../includes/header.php';
               <td><span class="mhs-docs-count"><?= (int)$eq->total_documentos ?></span></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
+                  <?php if (in_array($eq->estado, ['Em manutenção', 'Em calibração', 'Em quarentena'], true)): ?>
+                  <form method="post" action="lista.php" onsubmit="return confirm('Confirmar que a manutenção de <?= esc($eq->codigo_inventario) ?> foi concluída? Volta a Ativo.');" class="m-0">
+                    <input type="hidden" name="accao" value="concluir_manutencao">
+                    <input type="hidden" name="id_equipamento" value="<?= (int)$eq->id ?>">
+                    <input type="hidden" name="estado" value="<?= esc($f_estado) ?>">
+                    <input type="hidden" name="filtro" value="<?= esc($f_filtro) ?>">
+                    <button type="submit" class="btn btn-sm btn-success" title="Confirmar manutenção concluída"><i class="fa-solid fa-circle-check"></i></button>
+                  </form>
+                  <?php endif; ?>
                   <a href="detalhes.php?id=<?= (int)$eq->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
                   <a href="editar.php?id=<?= (int)$eq->id ?>"  class="btn btn-sm btn-outline-primary"   title="Editar"><i class="fa-solid fa-pen"></i></a>
                   <?php if (is_admin()): ?>

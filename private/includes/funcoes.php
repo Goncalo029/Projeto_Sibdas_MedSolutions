@@ -71,7 +71,7 @@ function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): stri
  * @param string $prefixo  prefixo para o nome do ficheiro (ex: código do equipamento)
  * @param string $erro     (saída) mensagem de erro, se aplicável
  */
-function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null): ?string {
+function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null, string $subpasta = 'documentos'): ?string {
     if (empty($_FILES[$campo]['name']) || ($_FILES[$campo]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return null; // sem ficheiro — não é erro
     }
@@ -89,7 +89,7 @@ function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null):
         return null;
     }
 
-    $dir = __DIR__ . '/../uploads/documentos';
+    $dir = __DIR__ . '/../uploads/' . $subpasta;
     if (!is_dir($dir)) { mkdir($dir, 0775, true); }
 
     $base = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $prefixo)) ?: 'doc';
@@ -127,6 +127,55 @@ function mhs_guardar_pdfs_multi(string $campo, string $prefixo): array {
         }
     }
     return $guardados;
+}
+
+/**
+ * Confirmar/concluir a manutenção de um equipamento: fecha intervenções
+ * abertas, atualiza o plano preventivo e repõe o equipamento como Ativo.
+ * Usado a partir da lista e da ficha de detalhes (sem ficheiros separados).
+ */
+function mhs_concluir_manutencao(int $id): bool {
+    try {
+        $pdo = mhs_pdo();
+        $stmt = $pdo->prepare("SELECT codigo_inventario, designacao, estado FROM equipamentos WHERE id = ? AND deleted_at IS NULL");
+        $stmt->execute([$id]);
+        $eq = $stmt->fetch();
+        if (!$eq) { return false; }
+
+        $estado_antigo = $eq->estado;
+
+        $pdo->prepare("
+            UPDATE manutencoes SET estado='Concluída', data_manutencao=COALESCE(data_manutencao, CURDATE()), updated_at=NOW()
+            WHERE id_equipamento=? AND estado IN ('Em curso','Planeada') AND deleted_at IS NULL
+        ")->execute([$id]);
+
+        $pdo->prepare("
+            UPDATE manutencoes_preventivas
+            SET ultima_manutencao=CURDATE(),
+                proxima_manutencao = CASE
+                    WHEN periodicidade='Mensal'     THEN DATE_ADD(CURDATE(), INTERVAL 1 MONTH)
+                    WHEN periodicidade='Trimestral' THEN DATE_ADD(CURDATE(), INTERVAL 3 MONTH)
+                    WHEN periodicidade='Semestral'  THEN DATE_ADD(CURDATE(), INTERVAL 6 MONTH)
+                    ELSE DATE_ADD(CURDATE(), INTERVAL 1 YEAR) END,
+                estado='Planeada', updated_at=NOW()
+            WHERE id_equipamento=? AND deleted_at IS NULL
+        ")->execute([$id]);
+
+        $pdo->prepare("UPDATE equipamentos SET estado='Ativo', updated_at=NOW() WHERE id=?")->execute([$id]);
+
+        if ($estado_antigo !== 'Ativo') {
+            $pdo->prepare("
+                INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at)
+                VALUES (?, 'estado', ?, 'Ativo', ?, NOW())
+            ")->execute([$id, $estado_antigo, $_SESSION['user_email'] ?? null]);
+        }
+
+        mhs_historico('equipamento', $id, $eq->codigo_inventario . ' — ' . $eq->designacao, 'editar',
+            'Manutenção confirmada/concluída — estado: ' . $estado_antigo . ' → Ativo');
+        return true;
+    } catch (PDOException) {
+        return false;
+    }
 }
 
 /**

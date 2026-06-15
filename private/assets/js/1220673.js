@@ -369,3 +369,179 @@ function mhsPrintSection(sectionId) {
     }
     renderCal();
 })();
+
+// ============================================================
+// Dashboard — gráficos (Chart.js), contadores e painéis
+// Dados lidos de #mhsDashData[data-charts]; só corre na home.
+// ============================================================
+(function () {
+    var dataEl = document.getElementById('mhsDashData');
+    if (!dataEl || typeof Chart === 'undefined') return;
+
+    var chartData = {};
+    try { chartData = JSON.parse(dataEl.dataset.charts || '{}'); } catch (e) { chartData = {}; }
+
+    var P = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4',
+             '#ec4899','#84cc16','#f97316','#6366f1','#14b8a6','#a855f7'];
+    var instances = {};
+
+    function buildChart(canvasId, type) {
+        var el = document.getElementById(canvasId);
+        if (!el) return;
+        var d = chartData[canvasId];
+        if (!d) return;
+        if (instances[canvasId]) instances[canvasId].destroy();
+
+        var isHBar    = type === 'bar-h';
+        var chartType = isHBar ? 'bar' : type;
+        var circular  = ['pie','doughnut','polarArea'].indexOf(chartType) !== -1;
+        var isLine    = chartType === 'line';
+
+        var bg, border;
+        if (circular) {
+            bg = P.slice(0, d.values.length); border = '#fff';
+        } else if (isLine) {
+            var grad = el.getContext('2d').createLinearGradient(0, 0, 0, 280);
+            grad.addColorStop(0, P[0] + '38'); grad.addColorStop(1, P[0] + '00');
+            bg = grad; border = P[0];
+        } else {
+            bg = d.values.map(function (_, i) { return P[i % P.length] + 'D0'; });
+            border = 'transparent';
+        }
+
+        var dataset = {
+            label: 'Total', data: d.values,
+            backgroundColor: bg, borderColor: border,
+            borderWidth: circular ? 2 : isLine ? 2.5 : 0,
+            borderRadius: circular || isLine ? 0 : 7,
+            fill: isLine, tension: isLine ? 0.45 : 0,
+            pointBackgroundColor: isLine ? P[0] : undefined,
+            pointBorderColor: isLine ? '#fff' : undefined,
+            pointBorderWidth: isLine ? 2.5 : undefined,
+            pointRadius: isLine ? 5 : undefined,
+            pointHoverRadius: isLine ? 7.5 : undefined
+        };
+
+        var tooltipDefs = {
+            backgroundColor: '#0f172a', titleColor: '#fff',
+            bodyColor: 'rgba(255,255,255,.72)', padding: 13, cornerRadius: 11,
+            titleFont: { weight: '700', size: 12.5, family: 'Inter' },
+            bodyFont: { size: 12, family: 'Inter' },
+            usePointStyle: true, boxWidth: 9, boxHeight: 9
+        };
+        var scaleBase = {
+            grid: { color: 'rgba(148,163,184,.1)', drawBorder: false },
+            border: { display: false },
+            ticks: { font: { size: 11, family: 'Inter' }, color: '#94a3b8', padding: 6 },
+            beginAtZero: true
+        };
+
+        instances[canvasId] = new Chart(el, {
+            type: chartType,
+            data: { labels: d.labels, datasets: [dataset] },
+            options: {
+                indexAxis: isHBar ? 'y' : 'x',
+                responsive: true, maintainAspectRatio: true,
+                animation: { duration: 640, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        display: circular, position: 'bottom',
+                        labels: { padding: 18, font: { size: 11.5, weight: '600', family: 'Inter' },
+                                  usePointStyle: true, pointStyleWidth: 9, color: '#334155' }
+                    },
+                    tooltip: tooltipDefs
+                },
+                scales: circular ? {} : {
+                    x: Object.assign({}, scaleBase, { grid: Object.assign({}, scaleBase.grid, { display: isHBar }) }),
+                    y: Object.assign({}, scaleBase, { grid: Object.assign({}, scaleBase.grid, { display: !isHBar }),
+                        ticks: Object.assign({}, scaleBase.ticks, { stepSize: 1 }) })
+                }
+            }
+        });
+
+        var body = document.getElementById('body-' + canvasId);
+        if (body) body.classList.remove('loading');
+    }
+
+    function animateCounter(el) {
+        var target = parseInt(el.dataset.count, 10) || 0;
+        var steps = Math.ceil(1100 / (1000 / 60)), frame = 0;
+        var timer = setInterval(function () {
+            frame++;
+            var ease = 1 - Math.pow(1 - frame / steps, 4);
+            el.textContent = Math.round(target * ease).toLocaleString('pt-PT');
+            if (frame >= steps) { el.textContent = target.toLocaleString('pt-PT'); clearInterval(timer); }
+        }, 1000 / 60);
+    }
+    document.querySelectorAll('.dash-stat-num').forEach(animateCounter);
+
+    document.querySelectorAll('.dash-toggle-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var group = this.closest('.dash-toggle');
+            group.querySelectorAll('.dash-toggle-btn').forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            buildChart(this.dataset.canvas, this.dataset.type);
+        });
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); } });
+    }, { threshold: 0.06 });
+    document.querySelectorAll('.dash-panel').forEach(function (p) { observer.observe(p); });
+
+    var panelChartMap = {
+        'body-cEstados': ['cEstados', 'pie'],
+        'body-cCategorias': ['cCategorias', 'bar-h'],
+        'body-cLocalizacoes': ['cLocalizacoes', 'doughnut'],
+        'body-cDocumentos': ['cDocumentos', 'doughnut'],
+        'body-cFornecedores': ['cFornecedores', 'bar-h'],
+        'body-cGarantias': ['cGarantias', 'line']
+    };
+
+    var renderObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (e.isIntersecting && e.target.classList.contains('loading')) {
+                if (panelChartMap[e.target.id]) buildChart.apply(null, panelChartMap[e.target.id]);
+                renderObserver.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.05 });
+    Object.keys(panelChartMap).forEach(function (id) {
+        var el = document.getElementById(id); if (el) renderObserver.observe(el);
+    });
+
+    requestAnimationFrame(function () {
+        document.querySelectorAll('.dash-panel').forEach(function (p) {
+            if (p.getBoundingClientRect().top < window.innerHeight + 100) p.classList.add('in');
+        });
+        Object.keys(panelChartMap).forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top < window.innerHeight + 100) buildChart.apply(null, panelChartMap[id]);
+        });
+    });
+})();
+
+// ============================================================
+// Ligação de eventos sem handlers inline (sidebar, menus, confirmações)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
+    var sbToggle = document.querySelector('[data-toggle-sidebar]');
+    if (sbToggle) sbToggle.addEventListener('click', function () { document.body.classList.toggle('mhs-sidebar-open'); });
+
+    var sbOverlay = document.querySelector('.mhs-sidebar-overlay');
+    if (sbOverlay) sbOverlay.addEventListener('click', function () { document.body.classList.remove('mhs-sidebar-open'); });
+
+    var notifBtn = document.querySelector('[data-toggle-notif]');
+    if (notifBtn) notifBtn.addEventListener('click', toggleNotifMenu);
+
+    var avatarBtn = document.querySelector('.mhs-avatar-btn');
+    if (avatarBtn) avatarBtn.addEventListener('click', toggleAvatarMenu);
+});
+
+// Confirmação de formulários via atributo data-confirm
+document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f && f.getAttribute && f.getAttribute('data-confirm') && !window.confirm(f.getAttribute('data-confirm'))) {
+        e.preventDefault();
+    }
+}, true);
