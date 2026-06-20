@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $antes_stmt->execute([$id]);
         $antes = $antes_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-        $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,updated_at=NOW() WHERE id=?")
+        $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
             ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes,$id]);
 
         // Histórico de alterações
@@ -69,21 +69,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 telefone VARCHAR(50) DEFAULT NULL,
                 telefone_urgencia VARCHAR(50) DEFAULT NULL,
                 observacoes TEXT DEFAULT NULL,
-                created_at DATETIME DEFAULT NOW(),
-                updated_at DATETIME DEFAULT NOW(),
+                criado_em DATETIME DEFAULT NOW(),
+                atualizado_em DATETIME DEFAULT NOW(),
                 UNIQUE KEY uq_eq_at (id_equipamento)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
             $pdo->prepare("
-                INSERT INTO equipamento_at (id_equipamento, empresa, nome_contacto, email, telefone, created_at, updated_at)
+                INSERT INTO equipamento_at (id_equipamento, empresa, nome_contacto, email, telefone, criado_em, atualizado_em)
                 VALUES (?, ?, ?, ?, ?, NOW(), NOW())
                 ON DUPLICATE KEY UPDATE
                     empresa       = VALUES(empresa),
                     nome_contacto = VALUES(nome_contacto),
                     email         = VALUES(email),
                     telefone      = VALUES(telefone),
-                    updated_at    = NOW()
+                    atualizado_em    = NOW()
             ")->execute([$id, $at_empresa, $at_nome, $at_email, $at_tel]);
         } catch (PDOException) {}
+
+        // Apagar documentos marcados
+        $apagar = $_POST['doc_apagar'] ?? [];
+        if (is_array($apagar) && $apagar) {
+            $del = $pdo->prepare("DELETE FROM documentos WHERE id = ? AND id_equipamento = ?");
+            foreach ($apagar as $docId) {
+                $del->execute([(int)$docId, $id]);
+                mhs_historico('documento', (int)$docId, 'Documento do equipamento ' . $codigo_inventario, 'apagar');
+            }
+        }
+
+        // Anexar novos documentos (PDF guardado na base de dados)
+        $novos = mhs_ler_pdfs_upload('documentos');
+        if ($novos) {
+            $doc_tipo = trim($_POST['doc_tipo'] ?? '') ?: 'Outro';
+            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,NOW())");
+            foreach ($novos as $d) {
+                $nome_doc = pathinfo($d['nome'], PATHINFO_FILENAME) ?: $doc_tipo;
+                $ins->bindValue(1, $id, PDO::PARAM_INT);
+                $ins->bindValue(2, $doc_tipo);
+                $ins->bindValue(3, $nome_doc);
+                $ins->bindValue(4, date('Y-m-d'));
+                $ins->bindValue(5, $d['nome']);
+                $ins->bindValue(6, $d['conteudo'], PDO::PARAM_LOB);
+                $ins->bindValue(7, $d['mime']);
+                $ins->execute();
+                mhs_historico('documento', (int)$pdo->lastInsertId(), $nome_doc, 'criar');
+            }
+        }
 
         $_SESSION['success_message'] = 'Equipamento atualizado com sucesso.';
         header('Location: detalhes.php?id=' . $id); exit;
@@ -103,6 +132,8 @@ $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fe
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
+$tipos_doc    = ['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'];
+$documentos_eq = $pdo->query("SELECT id, tipo_documento, nome_documento, nome_ficheiro, (ficheiro_conteudo IS NOT NULL) AS tem_ficheiro FROM documentos WHERE id_equipamento = " . (int)$id . " AND eliminado_em IS NULL ORDER BY id")->fetchAll();
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
 
 // Carregar AT
@@ -117,14 +148,41 @@ try {
         telefone VARCHAR(50) DEFAULT NULL,
         telefone_urgencia VARCHAR(50) DEFAULT NULL,
         observacoes TEXT DEFAULT NULL,
-        created_at DATETIME DEFAULT NOW(),
-        updated_at DATETIME DEFAULT NOW(),
+        criado_em DATETIME DEFAULT NOW(),
+        atualizado_em DATETIME DEFAULT NOW(),
         UNIQUE KEY uq_eq_at (id_equipamento)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $s = $pdo->prepare("SELECT * FROM equipamento_at WHERE id_equipamento = ? LIMIT 1");
     $s->execute([$id]);
     $at = $s->fetch();
 } catch (PDOException) {}
+
+// Valores a mostrar nos campos de AT: usa o contacto próprio do equipamento;
+// se não existir, mostra o do fornecedor de assistência técnica (igual aos detalhes).
+$at_vals = ['empresa' => '', 'nome_contacto' => '', 'telefone' => '', 'email' => ''];
+if ($at) {
+    $at_vals = ['empresa' => $at->empresa, 'nome_contacto' => $at->nome_contacto, 'telefone' => $at->telefone, 'email' => $at->email];
+} else {
+    try {
+        $sf = $pdo->prepare("
+            SELECT f.nome, f.pessoa_contacto, f.telefone, f.tel_contacto, f.email
+            FROM equipamentos_fornecedores ef
+            JOIN fornecedores f ON f.id = ef.id_fornecedor
+            WHERE ef.id_equipamento = ? AND f.eliminado_em IS NULL
+              AND (ef.tipo_relacao LIKE '%assist%' OR ef.tipo_relacao LIKE '%tecni%'
+                   OR f.tipo_fornecedor LIKE '%assist%' OR f.tipo_fornecedor LIKE '%tecni%')
+            LIMIT 1
+        ");
+        $sf->execute([$id]);
+        $fb = $sf->fetch();
+        if (!$fb) {
+            $fb = $pdo->query("SELECT nome, pessoa_contacto, telefone, tel_contacto, email FROM fornecedores WHERE tipo_fornecedor LIKE '%assist%' AND eliminado_em IS NULL ORDER BY id LIMIT 1")->fetch();
+        }
+        if ($fb) {
+            $at_vals = ['empresa' => $fb->nome, 'nome_contacto' => $fb->pessoa_contacto, 'telefone' => $fb->telefone ?: $fb->tel_contacto, 'email' => $fb->email];
+        }
+    } catch (PDOException) {}
+}
 
 $page_title = 'Equipamentos - Editar';
 include __DIR__ . '/../../includes/header.php';
@@ -173,7 +231,7 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
-<form method="POST" action="">
+<form method="POST" action="" enctype="multipart/form-data">
 <input type="hidden" name="id" value="<?= $row->id ?>">
 
 <div class="card mhs-data-card">
@@ -189,6 +247,9 @@ include __DIR__ . '/../../includes/header.php';
     </button>
     <button type="button" class="mhs-detail-tab" data-tab="assistencia">
       <i class="fa-solid fa-headset"></i> Assistência Técnica
+    </button>
+    <button type="button" class="mhs-detail-tab" data-tab="documentos">
+      <i class="fa-solid fa-file-lines"></i> Documentos
     </button>
   </div>
 
@@ -318,16 +379,21 @@ include __DIR__ . '/../../includes/header.php';
       <div class="mhs-form-section">
         <div class="mhs-form-section-title"><i class="fa-solid fa-headset"></i> Contacto de assistência técnica</div>
         <div class="row g-3">
+          <?php if (!$at): ?>
+          <div class="col-12">
+            <div class="alert alert-info py-2 mb-0"><i class="fa-solid fa-circle-info me-1"></i>Contacto pré-preenchido a partir do fornecedor de assistência técnica. Pode editá-lo para definir um contacto próprio deste equipamento.</div>
+          </div>
+          <?php endif; ?>
           <div class="col-md-6">
             <label class="form-label">Empresa / Marca</label>
             <input type="text" name="at_empresa" class="form-control"
-              value="<?= $at ? esc($at->empresa) : '' ?>"
+              value="<?= esc($at_vals['empresa']) ?>"
               placeholder="Ex: MedTech SA" maxlength="255" />
           </div>
           <div class="col-md-6">
             <label class="form-label">Nome do contacto</label>
             <input type="text" name="at_nome_contacto" class="form-control"
-              value="<?= $at ? esc($at->nome_contacto) : '' ?>"
+              value="<?= esc($at_vals['nome_contacto']) ?>"
               placeholder="Ex: João Silva" maxlength="255" />
           </div>
           <div class="col-md-6">
@@ -335,7 +401,7 @@ include __DIR__ . '/../../includes/header.php';
             <div class="input-group">
               <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
               <input type="text" name="at_telefone" class="form-control"
-                value="<?= $at ? esc($at->telefone) : '' ?>"
+                value="<?= esc($at_vals['telefone']) ?>"
                 placeholder="222 XXX XXX" maxlength="50" />
             </div>
           </div>
@@ -344,9 +410,56 @@ include __DIR__ . '/../../includes/header.php';
             <div class="input-group">
               <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
               <input type="email" name="at_email" class="form-control"
-                value="<?= $at ? esc($at->email) : '' ?>"
+                value="<?= esc($at_vals['email']) ?>"
                 placeholder="assistencia@empresa.pt" maxlength="255" />
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documentos -->
+  <div class="mhs-tab-pane" id="tab-documentos">
+    <div class="mhs-tab-body">
+      <div class="mhs-form-section">
+        <div class="mhs-form-section-title"><i class="fa-solid fa-file-lines"></i> Documentos associados</div>
+        <?php if ($documentos_eq): ?>
+        <table class="table table-sm align-middle mb-3">
+          <thead><tr><th>Nome</th><th>Tipo</th><th>Ficheiro</th><th class="text-end">Apagar</th></tr></thead>
+          <tbody>
+            <?php foreach ($documentos_eq as $doc): ?>
+            <tr>
+              <td><?= esc($doc->nome_documento ?: '—') ?></td>
+              <td><?= esc($doc->tipo_documento ?: '—') ?></td>
+              <td>
+                <?php if ($doc->tem_ficheiro): ?>
+                  <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf me-1"></i>PDF</a>
+                <?php else: ?><span class="text-muted small">sem ficheiro</span><?php endif; ?>
+              </td>
+              <td class="text-end">
+                <input type="checkbox" name="doc_apagar[]" value="<?= (int)$doc->id ?>" class="form-check-input" title="Marcar para apagar">
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+        <p class="text-muted small">Marca a coluna "Apagar" e grava para remover documentos.</p>
+        <?php else: ?>
+        <p class="mhs-info-obs mb-3">Este equipamento ainda não tem documentos.</p>
+        <?php endif; ?>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Tipo do novo documento</label>
+            <select name="doc_tipo" class="form-select">
+              <?php foreach ($tipos_doc as $t): ?><option><?= $t ?></option><?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Anexar PDF(s)</label>
+            <input type="file" name="documentos[]" class="form-control" accept="application/pdf,.pdf" multiple />
+            <div class="form-text">Os ficheiros ficam guardados na base de dados.</div>
           </div>
         </div>
       </div>

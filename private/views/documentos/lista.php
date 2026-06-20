@@ -13,7 +13,7 @@ try {
                e.codigo_inventario, e.designacao
         FROM documentos d
         JOIN equipamentos e ON e.id = d.id_equipamento
-        WHERE d.deleted_at IS NULL
+        WHERE d.eliminado_em IS NULL
         ORDER BY d.data_documento DESC, d.nome_documento
     ")->fetchAll();
 } catch (PDOException $e) {

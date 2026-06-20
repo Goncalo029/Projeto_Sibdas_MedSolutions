@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: editar.php?id=$id"); exit;
     }
     try {
-        mhs_pdo()->prepare("UPDATE fornecedores SET nome=?,nif=?,tipo_fornecedor=?,telefone=?,email=?,morada=?,website=?,pessoa_contacto=?,tel_contacto=?,observacoes=?,updated_at=NOW() WHERE id=?")
+        mhs_pdo()->prepare("UPDATE fornecedores SET nome=?,nif=?,tipo_fornecedor=?,telefone=?,email=?,morada=?,website=?,pessoa_contacto=?,tel_contacto=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null, $id]);
         mhs_historico('fornecedor', $id, $nome, 'editar');
         $_SESSION['success_message'] = 'Fornecedor atualizado com sucesso.';
@@ -41,71 +41,83 @@ $page_title = 'Fornecedores - Editar';
 include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="mhs-page-header mhs-page-header--dashboard">
-    <div>
-        <span class="mhs-page-kicker"><i class="fa-solid fa-pen fa-fw"></i></span>
-        <h1 class="mhs-page-title">Fornecedores - Editar</h1>
-    </div>
+<div class="mhs-page-header">
+  <div>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-truck fa-fw"></i></span>
+    <h1 class="mhs-page-title">Editar Fornecedor</h1>
+  </div>
+  <div class="mhs-page-actions">
+    <a href="detalhes.php?id=<?= $row->id ?>" class="btn btn-outline-secondary"><i class="fa-solid fa-eye me-2"></i>Ver</a>
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+  </div>
 </div>
 
-<div class="card mhs-data-card">
-    <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-address-card me-1"></i>Informação do fornecedor</div>
-    <div class="card-body">
-        <form method="POST" action="" style="max-width:720px">
-            <input type="hidden" name="id" value="<?= $row->id ?>">
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
-                    <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($row->nome) ?>" required maxlength="150" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">NIF</label>
-                    <input type="text" name="nif" class="form-control" value="<?= htmlspecialchars($row->nif ?? '') ?>" maxlength="9" pattern="[0-9]{9}" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Tipo de Fornecedor</label>
-                    <select name="tipo_fornecedor" class="form-select">
-                        <option value="">-- Selecione --</option>
-                        <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $opt): ?>
-                        <option <?= ($row->tipo_fornecedor ?? '') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Telefone</label>
-                    <input type="text" name="telefone" class="form-control" value="<?= htmlspecialchars($row->telefone ?? '') ?>" maxlength="20" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Email</label>
-                    <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($row->email ?? '') ?>" maxlength="100" />
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Morada</label>
-                    <input type="text" name="morada" class="form-control" value="<?= htmlspecialchars($row->morada ?? '') ?>" maxlength="250" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Website</label>
-                    <input type="url" name="website" class="form-control" value="<?= htmlspecialchars($row->website ?? '') ?>" maxlength="150" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Pessoa de Contacto</label>
-                    <input type="text" name="pessoa_contacto" class="form-control" value="<?= htmlspecialchars($row->pessoa_contacto ?? '') ?>" maxlength="100" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Tel. Contacto</label>
-                    <input type="text" name="tel_contacto" class="form-control" value="<?= htmlspecialchars($row->tel_contacto ?? '') ?>" maxlength="20" />
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Observações</label>
-                    <textarea name="observacoes" class="form-control" rows="2"><?= htmlspecialchars($row->observacoes ?? '') ?></textarea>
-                </div>
-            </div>
-            <div class="d-flex gap-2 mt-3">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
-                <a href="lista.php" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
+<form method="POST" action="">
+  <input type="hidden" name="id" value="<?= $row->id ?>">
+  <div class="card mhs-data-card">
+    <div class="mhs-tab-body">
+      <div class="mhs-info-group">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-address-card"></i> Dados gerais</div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-8">
+            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($row->nome) ?>" required maxlength="150" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">NIF</label>
+            <input type="text" name="nif" class="form-control" value="<?= htmlspecialchars($row->nif ?? '') ?>" maxlength="9" pattern="[0-9]{9}" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Tipo de Fornecedor</label>
+            <select name="tipo_fornecedor" class="form-select">
+              <option value="">-- Selecione --</option>
+              <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $opt): ?>
+              <option <?= ($row->tipo_fornecedor ?? '') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Telefone</label>
+            <input type="text" name="telefone" class="form-control" value="<?= htmlspecialchars($row->telefone ?? '') ?>" maxlength="20" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($row->email ?? '') ?>" maxlength="100" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Morada</label>
+            <input type="text" name="morada" class="form-control" value="<?= htmlspecialchars($row->morada ?? '') ?>" maxlength="250" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Website</label>
+            <input type="url" name="website" class="form-control" value="<?= htmlspecialchars($row->website ?? '') ?>" maxlength="150" />
+          </div>
+        </div>
+      </div>
+
+      <div class="mhs-info-group mt-3">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-user"></i> Pessoa de contacto</div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nome do contacto</label>
+            <input type="text" name="pessoa_contacto" class="form-control" value="<?= htmlspecialchars($row->pessoa_contacto ?? '') ?>" maxlength="100" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Tel. Contacto</label>
+            <input type="text" name="tel_contacto" class="form-control" value="<?= htmlspecialchars($row->tel_contacto ?? '') ?>" maxlength="20" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Observações</label>
+            <textarea name="observacoes" class="form-control" rows="3"><?= htmlspecialchars($row->observacoes ?? '') ?></textarea>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  <div class="d-flex gap-2 my-4">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar Fornecedor</button>
+    <a href="lista.php" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

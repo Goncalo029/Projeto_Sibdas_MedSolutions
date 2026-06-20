@@ -2,25 +2,40 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+require_admin();
+
+$id = (int)($_GET['id'] ?? 0);
+if (!$id) { header('Location: lista.php'); exit; }
+
+$stmt = mhs_pdo()->prepare("
+    SELECT id, AES_DECRYPT(nome, ?) AS email, perfil AS profile, ultimo_acesso, criado_em
+    FROM utilizadores WHERE id = ? AND eliminado_em IS NULL
+");
+$stmt->execute([MYSQL_AES_KEY, $id]);
+$u = $stmt->fetch();
+if (!$u) { header('Location: lista.php'); exit; }
+
+$perfil_label = match ($u->profile) { 'admin' => 'Administrador', 'tecnico' => 'Técnico', default => ucfirst((string)$u->profile) };
+$is_admin_user = $u->profile === 'admin';
+
 $page_title = 'Utilizadores - Detalhes';
 include __DIR__ . '/../../includes/header.php';
 ?>
 <div class="mhs-page-header">
-  <div><span class="mhs-page-kicker"><i class="fa-solid fa-user-gear fa-fw"></i></span><h1 class="mhs-page-title">Técnico Hospitalar</h1></div>
+  <div><span class="mhs-page-kicker"><i class="fa-solid fa-user-gear fa-fw"></i></span><h1 class="mhs-page-title"><?= esc($u->email) ?></h1></div>
   <div class="mhs-page-actions">
-    <a href="editar.php" class="btn btn-outline-primary"><i class="fa-solid fa-pen me-2"></i>Editar</a>
     <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
   </div>
 </div>
 <div class="mhs-detail-summary card mhs-data-card mb-4">
   <div class="mhs-detail-summary-inner">
-    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Email</span><span class="mhs-detail-summary-val">tecnico@hospital.pt</span></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Email</span><span class="mhs-detail-summary-val"><?= esc($u->email) ?></span></div>
     <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Perfil</span><span class="mhs-detail-summary-val">Técnico</span></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Perfil</span><span class="mhs-detail-summary-val"><span class="badge <?= $is_admin_user ? 'bg-danger' : 'bg-primary' ?>"><?= esc($perfil_label) ?></span></span></div>
     <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Estado</span><span class="mhs-detail-summary-val mhs-detail-summary-val--ok">Ativo</span></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Último acesso</span><span class="mhs-detail-summary-val"><?= $u->ultimo_acesso ? date('d/m/Y H:i', strtotime($u->ultimo_acesso)) : '—' ?></span></div>
     <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Último acesso</span><span class="mhs-detail-summary-val">12/04/2026 10:35</span></div>
+    <div class="mhs-detail-summary-item"><span class="mhs-detail-summary-label">Membro desde</span><span class="mhs-detail-summary-val"><?= $u->criado_em ? date('d/m/Y', strtotime($u->criado_em)) : '—' ?></span></div>
   </div>
 </div>
 <div class="card mhs-data-card">
@@ -29,34 +44,33 @@ include __DIR__ . '/../../includes/header.php';
     <button class="mhs-detail-tab" data-tab="permissoes"><i class="fa-solid fa-shield-halved"></i> Permissões</button>
   </div>
   <div class="mhs-tab-pane active" id="tab-conta">
-    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-5">
+    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-6">
       <div class="mhs-info-group">
         <div class="mhs-info-group-title"><i class="fa-solid fa-user"></i> Dados da conta</div>
         <dl class="mhs-info-dl">
-          <dt>Email</dt><dd>tecnico@hospital.pt</dd>
-          <dt>Perfil</dt><dd>Técnico</dd>
-          <dt>Estado</dt><dd>Ativo</dd>
-          <dt>Último acesso</dt><dd>12/04/2026 10:35</dd>
-          <dt>Criado em</dt><dd>01/01/2026</dd>
+          <dt>Email</dt><dd><?= esc($u->email) ?></dd>
+          <dt>Perfil</dt><dd><?= esc($perfil_label) ?></dd>
+          <dt>Último acesso</dt><dd><?= $u->ultimo_acesso ? date('d/m/Y H:i', strtotime($u->ultimo_acesso)) : '—' ?></dd>
+          <dt>Criado em</dt><dd><?= $u->criado_em ? date('d/m/Y', strtotime($u->criado_em)) : '—' ?></dd>
         </dl>
       </div>
     </div></div></div>
   </div>
   <div class="mhs-tab-pane" id="tab-permissoes">
-    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-5">
+    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-6">
       <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-shield-halved"></i> Permissões — Técnico</div>
+        <div class="mhs-info-group-title"><i class="fa-solid fa-shield-halved"></i> Permissões — <?= esc($perfil_label) ?></div>
         <ul class="mhs-permissions-list">
-          <li><i class="fa-solid fa-check"></i> Consultar equipamentos</li>
-          <li><i class="fa-solid fa-check"></i> Registar documentos</li>
-          <li><i class="fa-solid fa-check"></i> Atualizar localizações e contratos</li>
-          <li><i class="fa-solid fa-check"></i> Ver notificações</li>
-          <li><i class="fa-solid fa-xmark mhs-perm-no"></i> Gerir utilizadores</li>
-          <li><i class="fa-solid fa-xmark mhs-perm-no"></i> Editar website público</li>
+          <li><i class="fa-solid fa-check"></i> Consultar e pesquisar todo o inventário</li>
+          <li><i class="fa-solid fa-check"></i> Criar e editar registos (equipamentos, documentos, etc.)</li>
+          <li><i class="fa-solid fa-check"></i> Registar manutenções, empréstimos e movimentações</li>
+          <li><i class="fa-solid <?= $is_admin_user ? 'fa-check' : 'fa-xmark mhs-perm-no' ?>"></i> Apagar registos</li>
+          <li><i class="fa-solid <?= $is_admin_user ? 'fa-check' : 'fa-xmark mhs-perm-no' ?>"></i> Ver mensagens do formulário de contacto</li>
+          <li><i class="fa-solid <?= $is_admin_user ? 'fa-check' : 'fa-xmark mhs-perm-no' ?>"></i> Gerir utilizadores</li>
+          <li><i class="fa-solid <?= $is_admin_user ? 'fa-check' : 'fa-xmark mhs-perm-no' ?>"></i> Editar website público</li>
         </ul>
       </div>
     </div></div></div>
   </div>
 </div>
-<script>document.querySelectorAll('.mhs-detail-tab').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.mhs-detail-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.mhs-tab-pane').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});</script>
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

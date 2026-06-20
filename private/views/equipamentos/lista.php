@@ -3,13 +3,22 @@ require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
-// Confirmar manutenção a partir da lista (sem ficheiro separado)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accao'] ?? '') === 'concluir_manutencao') {
-    $eq_id = (int)($_POST['id_equipamento'] ?? 0);
-    if ($eq_id && mhs_concluir_manutencao($eq_id)) {
-        $_SESSION['success_message'] = 'Manutenção confirmada. Equipamento marcado como Ativo.';
-    } else {
-        $_SESSION['error_message'] = 'Não foi possível confirmar a manutenção.';
+// Ações rápidas a partir da lista (sem ficheiro separado)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['accao'] ?? ''), ['concluir_manutencao', 'ativar'], true)) {
+    $eq_id  = (int)($_POST['id_equipamento'] ?? 0);
+    $accao  = $_POST['accao'];
+    if ($accao === 'ativar') {
+        if ($eq_id && mhs_ativar_equipamento($eq_id)) {
+            $_SESSION['success_message'] = 'Equipamento ativado.';
+        } else {
+            $_SESSION['error_message'] = 'Equipamento já está ativo ou não foi encontrado.';
+        }
+    } else { // concluir_manutencao
+        if ($eq_id && mhs_concluir_manutencao($eq_id)) {
+            $_SESSION['success_message'] = 'Manutenção confirmada. Equipamento marcado como Ativo.';
+        } else {
+            $_SESSION['error_message'] = 'Não foi possível confirmar a manutenção.';
+        }
     }
     $qs = http_build_query(array_filter(['estado' => $_POST['estado'] ?? '', 'filtro' => $_POST['filtro'] ?? '']));
     header('Location: lista.php' . ($qs ? '?' . $qs : ''));
@@ -20,34 +29,44 @@ $page_title = 'Equipamentos - Lista';
 $equipamentos = [];
 $erro_bd = '';
 
-// Filtros vindos das notificações (ou de links diretos)
+// Filtros vindos das notificações / dashboard (ou de links diretos)
 $f_estado = trim($_GET['estado'] ?? '');
+$f_critic = trim($_GET['criticidade'] ?? '');
 $f_filtro = trim($_GET['filtro'] ?? '');
 
-$where  = "e.deleted_at IS NULL";
+$where  = "e.eliminado_em IS NULL";
 $params = [];
 
 if ($f_estado !== '') {
     $where .= " AND e.estado = ?";
     $params[] = $f_estado;
 }
+if ($f_critic !== '') {
+    $where .= " AND e.criticidade = ?";
+    $params[] = $f_critic;
+}
+if ($f_filtro === 'sem_docs') {
+    $where .= " AND NOT EXISTS (SELECT 1 FROM documentos d2 WHERE d2.id_equipamento = e.id AND d2.eliminado_em IS NULL)";
+}
 if ($f_filtro === 'manutencao_atraso') {
     $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
                 WHERE mp.id_equipamento = e.id AND mp.proxima_manutencao < CURDATE()
-                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.deleted_at IS NULL)";
+                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.eliminado_em IS NULL)";
 } elseif ($f_filtro === 'manutencao_7dias') {
     $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
                 WHERE mp.id_equipamento = e.id
                 AND mp.proxima_manutencao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.deleted_at IS NULL)";
+                AND mp.estado NOT IN ('Concluída', 'Cancelada') AND mp.eliminado_em IS NULL)";
 } elseif ($f_filtro === 'emprestimo_30dias') {
     $where .= " AND EXISTS (SELECT 1 FROM emprestimos_equipamentos ee
                 WHERE ee.id_equipamento = e.id AND ee.data_devolucao IS NULL
-                AND ee.data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND ee.deleted_at IS NULL)";
+                AND ee.data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND ee.eliminado_em IS NULL)";
 }
 
 $filtro_label = match(true) {
     $f_estado !== ''                   => 'Estado: ' . $f_estado,
+    $f_critic !== ''                   => 'Criticidade: ' . $f_critic,
+    $f_filtro === 'sem_docs'           => 'Sem documentação',
     $f_filtro === 'manutencao_atraso'  => 'Manutenções em atraso',
     $f_filtro === 'manutencao_7dias'   => 'Manutenção prevista nos próximos 7 dias',
     $f_filtro === 'emprestimo_30dias'  => 'Empréstimos em curso há mais de 30 dias',
@@ -63,7 +82,7 @@ try {
         FROM equipamentos e
         LEFT JOIN categorias c ON c.id = e.id_categoria
         LEFT JOIN localizacoes l ON l.id = e.id_localizacao
-        LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.deleted_at IS NULL
+        LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.eliminado_em IS NULL
         WHERE $where
         GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
                  e.estado, e.criticidade, c.nome, l.servico
@@ -211,7 +230,7 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-count"><?= count($equipamentos) ?> registos</span>
     </div>
     <div class="d-flex gap-2 align-items-center">
-      <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'filtro' => $f_filtro])); ?>
+      <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro])); ?>
       <a href="?export=csv<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-csv me-1"></i>Exportar CSV
       </a>
@@ -263,6 +282,14 @@ include __DIR__ . '/../../includes/header.php';
                     <input type="hidden" name="estado" value="<?= esc($f_estado) ?>">
                     <input type="hidden" name="filtro" value="<?= esc($f_filtro) ?>">
                     <button type="submit" class="btn btn-sm btn-success" title="Confirmar manutenção concluída"><i class="fa-solid fa-circle-check"></i></button>
+                  </form>
+                  <?php elseif (in_array($eq->estado, ['Inativo', 'Abatido'], true)): ?>
+                  <form method="post" action="lista.php" onsubmit="return confirm('Tornar <?= esc($eq->codigo_inventario) ?> Ativo?');" class="m-0">
+                    <input type="hidden" name="accao" value="ativar">
+                    <input type="hidden" name="id_equipamento" value="<?= (int)$eq->id ?>">
+                    <input type="hidden" name="estado" value="<?= esc($f_estado) ?>">
+                    <input type="hidden" name="filtro" value="<?= esc($f_filtro) ?>">
+                    <button type="submit" class="btn btn-sm btn-success" title="Tornar ativo"><i class="fa-solid fa-power-off"></i></button>
                   </form>
                   <?php endif; ?>
                   <a href="detalhes.php?id=<?= (int)$eq->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>

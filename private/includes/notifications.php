@@ -14,7 +14,7 @@ function get_notificacoes(): array {
         // Mensagens de contacto não lidas (apenas admin)
         if ($profile === 'admin') {
             $row = $pdo->query(
-                "SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL"
+                "SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND eliminado_em IS NULL"
             )->fetch();
             if ((int)($row->total ?? 0) > 0) {
                 $n = (int)$row->total;
@@ -34,7 +34,7 @@ function get_notificacoes(): array {
             "SELECT COUNT(*) AS total FROM manutencoes_preventivas
              WHERE proxima_manutencao < CURDATE()
              AND estado NOT IN ('Concluída', 'Cancelada')
-             AND deleted_at IS NULL"
+             AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -53,7 +53,7 @@ function get_notificacoes(): array {
             "SELECT COUNT(*) AS total FROM manutencoes_preventivas
              WHERE proxima_manutencao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
              AND estado NOT IN ('Concluída', 'Cancelada')
-             AND deleted_at IS NULL"
+             AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -71,7 +71,7 @@ function get_notificacoes(): array {
         $row = $pdo->query(
             "SELECT COUNT(*) AS total FROM garantias_contratos
              WHERE data_fim BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-             AND ativo = 1 AND deleted_at IS NULL"
+             AND ativo = 1 AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -89,7 +89,7 @@ function get_notificacoes(): array {
         $row = $pdo->query(
             "SELECT COUNT(*) AS total FROM documentos
              WHERE data_validade BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-             AND ativo = 1 AND deleted_at IS NULL"
+             AND ativo = 1 AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -106,7 +106,7 @@ function get_notificacoes(): array {
         // Equipamentos em manutenção no momento
         $row = $pdo->query(
             "SELECT COUNT(*) AS total FROM equipamentos
-             WHERE estado = 'Em manutenção' AND ativo = 1 AND deleted_at IS NULL"
+             WHERE estado = 'Em manutenção' AND ativo = 1 AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -123,7 +123,7 @@ function get_notificacoes(): array {
         // Equipamentos avariados
         $row = $pdo->query(
             "SELECT COUNT(*) AS total FROM equipamentos
-             WHERE estado = 'Avariado' AND ativo = 1 AND deleted_at IS NULL"
+             WHERE estado = 'Avariado' AND ativo = 1 AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;
@@ -142,7 +142,7 @@ function get_notificacoes(): array {
             "SELECT COUNT(*) AS total FROM emprestimos_equipamentos
              WHERE data_devolucao IS NULL
              AND data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-             AND deleted_at IS NULL"
+             AND eliminado_em IS NULL"
         )->fetch();
         if ((int)($row->total ?? 0) > 0) {
             $n = (int)$row->total;

@@ -11,7 +11,7 @@ try {
     $localizacoes = mhs_pdo()->query("
         SELECT id, edificio, piso, servico, sala
         FROM localizacoes
-        WHERE deleted_at IS NULL
+        WHERE eliminado_em IS NULL
         ORDER BY edificio, piso, servico, sala
     ")->fetchAll();
 } catch (PDOException $e) {

@@ -22,7 +22,7 @@ function mhs_mensagens_nao_lidas(): int
         return 0;
     }
     try {
-        $row = mhs_pdo()->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL")->fetch();
+        $row = mhs_pdo()->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND eliminado_em IS NULL")->fetch();
         return (int)($row->total ?? 0);
     } catch (Exception) {
         return 0;

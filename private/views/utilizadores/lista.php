@@ -10,10 +10,10 @@ $erro_bd = '';
 
 try {
     $stmt = mhs_pdo()->prepare("
-        SELECT id, AES_DECRYPT(name, :chave) AS email, profile, last_login, created_at
-        FROM agents
-        WHERE deleted_at IS NULL
-        ORDER BY profile, email
+        SELECT id, AES_DECRYPT(nome, :chave) AS email, perfil AS profile, ultimo_acesso, criado_em
+        FROM utilizadores
+        WHERE eliminado_em IS NULL
+        ORDER BY perfil, email
     ");
     $stmt->execute([':chave' => MYSQL_AES_KEY]);
     $utilizadores = $stmt->fetchAll();
@@ -53,8 +53,8 @@ include __DIR__ . '/../../includes/header.php';
             <tr>
               <td><?= esc($utilizador->email) ?></td>
               <td><span class="badge bg-info"><?= esc($utilizador->profile) ?></span></td>
-              <td><?= $utilizador->last_login ? esc(date('d/m/Y H:i', strtotime($utilizador->last_login))) : '' ?></td>
-              <td><?= $utilizador->created_at ? esc(date('d/m/Y', strtotime($utilizador->created_at))) : '' ?></td>
+              <td><?= $utilizador->ultimo_acesso ? esc(date('d/m/Y H:i', strtotime($utilizador->ultimo_acesso))) : '' ?></td>
+              <td><?= $utilizador->criado_em ? esc(date('d/m/Y', strtotime($utilizador->criado_em))) : '' ?></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="detalhes.php?id=<?= (int) $utilizador->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>

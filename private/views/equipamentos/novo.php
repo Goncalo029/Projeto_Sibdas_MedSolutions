@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     try {
         $pdo = mhs_pdo();
-        $pdo->prepare("INSERT INTO equipamentos (codigo_inventario,designacao,id_categoria,marca,modelo,numero_serie,fabricante,data_aquisicao,ano_fabrico,custo_aquisicao,tipo_entrada,id_localizacao,estado,criticidade,observacoes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())")
+        $pdo->prepare("INSERT INTO equipamentos (codigo_inventario,designacao,id_categoria,marca,modelo,numero_serie,fabricante,data_aquisicao,ano_fabrico,custo_aquisicao,tipo_entrada,id_localizacao,estado,criticidade,observacoes,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())")
             ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes]);
 
         $new_id = (int)$pdo->lastInsertId();
@@ -48,31 +48,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     telefone VARCHAR(50) DEFAULT NULL,
                     telefone_urgencia VARCHAR(50) DEFAULT NULL,
                     observacoes TEXT DEFAULT NULL,
-                    created_at DATETIME DEFAULT NOW(),
-                    updated_at DATETIME DEFAULT NOW(),
+                    criado_em DATETIME DEFAULT NOW(),
+                    atualizado_em DATETIME DEFAULT NOW(),
                     UNIQUE KEY uq_eq_at (id_equipamento)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
                 $pdo->prepare("
-                    INSERT INTO equipamento_at (id_equipamento, empresa, nome_contacto, email, telefone, created_at, updated_at)
+                    INSERT INTO equipamento_at (id_equipamento, empresa, nome_contacto, email, telefone, criado_em, atualizado_em)
                     VALUES (?, ?, ?, ?, ?, NOW(), NOW())
                     ON DUPLICATE KEY UPDATE
                         empresa       = VALUES(empresa),
                         nome_contacto = VALUES(nome_contacto),
                         email         = VALUES(email),
                         telefone      = VALUES(telefone),
-                        updated_at    = NOW()
+                        atualizado_em    = NOW()
                 ")->execute([$new_id, $at_empresa, $at_nome, $at_email, $at_tel]);
             } catch (PDOException) {}
         }
 
-        // Guardar documentos anexados (PDF) e associá-los ao equipamento
-        $docs = mhs_guardar_pdfs_multi('documentos', $codigo_inventario);
+        // Guardar documentos anexados (PDF na base de dados) e associá-los ao equipamento
+        $docs = mhs_ler_pdfs_upload('documentos');
         if ($docs) {
             $doc_tipo = trim($_POST['doc_tipo'] ?? '') ?: 'Outro';
-            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,nome_ficheiro,created_at) VALUES (?,?,?,?,?,NOW())");
+            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,NOW())");
             foreach ($docs as $d) {
-                $nome_doc = pathinfo($d['original'], PATHINFO_FILENAME) ?: $doc_tipo;
-                $ins->execute([$new_id, $doc_tipo, $nome_doc, date('Y-m-d'), $d['ficheiro']]);
+                $nome_doc = pathinfo($d['nome'], PATHINFO_FILENAME) ?: $doc_tipo;
+                $ins->bindValue(1, $new_id, PDO::PARAM_INT);
+                $ins->bindValue(2, $doc_tipo);
+                $ins->bindValue(3, $nome_doc);
+                $ins->bindValue(4, date('Y-m-d'));
+                $ins->bindValue(5, $d['nome']);
+                $ins->bindValue(6, $d['conteudo'], PDO::PARAM_LOB);
+                $ins->bindValue(7, $d['mime']);
+                $ins->execute();
                 mhs_historico('documento', (int)$pdo->lastInsertId(), $nome_doc, 'criar');
             }
         }

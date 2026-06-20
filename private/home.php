@@ -36,16 +36,16 @@ while ($row = $r->fetch_assoc()) $localizacoes_uso[] = $row;
 $r = $mysqli->query("SELECT DATE_FORMAT(data_fim,'%Y-%m') as mes, COUNT(*) as total FROM garantias_contratos WHERE data_fim IS NOT NULL GROUP BY DATE_FORMAT(data_fim,'%Y-%m') ORDER BY mes ASC LIMIT 12");
 while ($row = $r->fetch_assoc()) $garantias_vencimento[] = $row;
 
-$stats_equipamentos        = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_ativos              = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Ativo' AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_manutencao          = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Em manutenção' AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_inativos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Inativo' AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_garantias_expiradas = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim < CURDATE() AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_sem_doc             = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos e WHERE e.ativo=1 AND e.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento=e.id AND d.ativo=1 AND d.deleted_at IS NULL)")->fetch_assoc()['t'];
-$stats_documentos          = (int)$mysqli->query("SELECT COUNT(*) as t FROM documentos WHERE ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_fornecedores        = (int)$mysqli->query("SELECT COUNT(*) as t FROM fornecedores WHERE ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_garantias           = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW() AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
-$stats_criticos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade='Alta' AND ativo=1 AND deleted_at IS NULL")->fetch_assoc()['t'];
+$stats_equipamentos        = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_ativos              = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Ativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_manutencao          = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Em manutenção' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_inativos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Inativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_garantias_expiradas = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim < CURDATE() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_sem_doc             = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos e WHERE e.ativo=1 AND e.eliminado_em IS NULL AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento=e.id AND d.ativo=1 AND d.eliminado_em IS NULL)")->fetch_assoc()['t'];
+$stats_documentos          = (int)$mysqli->query("SELECT COUNT(*) as t FROM documentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_fornecedores        = (int)$mysqli->query("SELECT COUNT(*) as t FROM fornecedores WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_garantias           = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+$stats_criticos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade='Alta' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 
 $page_title = 'Dashboard';
 include __DIR__ . '/includes/header.php';
@@ -64,48 +64,49 @@ include __DIR__ . '/includes/header.php';
         </a>
     </div>
 
-    <!-- Stats strip: big numbers, no card boxes -->
+    <!-- Stats strip: big numbers clicáveis -> listas filtradas -->
+    <?php $EQ = BASE_URL . '/private/views/equipamentos/lista.php'; $GAR = BASE_URL . '/private/views/garantias-contrato/lista.php'; ?>
     <div class="dash-stats">
-        <div class="dash-stat">
+        <a href="<?= $EQ ?>" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-stethoscope"></i> &nbsp;Equipamentos</div>
             <div class="dash-stat-num" data-count="<?= $stats_equipamentos ?>">0</div>
             <div class="dash-stat-lbl">Total registado</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $EQ ?>?estado=Ativo" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-circle-check"></i> &nbsp;Ativos</div>
             <div class="dash-stat-num" data-count="<?= $stats_ativos ?>">0</div>
             <div class="dash-stat-lbl">Em operação</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $EQ ?>?estado=<?= rawurlencode('Em manutenção') ?>" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-wrench"></i> &nbsp;Manutenção</div>
             <div class="dash-stat-num" data-count="<?= $stats_manutencao ?>">0</div>
             <div class="dash-stat-lbl">Em intervenção</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $EQ ?>?estado=Inativo" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-circle-xmark"></i> &nbsp;Inativos</div>
             <div class="dash-stat-num" data-count="<?= $stats_inativos ?>">0</div>
             <div class="dash-stat-lbl">Fora de serviço</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $GAR ?>?filtro=vigor" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-shield-halved"></i> &nbsp;Garantias</div>
             <div class="dash-stat-num" data-count="<?= $stats_garantias ?>">0</div>
             <div class="dash-stat-lbl">Ainda em vigor</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $GAR ?>?filtro=expiradas" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-calendar-xmark"></i> &nbsp;Expiradas</div>
             <div class="dash-stat-num" data-count="<?= $stats_garantias_expiradas ?>">0</div>
             <div class="dash-stat-lbl">Garantias expiradas</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $EQ ?>?filtro=sem_docs" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-file-circle-xmark"></i> &nbsp;Sem Docs</div>
             <div class="dash-stat-num" data-count="<?= $stats_sem_doc ?>">0</div>
             <div class="dash-stat-lbl">Sem documentação</div>
-        </div>
-        <div class="dash-stat">
+        </a>
+        <a href="<?= $EQ ?>?criticidade=Alta" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-triangle-exclamation"></i> &nbsp;Críticos</div>
             <div class="dash-stat-num" data-count="<?= $stats_criticos ?>">0</div>
             <div class="dash-stat-lbl">Criticidade alta</div>
-        </div>
+        </a>
     </div>
 </div>
 

@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS=0;
 
+DROP TABLE IF EXISTS `equipamento_at`;
 DROP TABLE IF EXISTS `manutencoes`;
 DROP TABLE IF EXISTS `emprestimos_equipamentos`;
 DROP TABLE IF EXISTS `equipamentos_movimentacoes`;
@@ -12,21 +13,20 @@ DROP TABLE IF EXISTS `fornecedores`;
 DROP TABLE IF EXISTS `localizacoes`;
 DROP TABLE IF EXISTS `categorias`;
 DROP TABLE IF EXISTS `mensagens_contacto`;
+DROP TABLE IF EXISTS `utilizadores`;
 DROP TABLE IF EXISTS `agents`;
 DROP TABLE IF EXISTS `historico_alteracoes`;
 DROP TABLE IF EXISTS `website_config`;
 
-CREATE TABLE `agents` (
+CREATE TABLE `utilizadores` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` VARBINARY(200) DEFAULT NULL,
-  `passwrd` VARCHAR(200) DEFAULT NULL,
-  `profile` VARCHAR(20) DEFAULT NULL,
-  `purl` VARCHAR(20) DEFAULT NULL,
-  `code` VARCHAR(6) DEFAULT NULL,
-  `last_login` DATETIME DEFAULT NULL,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `nome` VARBINARY(200) DEFAULT NULL,
+  `senha` VARCHAR(200) DEFAULT NULL,
+  `perfil` VARCHAR(20) DEFAULT NULL,
+  `ultimo_acesso` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -35,9 +35,9 @@ CREATE TABLE `categorias` (
   `nome` VARCHAR(100) NOT NULL,
   `descricao` TEXT DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -49,9 +49,9 @@ CREATE TABLE `localizacoes` (
   `sala` VARCHAR(100) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -68,9 +68,9 @@ CREATE TABLE `fornecedores` (
   `tipo_fornecedor` VARCHAR(50) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -92,9 +92,9 @@ CREATE TABLE `equipamentos` (
   `criticidade` VARCHAR(30) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_codigo_inventario` (`codigo_inventario`),
   FOREIGN KEY (`id_categoria`) REFERENCES `categorias`(`id`) ON DELETE SET NULL,
@@ -106,7 +106,7 @@ CREATE TABLE `equipamentos_fornecedores` (
   `id_fornecedor` INT UNSIGNED NOT NULL,
   `tipo_relacao` VARCHAR(50) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
-  `created_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_equipamento`, `id_fornecedor`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`id_fornecedor`) REFERENCES `fornecedores`(`id`) ON DELETE CASCADE
@@ -121,11 +121,13 @@ CREATE TABLE `documentos` (
   `data_documento` DATE DEFAULT NULL,
   `data_validade` DATE DEFAULT NULL,
   `nome_ficheiro` VARCHAR(255) DEFAULT NULL,
+  `ficheiro_conteudo` LONGBLOB DEFAULT NULL,
+  `ficheiro_mime` VARCHAR(120) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`id_fornecedor`) REFERENCES `fornecedores`(`id`) ON DELETE SET NULL
@@ -142,10 +144,12 @@ CREATE TABLE `garantias_contratos` (
   `periodicidade` VARCHAR(50) DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `nome_ficheiro` VARCHAR(255) DEFAULT NULL,
+  `ficheiro_conteudo` LONGBLOB DEFAULT NULL,
+  `ficheiro_mime` VARCHAR(120) DEFAULT NULL,
   `ativo` TINYINT UNSIGNED DEFAULT 1,
-  `created_at` DATETIME DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -156,12 +160,12 @@ CREATE TABLE `mensagens_contacto` (
   `email` VARCHAR(190) NOT NULL,
   `mensagem` TEXT NOT NULL,
   `lida` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME NOT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME NOT NULL,
+  `atualizado_em` DATETIME NOT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_lida` (`lida`),
-  KEY `idx_created_at` (`created_at`)
+  KEY `idx_criado_em` (`criado_em`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `equipamentos_movimentacoes` (
@@ -171,10 +175,10 @@ CREATE TABLE `equipamentos_movimentacoes` (
   `valor_anterior` VARCHAR(255) DEFAULT NULL,
   `valor_novo` VARCHAR(255) DEFAULT NULL,
   `alterado_por` VARCHAR(190) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME NOT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_equipamento_created` (`id_equipamento`, `created_at`),
+  KEY `idx_equipamento_created` (`id_equipamento`, `criado_em`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -190,9 +194,9 @@ CREATE TABLE `emprestimos_equipamentos` (
   `observacoes` TEXT DEFAULT NULL,
   `created_by` VARCHAR(190) DEFAULT NULL,
   `updated_by` VARCHAR(190) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME NOT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME NOT NULL,
+  `atualizado_em` DATETIME NOT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_equipamento_estado` (`id_equipamento`, `estado`),
   KEY `idx_prevista_devolucao` (`data_prevista_devolucao`),
@@ -212,9 +216,9 @@ CREATE TABLE `manutencoes_preventivas` (
   `observacoes` TEXT DEFAULT NULL,
   `created_by` VARCHAR(190) DEFAULT NULL,
   `updated_by` VARCHAR(190) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME NOT NULL,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME NOT NULL,
+  `atualizado_em` DATETIME NOT NULL,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_equipamento` (`id_equipamento`),
   KEY `idx_proxima_manutencao` (`proxima_manutencao`),
@@ -224,7 +228,7 @@ CREATE TABLE `manutencoes_preventivas` (
 CREATE TABLE `manutencoes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_equipamento` INT UNSIGNED NOT NULL,
-  `tipo` ENUM('Preventiva','Urgência') NOT NULL DEFAULT 'Preventiva',
+  `tipo` ENUM('Preventiva','UrgÃªncia') NOT NULL DEFAULT 'Preventiva',
   `data_manutencao` DATE DEFAULT NULL,
   `proxima_manutencao` DATE DEFAULT NULL,
   `periodicidade` VARCHAR(50) DEFAULT NULL,
@@ -233,11 +237,27 @@ CREATE TABLE `manutencoes` (
   `descricao` TEXT DEFAULT NULL,
   `observacoes` TEXT DEFAULT NULL,
   `created_by` VARCHAR(190) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `deleted_at` DATETIME DEFAULT NULL,
+  `criado_em` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `eliminado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `id_equipamento` (`id_equipamento`),
+  FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `equipamento_at` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_equipamento` INT UNSIGNED NOT NULL,
+  `empresa` VARCHAR(255) DEFAULT NULL,
+  `nome_contacto` VARCHAR(255) DEFAULT NULL,
+  `email` VARCHAR(255) DEFAULT NULL,
+  `telefone` VARCHAR(50) DEFAULT NULL,
+  `telefone_urgencia` VARCHAR(50) DEFAULT NULL,
+  `observacoes` TEXT DEFAULT NULL,
+  `criado_em` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_eq_at` (`id_equipamento`),
   FOREIGN KEY (`id_equipamento`) REFERENCES `equipamentos`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -249,9 +269,9 @@ CREATE TABLE `historico_alteracoes` (
   `acao` VARCHAR(20) NOT NULL,
   `detalhe` TEXT DEFAULT NULL,
   `utilizador` VARCHAR(190) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `criado_em` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_created` (`created_at`),
+  KEY `idx_created` (`criado_em`),
   KEY `idx_entidade` (`entidade`, `entidade_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -259,173 +279,192 @@ CREATE TABLE `website_config` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `chave` VARCHAR(100) NOT NULL,
   `valor` TEXT DEFAULT NULL,
-  `updated_at` DATETIME DEFAULT NULL,
+  `atualizado_em` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_chave` (`chave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;
 
-INSERT INTO `agents` (`name`, `passwrd`, `profile`, `created_at`) VALUES
+INSERT INTO `utilizadores` (`nome`, `senha`, `perfil`, `criado_em`) VALUES
 (AES_ENCRYPT('admin@hospital.pt', 'M3dSol_MySQL_AES_2026!'), '$2y$10$wQ5Z41jT3naiHUy2eNI0NuQLS5mm00.wFNnTJP9g0jZ9GsAnxbIvO', 'admin', NOW()),
 (AES_ENCRYPT('tecnico@hospital.pt', 'M3dSol_MySQL_AES_2026!'), '$2y$10$X.oDPE4lxS5WShLYmsuQKOsSRqTPmoCl2K.8Frfsv.AP5Q.RHByEq', 'tecnico', NOW());
 
-INSERT INTO `categorias` (`nome`, `descricao`, `created_at`) VALUES
-('Monitorização', 'Equipamentos para monitorizar sinais fisiológicos', NOW()),
-('Suporte de vida', 'Equipamentos essenciais para manter funções vitais', NOW()),
+INSERT INTO `categorias` (`nome`, `descricao`, `criado_em`) VALUES
+('MonitorizaÃ§Ã£o', 'Equipamentos para monitorizar sinais fisiolÃ³gicos', NOW()),
+('Suporte de vida', 'Equipamentos essenciais para manter funÃ§Ãµes vitais', NOW()),
 ('Terapia', 'Equipamentos utilizados para tratamento', NOW()),
-('Diagnóstico', 'Equipamentos para avaliação clínica ou imagiologia', NOW()),
-('Laboratório', 'Equipamentos usados em análises clínicas', NOW()),
-('Esterilização', 'Equipamentos de processamento de dispositivos médicos', NOW()),
-('Reabilitação', 'Equipamentos de fisioterapia e recuperação funcional', NOW()),
-('Cirurgia', 'Equipamentos de apoio a blocos operatórios', NOW()),
-('Imagiologia', 'Equipamentos de diagnóstico por imagem', NOW());
+('DiagnÃ³stico', 'Equipamentos para avaliaÃ§Ã£o clÃ­nica ou imagiologia', NOW()),
+('LaboratÃ³rio', 'Equipamentos usados em anÃ¡lises clÃ­nicas', NOW()),
+('EsterilizaÃ§Ã£o', 'Equipamentos de processamento de dispositivos mÃ©dicos', NOW()),
+('ReabilitaÃ§Ã£o', 'Equipamentos de fisioterapia e recuperaÃ§Ã£o funcional', NOW()),
+('Cirurgia', 'Equipamentos de apoio a blocos operatÃ³rios', NOW()),
+('Imagiologia', 'Equipamentos de diagnÃ³stico por imagem', NOW());
 
-INSERT INTO `localizacoes` (`edificio`, `piso`, `servico`, `sala`, `created_at`) VALUES
-('Edifício Principal', 'Piso 2', 'Unidade de Cuidados Intensivos', 'Sala 2.1', NOW()),
-('Edifício Principal', 'Piso 2', 'Unidade de Cuidados Intensivos', 'Sala 2.2', NOW()),
-('Edifício Principal', 'Piso 0', 'Urgência', 'Sala de Emergência', NOW()),
-('Edifício B', 'Piso 1', 'Medicina Interna', 'Enfermaria 1', NOW()),
-('Edifício B', 'Piso 0', 'Fisioterapia', 'Sala de Tratamentos', NOW()),
-('Edifício C', 'Piso -1', 'Laboratório de Análises', 'Lab. Hematologia', NOW()),
-('Edifício Principal', 'Piso 1', 'Bloco Operatório', 'Sala 1.3', NOW()),
-('Edifício C', 'Piso 0', 'Imagiologia', 'Sala RX', NOW());
+INSERT INTO `localizacoes` (`edificio`, `piso`, `servico`, `sala`, `criado_em`) VALUES
+('EdifÃ­cio Principal', 'Piso 2', 'Unidade de Cuidados Intensivos', 'Sala 2.1', NOW()),
+('EdifÃ­cio Principal', 'Piso 2', 'Unidade de Cuidados Intensivos', 'Sala 2.2', NOW()),
+('EdifÃ­cio Principal', 'Piso 0', 'UrgÃªncia', 'Sala de EmergÃªncia', NOW()),
+('EdifÃ­cio B', 'Piso 1', 'Medicina Interna', 'Enfermaria 1', NOW()),
+('EdifÃ­cio B', 'Piso 0', 'Fisioterapia', 'Sala de Tratamentos', NOW()),
+('EdifÃ­cio C', 'Piso -1', 'LaboratÃ³rio de AnÃ¡lises', 'Lab. Hematologia', NOW()),
+('EdifÃ­cio Principal', 'Piso 1', 'Bloco OperatÃ³rio', 'Sala 1.3', NOW()),
+('EdifÃ­cio C', 'Piso 0', 'Imagiologia', 'Sala RX', NOW());
 
-INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `website`, `pessoa_contacto`, `tel_contacto`, `tipo_fornecedor`, `created_at`) VALUES
-('Philips Healthcare', '501234567', '210000001', 'info@philips.pt', 'Rua da Saúde 100, Lisboa', 'https://www.philips.pt', 'João Silva', '912345001', 'Fabricante', NOW()),
-('Dräger Portugal', '502345678', '210000002', 'info@draeger.pt', 'Av. da Liberdade 50, Lisboa', 'https://www.draeger.com', 'Ana Costa', '912345002', 'Fabricante', NOW()),
+INSERT INTO `fornecedores` (`nome`, `nif`, `telefone`, `email`, `morada`, `website`, `pessoa_contacto`, `tel_contacto`, `tipo_fornecedor`, `criado_em`) VALUES
+('Philips Healthcare', '501234567', '210000001', 'info@philips.pt', 'Rua da SaÃºde 100, Lisboa', 'https://www.philips.pt', 'JoÃ£o Silva', '912345001', 'Fabricante', NOW()),
+('DrÃ¤ger Portugal', '502345678', '210000002', 'info@draeger.pt', 'Av. da Liberdade 50, Lisboa', 'https://www.draeger.com', 'Ana Costa', '912345002', 'Fabricante', NOW()),
 ('B. Braun Medical', '503456789', '210000003', 'info@bbraun.pt', 'Rua Industrial 25, Porto', 'https://www.bbraun.pt', 'Carlos Mendes', '912345003', 'Fabricante', NOW()),
 ('Zoll Medical', '504567890', '210000004', 'info@zoll.pt', 'Rua Nova 10, Lisboa', 'https://www.zoll.com', 'Maria Santos', '912345004', 'Distribuidor', NOW()),
-('TecnoMed Assistência', '505678901', '210000005', 'geral@tecnomed.pt', 'Rua Técnica 5, Porto', NULL, 'Pedro Alves', '912345005', 'Assistência técnica', NOW()),
-('Medtronic Portugal', '506789012', '210000006', 'info@medtronic.pt', 'Av. Técnica 12, Lisboa', 'https://www.medtronic.com', 'Rui Fernandes', '912345006', 'Fabricante', NOW()),
-('Siemens Healthineers', '507890123', '210000007', 'info@siemens-healthineers.pt', 'Rua da Inovação 40, Porto', 'https://www.siemens-healthineers.com', 'Sofia Martins', '912345007', 'Fabricante', NOW());
+('TecnoMed AssistÃªncia', '505678901', '210000005', 'geral@tecnomed.pt', 'Rua TÃ©cnica 5, Porto', NULL, 'Pedro Alves', '912345005', 'AssistÃªncia tÃ©cnica', NOW()),
+('Medtronic Portugal', '506789012', '210000006', 'info@medtronic.pt', 'Av. TÃ©cnica 12, Lisboa', 'https://www.medtronic.com', 'Rui Fernandes', '912345006', 'Fabricante', NOW()),
+('Siemens Healthineers', '507890123', '210000007', 'info@siemens-healthineers.pt', 'Rua da InovaÃ§Ã£o 40, Porto', 'https://www.siemens-healthineers.com', 'Sofia Martins', '912345007', 'Fabricante', NOW());
 
-INSERT INTO `equipamentos` (`codigo_inventario`, `designacao`, `id_categoria`, `marca`, `modelo`, `numero_serie`, `fabricante`, `data_aquisicao`, `ano_fabrico`, `custo_aquisicao`, `tipo_entrada`, `id_localizacao`, `estado`, `criticidade`, `observacoes`, `created_at`) VALUES
-('EQ-001', 'Monitor de Sinais Vitais', (SELECT id FROM categorias WHERE nome LIKE 'Monitoriza%' LIMIT 1), 'Philips', 'IntelliVue MX450', 'PH-MX450-001', 'Philips Healthcare', '2024-01-18', 2023, 6800.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Urg%' LIMIT 1), 'Ativo', 'Alta', 'Monitor multiparâmetrico com ECG, SpO2 e NIBP.', NOW()),
-('EQ-002', 'Ventilador UCI', (SELECT id FROM categorias WHERE nome = 'Suporte de vida' LIMIT 1), 'Dräger', 'Evita V600', 'DR-EV600-002', 'Dräger', '2023-09-04', 2023, 28500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Unidade de Cuidados Intensivos' LIMIT 1), 'Ativo', 'Suporte de vida', 'Ventilador para cuidados intensivos.', NOW()),
-('EQ-003', 'Desfibrilhador AED', (SELECT id FROM categorias WHERE nome = 'Terapia' LIMIT 1), 'Zoll', 'AED 3', 'ZO-AED3-003', 'Zoll Medical', '2022-11-22', 2022, 1950.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Bloco Operat%' LIMIT 1), 'Em manutenção', 'Alta', 'Requer verificação de bateria.', NOW()),
-('EQ-004', 'Bomba de Infusão', (SELECT id FROM categorias WHERE nome = 'Terapia' LIMIT 1), 'B. Braun', 'Infusomat Space', 'BB-INF-004', 'B. Braun Medical', '2024-03-12', 2024, 2400.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Medicina Interna' LIMIT 1), 'Ativo', 'Média', 'Bomba volumétrica para perfusão contínua.', NOW()),
-('EQ-005', 'Autoclave de Esterilização', (SELECT id FROM categorias WHERE nome LIKE 'Esteriliza%' LIMIT 1), 'Tuttnauer', '5596', 'TU-AUT-005', 'Tuttnauer', '2021-06-10', 2021, 18500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Laboratório%' LIMIT 1), 'Ativo', 'Média', 'Ciclo de esterilização validado.', NOW()),
-('EQ-006', 'Ecógrafo Portátil', (SELECT id FROM categorias WHERE nome = 'Imagiologia' LIMIT 1), 'Siemens', 'Acuson P500', 'SI-ECO-006', 'Siemens Healthineers', '2023-02-14', 2022, 32500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico = 'Imagiologia' LIMIT 1), 'Ativo', 'Alta', 'Ecógrafo portátil para urgência e UCI.', NOW()),
-('EQ-007', 'Marquesa de Fisioterapia', (SELECT id FROM categorias WHERE nome LIKE 'Reabilita%' LIMIT 1), 'Gymna', 'One', 'GY-MAR-007', 'Gymna', '2020-05-20', 2020, 1250.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Fisioterapia' LIMIT 1), 'Inativo', 'Baixa', 'A aguardar substituição.', NOW());
+INSERT INTO `equipamentos` (`codigo_inventario`, `designacao`, `id_categoria`, `marca`, `modelo`, `numero_serie`, `fabricante`, `data_aquisicao`, `ano_fabrico`, `custo_aquisicao`, `tipo_entrada`, `id_localizacao`, `estado`, `criticidade`, `observacoes`, `criado_em`) VALUES
+('EQ-001', 'Monitor de Sinais Vitais', (SELECT id FROM categorias WHERE nome LIKE 'Monitoriza%' LIMIT 1), 'Philips', 'IntelliVue MX450', 'PH-MX450-001', 'Philips Healthcare', '2024-01-18', 2023, 6800.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Urg%' LIMIT 1), 'Ativo', 'Alta', 'Monitor multiparÃ¢metrico com ECG, SpO2 e NIBP.', NOW()),
+('EQ-002', 'Ventilador UCI', (SELECT id FROM categorias WHERE nome = 'Suporte de vida' LIMIT 1), 'DrÃ¤ger', 'Evita V600', 'DR-EV600-002', 'DrÃ¤ger', '2023-09-04', 2023, 28500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Unidade de Cuidados Intensivos' LIMIT 1), 'Ativo', 'Suporte de vida', 'Ventilador para cuidados intensivos.', NOW()),
+('EQ-003', 'Desfibrilhador AED', (SELECT id FROM categorias WHERE nome = 'Terapia' LIMIT 1), 'Zoll', 'AED 3', 'ZO-AED3-003', 'Zoll Medical', '2022-11-22', 2022, 1950.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Bloco Operat%' LIMIT 1), 'Em manutenÃ§Ã£o', 'Alta', 'Requer verificaÃ§Ã£o de bateria.', NOW()),
+('EQ-004', 'Bomba de InfusÃ£o', (SELECT id FROM categorias WHERE nome = 'Terapia' LIMIT 1), 'B. Braun', 'Infusomat Space', 'BB-INF-004', 'B. Braun Medical', '2024-03-12', 2024, 2400.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Medicina Interna' LIMIT 1), 'Ativo', 'MÃ©dia', 'Bomba volumÃ©trica para perfusÃ£o contÃ­nua.', NOW()),
+('EQ-005', 'Autoclave de EsterilizaÃ§Ã£o', (SELECT id FROM categorias WHERE nome LIKE 'Esteriliza%' LIMIT 1), 'Tuttnauer', '5596', 'TU-AUT-005', 'Tuttnauer', '2021-06-10', 2021, 18500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'LaboratÃ³rio%' LIMIT 1), 'Ativo', 'MÃ©dia', 'Ciclo de esterilizaÃ§Ã£o validado.', NOW()),
+('EQ-006', 'EcÃ³grafo PortÃ¡til', (SELECT id FROM categorias WHERE nome = 'Imagiologia' LIMIT 1), 'Siemens', 'Acuson P500', 'SI-ECO-006', 'Siemens Healthineers', '2023-02-14', 2022, 32500.00, 'Compra', (SELECT id FROM localizacoes WHERE servico = 'Imagiologia' LIMIT 1), 'Ativo', 'Alta', 'EcÃ³grafo portÃ¡til para urgÃªncia e UCI.', NOW()),
+('EQ-007', 'Marquesa de Fisioterapia', (SELECT id FROM categorias WHERE nome LIKE 'Reabilita%' LIMIT 1), 'Gymna', 'One', 'GY-MAR-007', 'Gymna', '2020-05-20', 2020, 1250.00, 'Compra', (SELECT id FROM localizacoes WHERE servico LIKE 'Fisioterapia' LIMIT 1), 'Inativo', 'Baixa', 'A aguardar substituiÃ§Ã£o.', NOW());
 
-INSERT INTO `equipamentos_fornecedores` (`id_equipamento`, `id_fornecedor`, `tipo_relacao`, `created_at`)
+INSERT INTO `equipamentos_fornecedores` (`id_equipamento`, `id_fornecedor`, `tipo_relacao`, `criado_em`)
 SELECT e.id, f.id, 'Fornecedor principal', NOW()
 FROM equipamentos e
 JOIN fornecedores f ON
   (e.marca = 'Philips' AND f.nome = 'Philips Healthcare') OR
-  (e.marca = 'Dräger' AND f.nome = 'Dräger Portugal') OR
+  (e.marca = 'DrÃ¤ger' AND f.nome = 'DrÃ¤ger Portugal') OR
   (e.marca = 'Zoll' AND f.nome = 'Zoll Medical') OR
   (e.marca = 'B. Braun' AND f.nome = 'B. Braun Medical') OR
   (e.marca = 'Siemens' AND f.nome = 'Siemens Healthineers');
 
-INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `nome_ficheiro`, `created_at`)
-SELECT e.id, f.id, 'Manual', CONCAT('Manual técnico ', e.codigo_inventario), '2024-01-01', CONCAT(e.codigo_inventario, '_manual.pdf'), NOW()
+INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `nome_ficheiro`, `criado_em`)
+SELECT e.id, f.id, 'Manual', CONCAT('Manual tÃ©cnico ', e.codigo_inventario), '2024-01-01', CONCAT(e.codigo_inventario, '_manual.pdf'), NOW()
 FROM equipamentos e
 LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
 LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor;
 
-INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `data_validade`, `nome_ficheiro`, `created_at`)
-SELECT e.id, f.id, 'Certificado', CONCAT('Certificado calibração ', e.codigo_inventario), '2026-01-15', '2027-01-15', CONCAT(e.codigo_inventario, '_calibracao.pdf'), NOW()
+INSERT INTO `documentos` (`id_equipamento`, `id_fornecedor`, `tipo_documento`, `nome_documento`, `data_documento`, `data_validade`, `nome_ficheiro`, `criado_em`)
+SELECT e.id, f.id, 'Certificado', CONCAT('Certificado calibraÃ§Ã£o ', e.codigo_inventario), '2026-01-15', '2027-01-15', CONCAT(e.codigo_inventario, '_calibracao.pdf'), NOW()
 FROM equipamentos e
 LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
 LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor
 WHERE e.codigo_inventario IN ('EQ-001', 'EQ-004', 'EQ-006');
 
-INSERT INTO `garantias_contratos` (`id_equipamento`, `data_inicio`, `data_fim`, `tem_contrato`, `tipo_contrato`, `entidade_responsavel`, `periodicidade`, `created_at`)
-SELECT e.id, e.data_aquisicao, DATE_ADD(e.data_aquisicao, INTERVAL 3 YEAR), 1, 'Garantia e manutenção', COALESCE(f.nome, e.fabricante), 'Anual', NOW()
+INSERT INTO `garantias_contratos` (`id_equipamento`, `data_inicio`, `data_fim`, `tem_contrato`, `tipo_contrato`, `entidade_responsavel`, `periodicidade`, `criado_em`)
+SELECT e.id, e.data_aquisicao, DATE_ADD(e.data_aquisicao, INTERVAL 3 YEAR), 1, 'Garantia e manutenÃ§Ã£o', COALESCE(f.nome, e.fabricante), 'Anual', NOW()
 FROM equipamentos e
 LEFT JOIN equipamentos_fornecedores ef ON ef.id_equipamento = e.id
 LEFT JOIN fornecedores f ON f.id = ef.id_fornecedor;
 
-INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `created_at`)
+INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `criado_em`)
 SELECT e.id, 'estado', 'Rececionado', e.estado, 'admin@hospital.pt', NOW()
 FROM equipamentos e;
 
-INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `created_at`)
-SELECT e.id, 'localizacao', 'Armazém Central', CONCAT(l.servico, ' - ', l.sala), 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 90 DAY)
+INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `criado_em`)
+SELECT e.id, 'localizacao', 'ArmazÃ©m Central', CONCAT(l.servico, ' - ', l.sala), 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 90 DAY)
 FROM equipamentos e
 JOIN localizacoes l ON l.id = e.id_localizacao;
 
-INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `created_at`)
-SELECT e.id, 'localizacao', 'Bloco Operatório - Sala 2', 'Urgência - Sala de Reanimação', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 30 DAY)
+INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `criado_em`)
+SELECT e.id, 'localizacao', 'Bloco OperatÃ³rio - Sala 2', 'UrgÃªncia - Sala de ReanimaÃ§Ã£o', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 30 DAY)
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-001';
 
-INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `created_at`)
-SELECT e.id, 'estado', 'Ativo', 'Em manutenção', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 7 DAY)
+INSERT INTO `equipamentos_movimentacoes` (`id_equipamento`, `campo`, `valor_anterior`, `valor_novo`, `alterado_por`, `criado_em`)
+SELECT e.id, 'estado', 'Ativo', 'Em manutenÃ§Ã£o', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 7 DAY)
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-003';
 
-INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `criado_em`, `atualizado_em`)
 SELECT e.id, e.id_localizacao,
   (SELECT id FROM localizacoes WHERE servico LIKE 'Bloco Operat%' LIMIT 1),
   DATE_SUB(CURDATE(), INTERVAL 14 DAY), DATE_SUB(CURDATE(), INTERVAL 14 DAY), DATE_SUB(CURDATE(), INTERVAL 14 DAY),
-  'Devolvido', 'Empréstimo de algumas horas para cirurgia programada. Devolvido no próprio dia.', 'admin@hospital.pt', NOW(), NOW()
+  'Devolvido', 'EmprÃ©stimo de algumas horas para cirurgia programada. Devolvido no prÃ³prio dia.', 'admin@hospital.pt', NOW(), NOW()
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-006';
 
-INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `criado_em`, `atualizado_em`)
 SELECT e.id, e.id_localizacao,
   (SELECT id FROM localizacoes WHERE servico LIKE 'Urg%' LIMIT 1),
   DATE_SUB(CURDATE(), INTERVAL 5 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY),
-  'Devolvido', 'Empréstimo de um dia para reforço na urgência.', 'tecnico@hospital.pt', NOW(), NOW()
+  'Devolvido', 'EmprÃ©stimo de um dia para reforÃ§o na urgÃªncia.', 'tecnico@hospital.pt', NOW(), NOW()
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-004';
 
-INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+INSERT INTO `emprestimos_equipamentos` (`id_equipamento`, `id_localizacao_origem`, `id_localizacao_destino`, `data_saida`, `data_prevista_devolucao`, `data_devolucao`, `estado`, `observacoes`, `created_by`, `criado_em`, `atualizado_em`)
 SELECT e.id, e.id_localizacao,
   (SELECT id FROM localizacoes WHERE servico LIKE 'Unidade de Cuidados Intensivos' LIMIT 1),
   CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), NULL,
-  'Ativo', 'Empréstimo temporário à UCI. Devolução prevista para amanhã.', 'admin@hospital.pt', NOW(), NOW()
+  'Ativo', 'EmprÃ©stimo temporÃ¡rio Ã  UCI. DevoluÃ§Ã£o prevista para amanhÃ£.', 'admin@hospital.pt', NOW(), NOW()
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-001';
 
-INSERT INTO `manutencoes_preventivas` (`id_equipamento`, `ultima_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `observacoes`, `created_by`, `created_at`, `updated_at`)
+INSERT INTO `manutencoes_preventivas` (`id_equipamento`, `ultima_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `observacoes`, `created_by`, `criado_em`, `atualizado_em`)
 SELECT e.id,
   CASE WHEN e.criticidade IN ('Alta', 'Suporte de vida') THEN DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ELSE DATE_SUB(CURDATE(), INTERVAL 6 MONTH) END,
   CASE WHEN e.criticidade IN ('Alta', 'Suporte de vida') THEN DATE_ADD(CURDATE(), INTERVAL 3 MONTH) ELSE DATE_ADD(CURDATE(), INTERVAL 6 MONTH) END,
   CASE WHEN e.criticidade IN ('Alta', 'Suporte de vida') THEN 'Semestral' ELSE 'Anual' END,
   'Planeada', 'tecnico@hospital.pt',
-  CASE WHEN e.criticidade IN ('Alta', 'Suporte de vida') THEN 'Manutenção preventiva semestral (2x por ano) — equipamento crítico.' ELSE 'Manutenção preventiva anual.' END,
+  CASE WHEN e.criticidade IN ('Alta', 'Suporte de vida') THEN 'ManutenÃ§Ã£o preventiva semestral (2x por ano) â€” equipamento crÃ­tico.' ELSE 'ManutenÃ§Ã£o preventiva anual.' END,
   'admin@hospital.pt', NOW(), NOW()
 FROM equipamentos e;
 
-INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `created_at`)
-SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 9 MONTH), DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 'Semestral', 'Concluída', 'tecnico@hospital.pt',
-  'Manutenção preventiva semestral: verificação geral, limpeza e testes funcionais.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 9 MONTH)
+INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `criado_em`)
+SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 9 MONTH), DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 'Semestral', 'ConcluÃ­da', 'tecnico@hospital.pt',
+  'ManutenÃ§Ã£o preventiva semestral: verificaÃ§Ã£o geral, limpeza e testes funcionais.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 9 MONTH)
 FROM equipamentos e
 WHERE e.criticidade IN ('Alta','Suporte de vida');
 
-INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `created_at`)
-SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 3 MONTH), DATE_ADD(CURDATE(), INTERVAL 3 MONTH), 'Semestral', 'Concluída', 'tecnico@hospital.pt',
-  'Manutenção preventiva semestral: calibração, verificação de alarmes e segurança elétrica.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 3 MONTH)
+INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `criado_em`)
+SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 3 MONTH), DATE_ADD(CURDATE(), INTERVAL 3 MONTH), 'Semestral', 'ConcluÃ­da', 'tecnico@hospital.pt',
+  'ManutenÃ§Ã£o preventiva semestral: calibraÃ§Ã£o, verificaÃ§Ã£o de alarmes e seguranÃ§a elÃ©trica.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 3 MONTH)
 FROM equipamentos e
 WHERE e.criticidade IN ('Alta','Suporte de vida');
 
-INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `created_at`)
-SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 18 MONTH), DATE_SUB(CURDATE(), INTERVAL 6 MONTH), 'Anual', 'Concluída', 'tecnico@hospital.pt',
-  'Manutenção preventiva anual: inspeção geral e testes de funcionamento.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 18 MONTH)
+INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `criado_em`)
+SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 18 MONTH), DATE_SUB(CURDATE(), INTERVAL 6 MONTH), 'Anual', 'ConcluÃ­da', 'tecnico@hospital.pt',
+  'ManutenÃ§Ã£o preventiva anual: inspeÃ§Ã£o geral e testes de funcionamento.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 18 MONTH)
 FROM equipamentos e
 WHERE e.criticidade NOT IN ('Alta','Suporte de vida');
 
-INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `created_at`)
-SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 6 MONTH), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), 'Anual', 'Concluída', 'tecnico@hospital.pt',
-  'Manutenção preventiva anual: inspeção geral, limpeza e verificação de segurança.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 6 MONTH)
+INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `criado_em`)
+SELECT e.id, 'Preventiva', DATE_SUB(CURDATE(), INTERVAL 6 MONTH), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), 'Anual', 'ConcluÃ­da', 'tecnico@hospital.pt',
+  'ManutenÃ§Ã£o preventiva anual: inspeÃ§Ã£o geral, limpeza e verificaÃ§Ã£o de seguranÃ§a.', 'admin@hospital.pt', DATE_SUB(NOW(), INTERVAL 6 MONTH)
 FROM equipamentos e
 WHERE e.criticidade NOT IN ('Alta','Suporte de vida');
 
-INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `created_at`)
-SELECT e.id, 'Urgência', DATE_SUB(CURDATE(), INTERVAL 7 DAY), NULL, NULL, 'Em curso', 'tecnico@hospital.pt',
-  'Intervenção urgente: falha na verificação de bateria. Substituição em curso.', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 7 DAY)
+INSERT INTO `manutencoes` (`id_equipamento`, `tipo`, `data_manutencao`, `proxima_manutencao`, `periodicidade`, `estado`, `tecnico_responsavel`, `descricao`, `created_by`, `criado_em`)
+SELECT e.id, 'UrgÃªncia', DATE_SUB(CURDATE(), INTERVAL 7 DAY), NULL, NULL, 'Em curso', 'tecnico@hospital.pt',
+  'IntervenÃ§Ã£o urgente: falha na verificaÃ§Ã£o de bateria. SubstituiÃ§Ã£o em curso.', 'tecnico@hospital.pt', DATE_SUB(NOW(), INTERVAL 7 DAY)
 FROM equipamentos e
 WHERE e.codigo_inventario = 'EQ-003';
 
-INSERT INTO `website_config` (`chave`, `valor`, `updated_at`) VALUES
+INSERT INTO `equipamento_at` (`id_equipamento`, `empresa`, `nome_contacto`, `email`, `telefone`, `telefone_urgencia`, `observacoes`, `criado_em`, `atualizado_em`)
+SELECT id, 'Philips Healthcare â€” AssistÃªncia', 'JoÃ£o Marques', 'suporte.pt@philips.com', '210 000 911', '800 100 100',
+       'Contrato de assistÃªncia dedicado ao monitor de sinais vitais.', NOW(), NOW()
+FROM equipamentos WHERE codigo_inventario = 'EQ-001';
+
+INSERT INTO `equipamento_at` (`id_equipamento`, `empresa`, `nome_contacto`, `email`, `telefone`, `telefone_urgencia`, `observacoes`, `criado_em`, `atualizado_em`)
+SELECT id, 'DrÃ¤ger Portugal â€” ServiÃ§o TÃ©cnico', 'Ana Sousa', 'servico@draeger.pt', '210 000 922', '808 200 200',
+       'AssistÃªncia especializada em ventilaÃ§Ã£o (UCI). Resposta em 24h.', NOW(), NOW()
+FROM equipamentos WHERE codigo_inventario = 'EQ-002';
+
+INSERT INTO `equipamento_at` (`id_equipamento`, `empresa`, `nome_contacto`, `email`, `telefone`, `telefone_urgencia`, `observacoes`, `criado_em`, `atualizado_em`)
+SELECT id, 'Siemens Healthineers â€” AT Imagiologia', 'Carlos Pinto', 'at.imagiologia@siemens-healthineers.pt', '210 000 933', NULL,
+       'CalibraÃ§Ã£o e manutenÃ§Ã£o do ecÃ³grafo asseguradas pelo fabricante.', NOW(), NOW()
+FROM equipamentos WHERE codigo_inventario = 'EQ-006';
+
+
+-- Conteudo PDF de exemplo para os documentos do seed (guardado na BD, nao em pasta)
+UPDATE `documentos` SET `ficheiro_conteudo` = 0x255044462d312e340a312030206f626a0a3c3c202f54797065202f436174616c6f67202f5061676573203220302052203e3e0a656e646f626a0a322030206f626a0a3c3c202f54797065202f5061676573202f4b696473205b33203020525d202f436f756e742031203e3e0a656e646f626a0a332030206f626a0a3c3c202f54797065202f50616765202f506172656e74203220302052202f4d65646961426f78205b30203020353935203834325d202f5265736f7572636573203c3c202f466f6e74203c3c202f4631203520302052202f4632203620302052203e3e203e3e202f436f6e74656e7473203420302052203e3e0a656e646f626a0a342030206f626a0a3c3c202f4c656e67746820343534203e3e0a73747265616d0a302e31313420302e31363120302e333032207267203430203738302035313520343020726520662031203120312072670a4254202f46322032302054662035342037393220546420284d616e75616c205465636e69636f202d2045512d3030312920546a2045540a30203020302072670a4254202f46312031322054662035342037333020546420284d6f6e69746f722064652053696e61697320566974616973205c285068696c69707320496e74656c6c69567565204d583435305c292920546a2045540a4254202f46312031312054662035342036393520546420284d6564536f6c7574696f6e73202d2047657374616f206465204571756970616d656e746f73204d656469636f732920546a2045540a4254202f4631203130205466203534203637352054642028446f63756d656e746f20646520616d6f737472612067657261646f20706172612064656d6f6e7374726163616f2e2920546a2045540a4254202f46312031302054662035342036353520546420284461746120646520656d697373616f3a2031342f30362f323032362920546a2045540a302e38207720302e3720302e3720302e3720524720353420363435206d2035343120363435206c20530a656e6473747265616d0a656e646f626a0a352030206f626a0a3c3c202f54797065202f466f6e74202f53756274797065202f5479706531202f42617365466f6e74202f48656c766574696361202f456e636f64696e67202f57696e416e7369456e636f64696e67203e3e0a656e646f626a0a362030206f626a0a3c3c202f54797065202f466f6e74202f53756274797065202f5479706531202f42617365466f6e74202f48656c7665746963612d426f6c64202f456e636f64696e67202f57696e416e7369456e636f64696e67203e3e0a656e646f626a0a787265660a3020370a303030303030303030302036353533352066200a30303030303030303039203030303030206e200a30303030303030303538203030303030206e200a30303030303030313135203030303030206e200a30303030303030323531203030303030206e200a30303030303030373535203030303030206e200a30303030303030383532203030303030206e200a747261696c65720a3c3c202f53697a652037202f526f6f74203120302052203e3e0a7374617274787265660a3935340a2525454f46, `ficheiro_mime` = 'application/pdf' WHERE `nome_ficheiro` IS NOT NULL AND `ficheiro_conteudo` IS NULL;
+
+INSERT INTO `website_config` (`chave`, `valor`, `atualizado_em`) VALUES
 ('titulo', 'MedSolutions', NOW()),
-('subtitulo', 'Sistema de Gestão de Inventário Hospitalar', NOW()),
-('descricao', 'Plataforma integrada para gestão de equipamentos médicos, manutenções e inventário hospitalar.', NOW()),
+('subtitulo', 'Sistema de GestÃ£o de InventÃ¡rio Hospitalar', NOW()),
+('descricao', 'Plataforma integrada para gestÃ£o de equipamentos mÃ©dicos, manutenÃ§Ãµes e inventÃ¡rio hospitalar.', NOW()),
 ('email_contacto', 'geral@medsolutions.pt', NOW()),
 ('telefone', '+351 210 000 000', NOW()),
-('morada', 'Rua da Saúde, 100 — 4000-001 Porto, Portugal', NOW()),
-('horario', 'Segunda a Sexta: 08h00 – 18h00', NOW());
+('morada', 'Rua da SaÃºde, 100 â€” 4000-001 Porto, Portugal', NOW()),
+('horario', 'Segunda a Sexta: 08h00 â€“ 18h00', NOW());

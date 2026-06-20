@@ -22,10 +22,10 @@ if ($f_acao !== '')     { $where .= ' AND acao = ?';     $params[] = $f_acao; }
 
 try {
     $stmt = mhs_pdo()->prepare("
-        SELECT id, entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, created_at
+        SELECT id, entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em
         FROM historico_alteracoes
         WHERE $where
-        ORDER BY created_at DESC, id DESC
+        ORDER BY criado_em DESC, id DESC
         LIMIT 500
     ");
     $stmt->execute($params);
@@ -135,7 +135,7 @@ include __DIR__ . '/../../includes/header.php';
         <tbody>
           <?php foreach ($registos as $r): ?>
             <tr>
-              <td class="text-nowrap"><?= $r->created_at ? date('d/m/Y H:i', strtotime($r->created_at)) : '—' ?></td>
+              <td class="text-nowrap"><?= $r->criado_em ? date('d/m/Y H:i', strtotime($r->criado_em)) : '—' ?></td>
               <td><?= esc($r->utilizador ?? '—') ?></td>
               <td><?= mhs_hist_badge($r->acao) ?></td>
               <td><?= esc(mhs_hist_entidade_label($r->entidade)) ?></td>

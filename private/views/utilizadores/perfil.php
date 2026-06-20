@@ -7,7 +7,7 @@ $user_id    = $_SESSION['user_id'] ?? 0;
 $user_email = $_SESSION['user_email'] ?? '';
 $profile    = $_SESSION['profile'] ?? '';
 
-$stmt = $pdo->prepare("SELECT id, profile, last_login, created_at FROM agents WHERE id = ? AND deleted_at IS NULL");
+$stmt = $pdo->prepare("SELECT id, perfil AS profile, ultimo_acesso, criado_em FROM utilizadores WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$user_id]);
 $agent = $stmt->fetch();
 
@@ -20,11 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pw_nova     = trim($_POST['pw_nova']    ?? '');
     $pw_confirma = trim($_POST['pw_confirma'] ?? '');
 
-    $stmt_pw = $pdo->prepare("SELECT passwrd FROM agents WHERE id = ?");
+    $stmt_pw = $pdo->prepare("SELECT senha FROM utilizadores WHERE id = ?");
     $stmt_pw->execute([$user_id]);
     $row = $stmt_pw->fetch();
 
-    $valid = $row && (password_verify($pw_atual, $row->passwrd) || $pw_atual === $row->passwrd);
+    $valid = $row && (password_verify($pw_atual, $row->senha) || $pw_atual === $row->senha);
 
     if (!$valid) {
         $error = 'Password atual incorreta.';
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'As passwords não coincidem.';
     } else {
         $hash = password_hash($pw_nova, PASSWORD_DEFAULT);
-        $pdo->prepare("UPDATE agents SET passwrd = ?, updated_at = NOW() WHERE id = ?")->execute([$hash, $user_id]);
+        $pdo->prepare("UPDATE utilizadores SET senha = ?, atualizado_em = NOW() WHERE id = ?")->execute([$hash, $user_id]);
         $_SESSION['success_message'] = 'Password alterada com sucesso.';
         header('Location: perfil.php');
         exit;
@@ -92,12 +92,12 @@ include __DIR__ . '/../../includes/header.php';
     <div class="mhs-detail-summary-sep"></div>
     <div class="mhs-detail-summary-item">
       <span class="mhs-detail-summary-label">Último acesso</span>
-      <span class="mhs-detail-summary-val"><?= $agent && $agent->last_login ? date('d/m/Y H:i', strtotime($agent->last_login)) : '—' ?></span>
+      <span class="mhs-detail-summary-val"><?= $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—' ?></span>
     </div>
     <div class="mhs-detail-summary-sep"></div>
     <div class="mhs-detail-summary-item">
       <span class="mhs-detail-summary-label">Membro desde</span>
-      <span class="mhs-detail-summary-val"><?= $agent && $agent->created_at ? date('d/m/Y', strtotime($agent->created_at)) : '—' ?></span>
+      <span class="mhs-detail-summary-val"><?= $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—' ?></span>
     </div>
   </div>
 </div>
@@ -112,8 +112,8 @@ include __DIR__ . '/../../includes/header.php';
           <dl class="mhs-info-dl">
             <dt>Email</dt><dd><?= esc($user_email) ?></dd>
             <dt>Perfil</dt><dd><span class="badge <?= $profile === 'admin' ? 'bg-danger' : 'bg-primary' ?>"><?= esc($profile_label) ?></span></dd>
-            <dt>Último acesso</dt><dd><?= $agent && $agent->last_login ? date('d/m/Y H:i', strtotime($agent->last_login)) : '—' ?></dd>
-            <dt>Membro desde</dt><dd><?= $agent && $agent->created_at ? date('d/m/Y', strtotime($agent->created_at)) : '—' ?></dd>
+            <dt>Último acesso</dt><dd><?= $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—' ?></dd>
+            <dt>Membro desde</dt><dd><?= $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—' ?></dd>
           </dl>
         </div>
       </div>

@@ -14,7 +14,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS `website_config` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `chave` varchar(100) NOT NULL,
     `valor` text DEFAULT NULL,
-    `updated_at` datetime DEFAULT NULL,
+    `atualizado_em` datetime DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `chave` (`chave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -36,7 +36,7 @@ $defaults = [
     ['footer_telefone',     '+351 220 600 700'],
 ];
 
-$ins = $pdo->prepare("INSERT IGNORE INTO website_config (chave, valor, updated_at) VALUES (?, ?, NOW())");
+$ins = $pdo->prepare("INSERT IGNORE INTO website_config (chave, valor, atualizado_em) VALUES (?, ?, NOW())");
 foreach ($defaults as $d) {
     $ins->execute($d);
 }
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'contacto_descricao',
         'footer_morada', 'footer_email', 'footer_telefone',
     ];
-    $upd = $pdo->prepare("UPDATE website_config SET valor=?, updated_at=NOW() WHERE chave=?");
+    $upd = $pdo->prepare("UPDATE website_config SET valor=?, atualizado_em=NOW() WHERE chave=?");
     foreach ($campos as $chave) {
         $upd->execute([trim($_POST[$chave] ?? ''), $chave]);
     }

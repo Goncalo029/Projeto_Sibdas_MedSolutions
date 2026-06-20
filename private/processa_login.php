@@ -49,11 +49,11 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    // Verificar se a tabela agents existe
+    // Verificar se a tabela utilizadores existe
     $tableExistsStmt = $pdo->query("
         SELECT COUNT(*) FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = '" . MYSQL_DATABASE . "' 
-        AND TABLE_NAME = 'agents'
+        AND TABLE_NAME = 'utilizadores'
     ");
     $tableExists = $tableExistsStmt->fetchColumn() > 0;
 
@@ -63,11 +63,11 @@ try {
         exit;
     }
 
-    // Procurar utilizador (agents) - usando AES_DECRYPT na BD
+    // Procurar utilizador (utilizadores) - usando AES_DECRYPT na BD
     $stmt = $pdo->prepare("
-        SELECT id, name, passwrd, profile
-        FROM agents
-        WHERE AES_DECRYPT(name, :chave) = :email
+        SELECT id, nome, senha, perfil AS profile
+        FROM utilizadores
+        WHERE AES_DECRYPT(nome, :chave) = :email
         LIMIT 1
     ");
     $stmt->execute([
@@ -80,11 +80,11 @@ try {
     $password_valid = false;
     if ($agent) {
         // Se a password está armazenada com hash (recomendado)
-        if (password_verify($password, $agent->passwrd)) {
+        if (password_verify($password, $agent->senha)) {
             $password_valid = true;
         }
         // Fallback: comparação direta (usar apenas em desenvolvimento)
-        elseif ($password === $agent->passwrd) {
+        elseif ($password === $agent->senha) {
             $password_valid = true;
         }
     }
@@ -96,7 +96,7 @@ try {
     }
 
     // Atualizar último login
-    $pdo->prepare("UPDATE agents SET last_login = NOW() WHERE id = ?")
+    $pdo->prepare("UPDATE utilizadores SET ultimo_acesso = NOW() WHERE id = ?")
         ->execute([$agent->id]);
 
     // Guardar sessão

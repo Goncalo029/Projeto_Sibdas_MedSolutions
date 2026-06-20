@@ -11,7 +11,7 @@ try {
     $categorias = mhs_pdo()->query("
         SELECT id, nome, descricao
         FROM categorias
-        WHERE deleted_at IS NULL
+        WHERE eliminado_em IS NULL
         ORDER BY nome
     ")->fetchAll();
 } catch (PDOException $e) {

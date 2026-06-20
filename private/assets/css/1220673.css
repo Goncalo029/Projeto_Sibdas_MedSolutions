@@ -684,3 +684,8 @@ table.dataTable.stripe tbody tr.odd:hover td{background:#f6fdf9!important}
 .mhs-cal-legend--done{background:#16a34a}
 .mhs-cal-legend--planned{background:#1d4ed8}
 .mhs-cal-legend--overdue{background:#dc2626}
+
+/* Cards de estatística do dashboard clicáveis */
+a.dash-stat{text-decoration:none;color:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+a.dash-stat:hover{transform:translateY(-2px)}
+a.dash-stat:hover .dash-stat-num{filter:brightness(1.05)}

@@ -6,9 +6,9 @@ redirect_if_not_logged();
 $pdo = mhs_pdo();
 
 // Listas para os selects
-$categorias   = $pdo->query("SELECT id, nome FROM categorias WHERE ativo=1 AND deleted_at IS NULL ORDER BY nome")->fetchAll();
-$fornecedores = $pdo->query("SELECT id, nome FROM fornecedores WHERE ativo=1 AND deleted_at IS NULL ORDER BY nome")->fetchAll();
-$servicos     = $pdo->query("SELECT DISTINCT servico FROM localizacoes WHERE deleted_at IS NULL ORDER BY servico")->fetchAll();
+$categorias   = $pdo->query("SELECT id, nome FROM categorias WHERE ativo=1 AND eliminado_em IS NULL ORDER BY nome")->fetchAll();
+$fornecedores = $pdo->query("SELECT id, nome FROM fornecedores WHERE ativo=1 AND eliminado_em IS NULL ORDER BY nome")->fetchAll();
+$servicos     = $pdo->query("SELECT DISTINCT servico FROM localizacoes WHERE eliminado_em IS NULL ORDER BY servico")->fetchAll();
 
 // Recolha dos filtros (GET)
 $f_codigo    = trim($_GET['codigo']    ?? '');
@@ -34,7 +34,7 @@ if ($pesquisou) {
             FROM equipamentos e
             LEFT JOIN categorias c ON e.id_categoria = c.id
             LEFT JOIN localizacoes l ON e.id_localizacao = l.id
-            WHERE e.ativo = 1 AND e.deleted_at IS NULL";
+            WHERE e.ativo = 1 AND e.eliminado_em IS NULL";
 
     $params = [];
 

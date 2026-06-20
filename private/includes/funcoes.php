@@ -32,7 +32,7 @@ function mhs_pdo() {
 function mhs_historico(string $entidade, ?int $entidade_id, string $entidade_nome, string $acao, string $detalhe = ''): void {
     try {
         mhs_pdo()->prepare(
-            "INSERT INTO historico_alteracoes (entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, created_at)
+            "INSERT INTO historico_alteracoes (entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em)
              VALUES (?, ?, ?, ?, ?, ?, NOW())"
         )->execute([
             $entidade,
@@ -64,14 +64,11 @@ function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): stri
 }
 
 /**
- * Guardar um PDF carregado na pasta uploads/documentos.
- * Devolve o nome do ficheiro guardado, ou null se não houve upload válido.
- *
- * @param string $campo    nome do campo do formulário (ex: 'ficheiro')
- * @param string $prefixo  prefixo para o nome do ficheiro (ex: código do equipamento)
- * @param string $erro     (saída) mensagem de erro, se aplicável
+ * Ler um PDF carregado e devolver o seu CONTEÚDO (para guardar na base de dados).
+ * Devolve ['conteudo' => binário, 'mime' => 'application/pdf', 'nome' => nomeOriginal]
+ * ou null se não houve upload válido.
  */
-function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null, string $subpasta = 'documentos'): ?string {
+function mhs_ler_pdf_upload(string $campo, ?string &$erro = null): ?array {
     if (empty($_FILES[$campo]['name']) || ($_FILES[$campo]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return null; // sem ficheiro — não é erro
     }
@@ -83,50 +80,61 @@ function mhs_guardar_pdf(string $campo, string $prefixo, ?string &$erro = null, 
         $erro = 'O ficheiro excede o limite de 10 MB.';
         return null;
     }
-    $ext = strtolower(pathinfo($_FILES[$campo]['name'], PATHINFO_EXTENSION));
-    if ($ext !== 'pdf') {
+    if (strtolower(pathinfo($_FILES[$campo]['name'], PATHINFO_EXTENSION)) !== 'pdf') {
         $erro = 'Apenas são aceites ficheiros PDF.';
         return null;
     }
-
-    $dir = __DIR__ . '/../uploads/' . $subpasta;
-    if (!is_dir($dir)) { mkdir($dir, 0775, true); }
-
-    $base = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $prefixo)) ?: 'doc';
-    $nome = $base . '_' . date('Ymd_His') . '_' . substr(bin2hex(random_bytes(3)), 0, 6) . '.pdf';
-
-    if (!move_uploaded_file($_FILES[$campo]['tmp_name'], $dir . '/' . $nome)) {
-        $erro = 'Não foi possível guardar o ficheiro no servidor.';
+    $bin = @file_get_contents($_FILES[$campo]['tmp_name']);
+    if ($bin === false) {
+        $erro = 'Não foi possível ler o ficheiro.';
         return null;
     }
-    return $nome;
+    return ['conteudo' => $bin, 'mime' => 'application/pdf', 'nome' => basename($_FILES[$campo]['name'])];
 }
 
 /**
- * Guardar vários PDFs carregados (campo com name="campo[]").
- * Devolve um array de nomes de ficheiro guardados (apenas os PDF válidos).
+ * Ler vários PDFs carregados (campo com name="campo[]") e devolver os conteúdos.
+ * Devolve um array de ['conteudo','mime','nome'] (apenas os PDF válidos).
  */
-function mhs_guardar_pdfs_multi(string $campo, string $prefixo): array {
-    $guardados = [];
+function mhs_ler_pdfs_upload(string $campo): array {
+    $out = [];
     if (empty($_FILES[$campo]) || !is_array($_FILES[$campo]['name'])) {
-        return $guardados;
+        return $out;
     }
-    $dir = __DIR__ . '/../uploads/documentos';
-    if (!is_dir($dir)) { mkdir($dir, 0775, true); }
-
-    $base = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $prefixo)) ?: 'doc';
     $total = count($_FILES[$campo]['name']);
     for ($i = 0; $i < $total; $i++) {
         if (($_FILES[$campo]['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { continue; }
         if (($_FILES[$campo]['size'][$i] ?? 0) > 10 * 1024 * 1024) { continue; }
         if (strtolower(pathinfo($_FILES[$campo]['name'][$i], PATHINFO_EXTENSION)) !== 'pdf') { continue; }
-
-        $nome = $base . '_' . date('Ymd_His') . '_' . substr(bin2hex(random_bytes(3)), 0, 6) . '.pdf';
-        if (move_uploaded_file($_FILES[$campo]['tmp_name'][$i], $dir . '/' . $nome)) {
-            $guardados[] = ['ficheiro' => $nome, 'original' => $_FILES[$campo]['name'][$i]];
-        }
+        $bin = @file_get_contents($_FILES[$campo]['tmp_name'][$i]);
+        if ($bin === false) { continue; }
+        $out[] = ['conteudo' => $bin, 'mime' => 'application/pdf', 'nome' => basename($_FILES[$campo]['name'][$i])];
     }
-    return $guardados;
+    return $out;
+}
+
+/**
+ * Tornar um equipamento Ativo (ex.: estava Inativo/Abatido). Regista a
+ * movimentação de estado e o histórico. Usado da lista e dos detalhes.
+ */
+function mhs_ativar_equipamento(int $id): bool {
+    try {
+        $pdo = mhs_pdo();
+        $stmt = $pdo->prepare("SELECT codigo_inventario, designacao, estado FROM equipamentos WHERE id = ? AND eliminado_em IS NULL");
+        $stmt->execute([$id]);
+        $eq = $stmt->fetch();
+        if (!$eq || $eq->estado === 'Ativo') { return false; }
+        $antigo = $eq->estado;
+        $pdo->prepare("UPDATE equipamentos SET estado = 'Ativo', atualizado_em = NOW() WHERE id = ?")->execute([$id]);
+        $pdo->prepare("
+            INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, criado_em)
+            VALUES (?, 'estado', ?, 'Ativo', ?, NOW())
+        ")->execute([$id, $antigo, $_SESSION['user_email'] ?? null]);
+        mhs_historico('equipamento', $id, $eq->codigo_inventario . ' — ' . $eq->designacao, 'editar', 'Estado: ' . $antigo . ' → Ativo');
+        return true;
+    } catch (PDOException) {
+        return false;
+    }
 }
 
 /**
@@ -137,7 +145,7 @@ function mhs_guardar_pdfs_multi(string $campo, string $prefixo): array {
 function mhs_concluir_manutencao(int $id): bool {
     try {
         $pdo = mhs_pdo();
-        $stmt = $pdo->prepare("SELECT codigo_inventario, designacao, estado FROM equipamentos WHERE id = ? AND deleted_at IS NULL");
+        $stmt = $pdo->prepare("SELECT codigo_inventario, designacao, estado FROM equipamentos WHERE id = ? AND eliminado_em IS NULL");
         $stmt->execute([$id]);
         $eq = $stmt->fetch();
         if (!$eq) { return false; }
@@ -145,8 +153,8 @@ function mhs_concluir_manutencao(int $id): bool {
         $estado_antigo = $eq->estado;
 
         $pdo->prepare("
-            UPDATE manutencoes SET estado='Concluída', data_manutencao=COALESCE(data_manutencao, CURDATE()), updated_at=NOW()
-            WHERE id_equipamento=? AND estado IN ('Em curso','Planeada') AND deleted_at IS NULL
+            UPDATE manutencoes SET estado='Concluída', data_manutencao=COALESCE(data_manutencao, CURDATE()), atualizado_em=NOW()
+            WHERE id_equipamento=? AND estado IN ('Em curso','Planeada') AND eliminado_em IS NULL
         ")->execute([$id]);
 
         $pdo->prepare("
@@ -157,15 +165,15 @@ function mhs_concluir_manutencao(int $id): bool {
                     WHEN periodicidade='Trimestral' THEN DATE_ADD(CURDATE(), INTERVAL 3 MONTH)
                     WHEN periodicidade='Semestral'  THEN DATE_ADD(CURDATE(), INTERVAL 6 MONTH)
                     ELSE DATE_ADD(CURDATE(), INTERVAL 1 YEAR) END,
-                estado='Planeada', updated_at=NOW()
-            WHERE id_equipamento=? AND deleted_at IS NULL
+                estado='Planeada', atualizado_em=NOW()
+            WHERE id_equipamento=? AND eliminado_em IS NULL
         ")->execute([$id]);
 
-        $pdo->prepare("UPDATE equipamentos SET estado='Ativo', updated_at=NOW() WHERE id=?")->execute([$id]);
+        $pdo->prepare("UPDATE equipamentos SET estado='Ativo', atualizado_em=NOW() WHERE id=?")->execute([$id]);
 
         if ($estado_antigo !== 'Ativo') {
             $pdo->prepare("
-                INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at)
+                INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, criado_em)
                 VALUES (?, 'estado', ?, 'Ativo', ?, NOW())
             ")->execute([$id, $estado_antigo, $_SESSION['user_email'] ?? null]);
         }

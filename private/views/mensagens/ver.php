@@ -15,12 +15,12 @@ $erro = '';
 if ($id > 0) {
     try {
         $pdo = mhs_pdo();
-        $stmt = $pdo->prepare("SELECT * FROM mensagens_contacto WHERE id = ? AND deleted_at IS NULL");
+        $stmt = $pdo->prepare("SELECT * FROM mensagens_contacto WHERE id = ? AND eliminado_em IS NULL");
         $stmt->execute([$id]);
         $msg = $stmt->fetch();
 
         if ($msg && !$msg->lida) {
-            $pdo->prepare("UPDATE mensagens_contacto SET lida = 1, updated_at = NOW() WHERE id = ?")->execute([$id]);
+            $pdo->prepare("UPDATE mensagens_contacto SET lida = 1, atualizado_em = NOW() WHERE id = ?")->execute([$id]);
         }
     } catch (PDOException $e) {
         $erro = 'Não foi possível carregar a mensagem.';
@@ -71,7 +71,7 @@ include __DIR__ . '/../../includes/header.php';
             <dt>Nome</dt><dd><?= esc($msg->nome) ?></dd>
             <dt>Email</dt>
             <dd><a href="mailto:<?= esc($msg->email) ?>"><?= esc($msg->email) ?></a></dd>
-            <dt>Data</dt><dd><?= date('d/m/Y \à\s H:i', strtotime($msg->created_at)) ?></dd>
+            <dt>Data</dt><dd><?= date('d/m/Y \à\s H:i', strtotime($msg->criado_em)) ?></dd>
             <dt>Estado</dt>
             <dd>
               <?php if ($msg->lida): ?>

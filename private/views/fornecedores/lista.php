@@ -11,7 +11,7 @@ try {
     $fornecedores = mhs_pdo()->query("
         SELECT id, nome, nif, tipo_fornecedor, telefone, email
         FROM fornecedores
-        WHERE deleted_at IS NULL
+        WHERE eliminado_em IS NULL
         ORDER BY nome
     ")->fetchAll();
 } catch (PDOException $e) {

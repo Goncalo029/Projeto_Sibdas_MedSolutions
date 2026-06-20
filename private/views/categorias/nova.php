@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: nova.php'); exit;
     }
     try {
-        mhs_pdo()->prepare("INSERT INTO categorias (nome, descricao, created_at) VALUES (?,?,NOW())")
+        mhs_pdo()->prepare("INSERT INTO categorias (nome, descricao, criado_em) VALUES (?,?,NOW())")
             ->execute([$nome, $descricao ?: null]);
         mhs_historico('categoria', (int)mhs_pdo()->lastInsertId(), $nome, 'criar');
         $_SESSION['success_message'] = 'Categoria criada com sucesso.';
@@ -25,31 +25,38 @@ $page_title = 'Categorias - Nova';
 include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="mhs-page-header mhs-page-header--dashboard">
-    <div>
-        <span class="mhs-page-kicker"><i class="fa-solid fa-plus fa-fw"></i></span>
-        <h1 class="mhs-page-title">Categorias - Nova</h1>
-    </div>
+<div class="mhs-page-header">
+  <div>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-tags fa-fw"></i></span>
+    <h1 class="mhs-page-title">Nova Categoria</h1>
+  </div>
+  <div class="mhs-page-actions">
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+  </div>
 </div>
 
-<div class="card mhs-data-card">
-    <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-tags me-1"></i>Informação da categoria</div>
-    <div class="card-body">
-        <form method="POST" action="" style="max-width:600px">
-            <div class="mb-3">
-                <label for="nome" class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
-                <input type="text" id="nome" name="nome" class="form-control" placeholder="Ex.: Monitorização" required maxlength="100" />
-            </div>
-            <div class="mb-3">
-                <label for="descricao" class="form-label fw-semibold">Descrição</label>
-                <textarea id="descricao" name="descricao" class="form-control" placeholder="Descrição da categoria..." rows="4" maxlength="500"></textarea>
-            </div>
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Guardar</button>
-                <a href="lista.php" class="btn btn-secondary"><i class="fa-solid fa-times me-2"></i>Cancelar</a>
-            </div>
-        </form>
+<form method="POST" action="">
+  <div class="card mhs-data-card">
+    <div class="mhs-tab-body">
+      <div class="mhs-info-group">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-tags"></i> Informação da categoria</div>
+        <div class="row g-3 mt-1">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="nome" class="form-control" placeholder="Ex.: Monitorização" required maxlength="100" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Descrição</label>
+            <textarea name="descricao" class="form-control" placeholder="Descrição da categoria..." rows="4" maxlength="500"></textarea>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  <div class="d-flex gap-2 my-4">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar Categoria</button>
+    <a href="lista.php" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

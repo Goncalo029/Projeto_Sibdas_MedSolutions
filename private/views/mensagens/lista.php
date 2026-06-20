@@ -17,13 +17,13 @@ try {
     $mensagens = $pdo->query("
         SELECT id, nome, email,
                SUBSTRING(mensagem, 1, 100) AS resumo,
-               mensagem, lida, created_at
+               mensagem, lida, criado_em
         FROM mensagens_contacto
-        WHERE deleted_at IS NULL
-        ORDER BY lida ASC, created_at DESC
+        WHERE eliminado_em IS NULL
+        ORDER BY lida ASC, criado_em DESC
     ")->fetchAll();
 
-    $row = $pdo->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND deleted_at IS NULL")->fetch();
+    $row = $pdo->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND eliminado_em IS NULL")->fetch();
     $total_nao_lidas = (int)($row->total ?? 0);
 } catch (PDOException $e) {
     $erro_bd = 'Não foi possível carregar as mensagens.';
@@ -94,7 +94,7 @@ include __DIR__ . '/../../includes/header.php';
               <td class="text-muted" style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                 <?= esc($m->resumo) ?><?= strlen($m->mensagem) > 100 ? '…' : '' ?>
               </td>
-              <td style="white-space:nowrap"><?= date('d/m/Y H:i', strtotime($m->created_at)) ?></td>
+              <td style="white-space:nowrap"><?= date('d/m/Y H:i', strtotime($m->criado_em)) ?></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="ver.php?id=<?= (int)$m->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver mensagem">

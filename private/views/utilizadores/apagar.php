@@ -13,7 +13,7 @@ try {
     );
 
     $id = $_GET['id'] ?? 0;
-    $stmt = $pdo->prepare("SELECT id, AES_DECRYPT(name, :chave) as name, profile FROM agents WHERE id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, AES_DECRYPT(nome, :chave) as name, perfil AS profile FROM utilizadores WHERE id = ? LIMIT 1");
     $stmt->execute([':chave' => MYSQL_AES_KEY, $id]);
     $utilizador = $stmt->fetch(PDO::FETCH_ASSOC);
 

@@ -18,11 +18,11 @@ try {
     );
 
     $del_id = (int)($_POST['id_enc'] ?? 0);
-    $u_stmt = $pdo->prepare("SELECT AES_DECRYPT(name, ?) AS email, profile FROM agents WHERE id = ?");
+    $u_stmt = $pdo->prepare("SELECT AES_DECRYPT(nome, ?) AS email, perfil AS profile FROM utilizadores WHERE id = ?");
     $u_stmt->execute([MYSQL_AES_KEY, $del_id]);
     $user = $u_stmt->fetch(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->prepare("DELETE FROM agents WHERE id = ?");
+    $stmt = $pdo->prepare("DELETE FROM utilizadores WHERE id = ?");
     $stmt->execute([$del_id]);
 
     if ($user) {

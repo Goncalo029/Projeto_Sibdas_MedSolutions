@@ -28,7 +28,7 @@ try {
     $msg = $nome_stmt->fetch();
 
     $stmt = mhs_pdo()->prepare("
-        UPDATE mensagens_contacto SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?
+        UPDATE mensagens_contacto SET eliminado_em = NOW(), atualizado_em = NOW() WHERE id = ?
     ");
     $stmt->execute([$id]);
 

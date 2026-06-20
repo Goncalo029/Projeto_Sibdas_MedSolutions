@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     } else {
         try {
             $stmt = $wpdo->prepare(
-                "INSERT INTO mensagens_contacto (nome, email, mensagem, lida, created_at, updated_at)
+                "INSERT INTO mensagens_contacto (nome, email, mensagem, lida, criado_em, atualizado_em)
                  VALUES (?, ?, ?, 0, NOW(), NOW())"
             );
             $stmt->execute([$nome, $email, $mensagem]);

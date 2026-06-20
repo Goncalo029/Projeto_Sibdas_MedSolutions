@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     $tab   = $_POST['tab'] ?? 'ficha';
     try {
         $pdo = mhs_pdo();
-        $eqRow = $pdo->prepare("SELECT codigo_inventario, designacao, estado, id_localizacao FROM equipamentos WHERE id = ? AND deleted_at IS NULL");
+        $eqRow = $pdo->prepare("SELECT codigo_inventario, designacao, estado, id_localizacao FROM equipamentos WHERE id = ? AND eliminado_em IS NULL");
         $eqRow->execute([$id]);
         $eqRow = $eqRow->fetch();
 
@@ -31,12 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                 $data = trim($_POST['data_manutencao'] ?? '') ?: date('Y-m-d');
                 $desc = trim($_POST['descricao'] ?? '') ?: null;
                 $em_curso = isset($_POST['em_curso']);
-                $pdo->prepare("INSERT INTO manutencoes (id_equipamento, tipo, data_manutencao, estado, tecnico_responsavel, descricao, created_by, created_at) VALUES (?,?,?,?,?,?,?,NOW())")
+                $pdo->prepare("INSERT INTO manutencoes (id_equipamento, tipo, data_manutencao, estado, tecnico_responsavel, descricao, created_by, criado_em) VALUES (?,?,?,?,?,?,?,NOW())")
                     ->execute([$id, $tipo, $data, $em_curso ? 'Em curso' : 'Concluída', $user, $desc, $user]);
                 mhs_historico('equipamento', $id, $nome_eq, 'editar', 'Registo de manutenção (' . $tipo . ', ' . ($em_curso ? 'Em curso' : 'Concluída') . ')');
                 if ($em_curso && $eqRow->estado !== 'Em manutenção') {
-                    $pdo->prepare("UPDATE equipamentos SET estado='Em manutenção', updated_at=NOW() WHERE id=?")->execute([$id]);
-                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at) VALUES (?, 'estado', ?, 'Em manutenção', ?, NOW())")->execute([$id, $eqRow->estado, $user]);
+                    $pdo->prepare("UPDATE equipamentos SET estado='Em manutenção', atualizado_em=NOW() WHERE id=?")->execute([$id]);
+                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, criado_em) VALUES (?, 'estado', ?, 'Em manutenção', ?, NOW())")->execute([$id, $eqRow->estado, $user]);
                 }
                 $_SESSION['success_message'] = 'Manutenção registada com sucesso.' . ($em_curso ? ' Equipamento colocado em manutenção.' : '');
 
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                 } elseif ($prev && strtotime($prev) < strtotime($saida)) {
                     $_SESSION['error_message'] = 'A devolução prevista não pode ser anterior à data de saída.';
                 } else {
-                    $pdo->prepare("INSERT INTO emprestimos_equipamentos (id_equipamento, id_localizacao_origem, id_localizacao_destino, data_saida, data_prevista_devolucao, estado, observacoes, created_by, created_at, updated_at) VALUES (?,?,?,?,?,'Ativo',?,?,NOW(),NOW())")
+                    $pdo->prepare("INSERT INTO emprestimos_equipamentos (id_equipamento, id_localizacao_origem, id_localizacao_destino, data_saida, data_prevista_devolucao, estado, observacoes, created_by, criado_em, atualizado_em) VALUES (?,?,?,?,?,'Ativo',?,?,NOW(),NOW())")
                         ->execute([$id, $eqRow->id_localizacao ?: null, $destino, $saida, $prev, $obs, $user]);
                     $dn = $pdo->query("SELECT CONCAT(servico, IF(sala IS NOT NULL AND sala<>'', CONCAT(' / ', sala), '')) FROM localizacoes WHERE id = " . $destino)->fetchColumn();
                     mhs_historico('emprestimo', (int)$pdo->lastInsertId(), 'Empréstimo ' . $eqRow->codigo_inventario . ' → ' . ($dn ?: ('#' . $destino)), 'criar');
@@ -59,18 +59,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                 }
             } elseif ($accao === 'emprestimo_terminar' || $accao === 'emprestimo_estender') {
                 $eid = (int)($_POST['id_emprestimo'] ?? 0);
-                $emp = $pdo->prepare("SELECT * FROM emprestimos_equipamentos WHERE id=? AND id_equipamento=? AND deleted_at IS NULL");
+                $emp = $pdo->prepare("SELECT * FROM emprestimos_equipamentos WHERE id=? AND id_equipamento=? AND eliminado_em IS NULL");
                 $emp->execute([$eid, $id]);
                 $emp = $emp->fetch();
                 if ($emp && $emp->estado === 'Ativo' && !$emp->data_devolucao) {
                     if ($accao === 'emprestimo_terminar') {
-                        $pdo->prepare("UPDATE emprestimos_equipamentos SET data_devolucao=CURDATE(), estado='Devolvido', updated_at=NOW(), updated_by=? WHERE id=?")->execute([$user, $eid]);
+                        $pdo->prepare("UPDATE emprestimos_equipamentos SET data_devolucao=CURDATE(), estado='Devolvido', atualizado_em=NOW(), updated_by=? WHERE id=?")->execute([$user, $eid]);
                         mhs_historico('emprestimo', $eid, 'Empréstimo ' . $eqRow->codigo_inventario, 'editar', 'Terminado/devolvido antecipadamente em ' . date('d/m/Y'));
                         $_SESSION['success_message'] = 'Empréstimo terminado (devolução registada para hoje).';
                     } else {
                         $nova = trim($_POST['nova_data'] ?? '');
                         if (($ts = strtotime($nova)) && $ts >= strtotime($emp->data_saida)) {
-                            $pdo->prepare("UPDATE emprestimos_equipamentos SET data_prevista_devolucao=?, updated_at=NOW(), updated_by=? WHERE id=?")->execute([date('Y-m-d', $ts), $user, $eid]);
+                            $pdo->prepare("UPDATE emprestimos_equipamentos SET data_prevista_devolucao=?, atualizado_em=NOW(), updated_by=? WHERE id=?")->execute([date('Y-m-d', $ts), $user, $eid]);
                             mhs_historico('emprestimo', $eid, 'Empréstimo ' . $eqRow->codigo_inventario, 'editar', 'Devolução prevista alterada para ' . date('d/m/Y', $ts));
                             $_SESSION['success_message'] = 'Prazo de devolução atualizado.';
                         } else {
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                     $_SESSION['error_message'] = 'Indique a localização de destino.';
                 } else {
                     $valor_novo = $dn . ($obs !== '' ? ' (' . $obs . ')' : '');
-                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, created_at) VALUES (?, 'localizacao', ?, ?, ?, NOW())")
+                    $pdo->prepare("INSERT INTO equipamentos_movimentacoes (id_equipamento, campo, valor_anterior, valor_novo, alterado_por, criado_em) VALUES (?, 'localizacao', ?, ?, ?, NOW())")
                         ->execute([$id, $atual ?: '—', $valor_novo, $user]);
                     mhs_historico('equipamento', $id, $nome_eq, 'editar', 'Movimentação (temporária) para ' . $dn);
                     $_SESSION['success_message'] = 'Movimentação registada.';
@@ -125,7 +125,7 @@ if ($id > 0) {
             FROM equipamentos e
             LEFT JOIN categorias c ON c.id = e.id_categoria
             LEFT JOIN localizacoes l ON l.id = e.id_localizacao
-            WHERE e.id = ? AND e.deleted_at IS NULL
+            WHERE e.id = ? AND e.eliminado_em IS NULL
         ");
         $eq->execute([$id]);
         $eq = $eq->fetch();
@@ -154,7 +154,7 @@ if ($id > 0) {
                 $s = $pdo->query("
                     SELECT nome, telefone, email, pessoa_contacto, tel_contacto, tipo_fornecedor
                     FROM fornecedores
-                    WHERE tipo_fornecedor LIKE '%assist%' AND deleted_at IS NULL
+                    WHERE tipo_fornecedor LIKE '%assist%' AND eliminado_em IS NULL
                     ORDER BY id LIMIT 1
                 ");
                 $contacto_at = $s ? $s->fetch() : null;
@@ -162,7 +162,7 @@ if ($id > 0) {
 
             $documentos = $pdo->prepare("
                 SELECT * FROM documentos
-                WHERE id_equipamento = ? AND deleted_at IS NULL
+                WHERE id_equipamento = ? AND eliminado_em IS NULL
                 ORDER BY data_documento DESC
             ");
             $documentos->execute([$id]);
@@ -170,7 +170,7 @@ if ($id > 0) {
 
             $garantia = $pdo->prepare("
                 SELECT * FROM garantias_contratos
-                WHERE id_equipamento = ? AND deleted_at IS NULL
+                WHERE id_equipamento = ? AND eliminado_em IS NULL
                 ORDER BY id DESC LIMIT 1
             ");
             $garantia->execute([$id]);
@@ -178,7 +178,7 @@ if ($id > 0) {
 
             $man = $pdo->prepare("
                 SELECT * FROM manutencoes_preventivas
-                WHERE id_equipamento = ? AND deleted_at IS NULL
+                WHERE id_equipamento = ? AND eliminado_em IS NULL
                 ORDER BY id DESC LIMIT 1
             ");
             $man->execute([$id]);
@@ -196,8 +196,8 @@ if ($id > 0) {
                     telefone VARCHAR(50) DEFAULT NULL,
                     telefone_urgencia VARCHAR(50) DEFAULT NULL,
                     observacoes TEXT DEFAULT NULL,
-                    created_at DATETIME DEFAULT NOW(),
-                    updated_at DATETIME DEFAULT NOW(),
+                    criado_em DATETIME DEFAULT NOW(),
+                    atualizado_em DATETIME DEFAULT NOW(),
                     UNIQUE KEY uq_eq_at (id_equipamento)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
                 $s = $pdo->prepare("SELECT * FROM equipamento_at WHERE id_equipamento = ? LIMIT 1");
@@ -209,7 +209,7 @@ if ($id > 0) {
             try {
                 $s2 = $pdo->prepare("
                     SELECT * FROM manutencoes
-                    WHERE id_equipamento = ? AND deleted_at IS NULL
+                    WHERE id_equipamento = ? AND eliminado_em IS NULL
                     ORDER BY data_manutencao DESC
                 ");
                 $s2->execute([$id]);
@@ -770,7 +770,7 @@ include __DIR__ . '/../../includes/header.php';
                   FROM emprestimos_equipamentos ee
                   LEFT JOIN localizacoes l1 ON l1.id = ee.id_localizacao_origem
                   LEFT JOIN localizacoes l2 ON l2.id = ee.id_localizacao_destino
-                  WHERE ee.id_equipamento = ? AND ee.deleted_at IS NULL
+                  WHERE ee.id_equipamento = ? AND ee.eliminado_em IS NULL
                   ORDER BY ee.data_saida DESC
               ");
               $stmt->execute([$id]);
@@ -883,8 +883,8 @@ include __DIR__ . '/../../includes/header.php';
               $stmt = mhs_pdo()->prepare("
                   SELECT em.*
                   FROM equipamentos_movimentacoes em
-                  WHERE em.id_equipamento = ? AND em.deleted_at IS NULL
-                  ORDER BY em.created_at DESC
+                  WHERE em.id_equipamento = ? AND em.eliminado_em IS NULL
+                  ORDER BY em.criado_em DESC
               ");
               $stmt->execute([$id]);
               $movimentacoes = $stmt->fetchAll();
@@ -933,7 +933,7 @@ include __DIR__ . '/../../includes/header.php';
                         default       => 'Alteração de ' . esc($mov->campo),
                     };
                   ?></strong>
-                  <small><?= $mov->created_at ? date('d/m/Y H:i', strtotime($mov->created_at)) : '—' ?></small>
+                  <small><?= $mov->criado_em ? date('d/m/Y H:i', strtotime($mov->criado_em)) : '—' ?></small>
                 </div>
                 <p>
                   <?= esc($mov->valor_anterior ?? '—') ?>

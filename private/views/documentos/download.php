@@ -5,25 +5,18 @@ redirect_if_not_logged();
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-$stmt = mhs_pdo()->prepare("SELECT nome_documento, nome_ficheiro FROM documentos WHERE id = ? AND deleted_at IS NULL");
+$stmt = mhs_pdo()->prepare("SELECT nome_ficheiro, ficheiro_conteudo, ficheiro_mime FROM documentos WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$id]);
 $doc = $stmt->fetch();
 
-if (!$doc || !$doc->nome_ficheiro) {
+if (!$doc || $doc->ficheiro_conteudo === null) {
     $_SESSION['error_message'] = 'Este documento não tem ficheiro associado.';
     header('Location: lista.php'); exit;
 }
 
-$dir  = __DIR__ . '/../../uploads/documentos';
-$path = $dir . '/' . basename($doc->nome_ficheiro);
-
-if (!is_file($path)) {
-    $_SESSION['error_message'] = 'Ficheiro não encontrado no servidor.';
-    header('Location: lista.php'); exit;
-}
-
-header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="' . basename($doc->nome_ficheiro) . '"');
-header('Content-Length: ' . filesize($path));
-readfile($path);
+$nome = $doc->nome_ficheiro ?: ('documento_' . $id . '.pdf');
+header('Content-Type: ' . ($doc->ficheiro_mime ?: 'application/pdf'));
+header('Content-Disposition: attachment; filename="' . $nome . '"');
+header('Content-Length: ' . strlen($doc->ficheiro_conteudo));
+echo $doc->ficheiro_conteudo;
 exit;

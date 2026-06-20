@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: nova.php'); exit;
     }
     try {
-        mhs_pdo()->prepare("INSERT INTO localizacoes (edificio, piso, servico, sala, observacoes, created_at) VALUES (?,?,?,?,?,NOW())")
+        mhs_pdo()->prepare("INSERT INTO localizacoes (edificio, piso, servico, sala, observacoes, criado_em) VALUES (?,?,?,?,?,NOW())")
             ->execute([$edificio ?: null, $piso ?: null, $servico, $sala ?: null, $observacoes ?: null]);
         mhs_historico('localizacao', (int)mhs_pdo()->lastInsertId(), $servico . ($sala ? ' · ' . $sala : ''), 'criar');
         $_SESSION['success_message'] = 'Localização criada com sucesso.';
@@ -28,45 +28,50 @@ $page_title = 'Localizações - Nova';
 include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="mhs-page-header mhs-page-header--dashboard">
-    <div>
-        <span class="mhs-page-kicker"><i class="fa-solid fa-plus fa-fw"></i></span>
-        <h1 class="mhs-page-title">Localizações - Nova</h1>
-    </div>
+<div class="mhs-page-header">
+  <div>
+    <span class="mhs-page-kicker"><i class="fa-solid fa-location-dot fa-fw"></i></span>
+    <h1 class="mhs-page-title">Nova Localização</h1>
+  </div>
+  <div class="mhs-page-actions">
+    <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
+  </div>
 </div>
 
-<div class="card mhs-data-card">
-    <div class="card-header fw-bold bg-primary text-white"><i class="fa-solid fa-location-dot me-1"></i>Informação da localização</div>
-    <div class="card-body">
-        <form method="POST" action="" style="max-width:640px">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Edifício</label>
-                    <input type="text" name="edificio" class="form-control" placeholder="Ex.: Bloco Central" maxlength="100" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Piso</label>
-                    <input type="text" name="piso" class="form-control" placeholder="Ex.: Piso 2" maxlength="50" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Serviço <span class="text-danger">*</span></label>
-                    <input type="text" name="servico" class="form-control" placeholder="Ex.: Urgência" required maxlength="100" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Sala</label>
-                    <input type="text" name="sala" class="form-control" placeholder="Ex.: Sala 204" maxlength="100" />
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Observações</label>
-                    <textarea name="observacoes" class="form-control" rows="2" placeholder="Notas sobre a localização"></textarea>
-                </div>
-            </div>
-            <div class="d-flex gap-2 mt-3">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
-                <a href="lista.php" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
+<form method="POST" action="">
+  <div class="card mhs-data-card">
+    <div class="mhs-tab-body">
+      <div class="mhs-info-group">
+        <div class="mhs-info-group-title"><i class="fa-solid fa-location-dot"></i> Informação da localização</div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Edifício</label>
+            <input type="text" name="edificio" class="form-control" placeholder="Ex.: Bloco Central" maxlength="100" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Piso</label>
+            <input type="text" name="piso" class="form-control" placeholder="Ex.: Piso 2" maxlength="50" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Serviço <span class="text-danger">*</span></label>
+            <input type="text" name="servico" class="form-control" placeholder="Ex.: Urgência" required maxlength="100" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Sala</label>
+            <input type="text" name="sala" class="form-control" placeholder="Ex.: Sala 204" maxlength="100" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Observações</label>
+            <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas sobre a localização"></textarea>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  <div class="d-flex gap-2 my-4">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar Localização</button>
+    <a href="lista.php" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

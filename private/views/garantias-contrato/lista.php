@@ -3,18 +3,17 @@ require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
-// ── Descarregar o ficheiro PDF importado ──
+// ── Descarregar o ficheiro PDF importado (da base de dados) ──
 if (isset($_GET['ficheiro'])) {
     $gid = (int)$_GET['ficheiro'];
-    $stmt = mhs_pdo()->prepare("SELECT nome_ficheiro FROM garantias_contratos WHERE id = ? AND deleted_at IS NULL");
+    $stmt = mhs_pdo()->prepare("SELECT nome_ficheiro, ficheiro_conteudo, ficheiro_mime FROM garantias_contratos WHERE id = ? AND eliminado_em IS NULL");
     $stmt->execute([$gid]);
-    $fic = $stmt->fetchColumn();
-    $path = $fic ? __DIR__ . '/../../uploads/garantias/' . basename($fic) : '';
-    if ($fic && is_file($path)) {
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . basename($fic) . '"');
-        header('Content-Length: ' . filesize($path));
-        readfile($path);
+    $g = $stmt->fetch();
+    if ($g && $g->ficheiro_conteudo !== null) {
+        header('Content-Type: ' . ($g->ficheiro_mime ?: 'application/pdf'));
+        header('Content-Disposition: attachment; filename="' . ($g->nome_ficheiro ?: 'contrato_' . $gid . '.pdf') . '"');
+        header('Content-Length: ' . strlen($g->ficheiro_conteudo));
+        echo $g->ficheiro_conteudo;
         exit;
     }
     $_SESSION['error_message'] = 'Ficheiro não encontrado.';
@@ -27,7 +26,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'pdf' && isset($_GET['id'])) {
         SELECT g.*, e.codigo_inventario, e.designacao, e.marca, e.modelo
         FROM garantias_contratos g
         JOIN equipamentos e ON e.id = g.id_equipamento
-        WHERE g.id = ? AND g.deleted_at IS NULL
+        WHERE g.id = ? AND g.eliminado_em IS NULL
     ");
     $stmt->execute([(int)$_GET['id']]);
     $g = $stmt->fetch();
@@ -84,13 +83,24 @@ $page_title = 'Garantias-Contrato - Lista';
 $garantias = [];
 $erro_bd = '';
 
+$f_filtro = trim($_GET['filtro'] ?? '');
+$gwhere = "g.eliminado_em IS NULL";
+if ($f_filtro === 'expiradas')   { $gwhere .= " AND g.data_fim < CURDATE()"; }
+elseif ($f_filtro === 'vigor')   { $gwhere .= " AND g.data_fim >= CURDATE()"; }
+
+$filtro_label = match ($f_filtro) {
+    'expiradas' => 'Garantias/contratos expirados',
+    'vigor'     => 'Garantias/contratos em vigor',
+    default     => '',
+};
+
 try {
     $garantias = mhs_pdo()->query("
         SELECT g.id, g.data_inicio, g.data_fim, g.tem_contrato, g.tipo_contrato, g.entidade_responsavel, g.nome_ficheiro,
                e.codigo_inventario, e.designacao
         FROM garantias_contratos g
         JOIN equipamentos e ON e.id = g.id_equipamento
-        WHERE g.deleted_at IS NULL
+        WHERE $gwhere
         ORDER BY g.data_fim ASC
     ")->fetchAll();
 } catch (PDOException $e) {
@@ -108,6 +118,13 @@ include __DIR__ . '/../../includes/header.php';
 </div>
 
 <?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
+
+<?php if ($filtro_label !== '') : ?>
+<div class="alert alert-info d-flex align-items-center justify-content-between mb-3">
+  <span><i class="fa-solid fa-filter me-2"></i>Filtro ativo: <strong><?= esc($filtro_label) ?></strong> — <?= count($garantias) ?> resultado<?= count($garantias) !== 1 ? 's' : '' ?></span>
+  <a href="lista.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-xmark me-1"></i>Limpar filtro</a>
+</div>
+<?php endif; ?>
 
 <div class="card mhs-data-card">
   <div class="mhs-table-toolbar">
