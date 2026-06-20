@@ -230,10 +230,87 @@ document.addEventListener('click', function (e) {
 });
 
 // ============================================================
-// Tab switcher — global para todas as páginas com .mhs-detail-tab
+// Tab switcher com validação — global para todas as páginas
 // ============================================================
 (function () {
-    function mhsActivateTab(tabName) {
+    var TODAY_STR = new Date().toISOString().slice(0, 10);
+    var CURRENT_YEAR = new Date().getFullYear();
+
+    function clearTabErrors(pane) {
+        if (!pane) return;
+        pane.querySelectorAll('.mhs-field-error').forEach(function (el) { el.classList.remove('visible'); });
+        pane.querySelectorAll('.mhs-invalid').forEach(function (el) { el.classList.remove('mhs-invalid'); });
+    }
+
+    function showFieldError(field, errId) {
+        if (field) field.classList.add('mhs-invalid');
+        var errEl = errId ? document.getElementById(errId) : null;
+        if (errEl) errEl.classList.add('visible');
+    }
+
+    function mhsValidateTab(tabName) {
+        var pane = document.getElementById('tab-' + tabName);
+        if (!pane) return true;
+        clearTabErrors(pane);
+        var ok = true;
+        var firstBad = null;
+
+        pane.querySelectorAll('[required]').forEach(function (field) {
+            if (!field.value.trim()) {
+                showFieldError(field, 'err_' + (field.name || field.id));
+                if (!firstBad) firstBad = field;
+                ok = false;
+            }
+        });
+
+        if (tabName === 'ficha') {
+            var codFld = pane.querySelector('[name="codigo_inventario"]');
+            if (codFld && codFld.value.trim() && !/^EQ-\d{3,}$/.test(codFld.value.trim())) {
+                var errCod = document.getElementById('err_codigo_inventario');
+                if (errCod) errCod.textContent = 'Formato inválido. Use EQ-001, EQ-002, etc.';
+                showFieldError(codFld, 'err_codigo_inventario');
+                if (!firstBad) firstBad = codFld;
+                ok = false;
+            }
+            var serFld = pane.querySelector('[name="numero_serie"]');
+            if (serFld && serFld.value.trim() && !/^[A-Z0-9]{2,}-\d{4}-\d{3,}$/.test(serFld.value.trim())) {
+                var errSer = document.getElementById('err_numero_serie');
+                if (errSer) errSer.textContent = 'Formato inválido. Use ex: SN-2024-001';
+                showFieldError(serFld, 'err_numero_serie');
+                if (!firstBad) firstBad = serFld;
+                ok = false;
+            }
+        }
+        if (tabName === 'aquisicao') {
+            var anoFld = pane.querySelector('[name="ano_fabrico"]');
+            if (anoFld && anoFld.value.trim() && parseInt(anoFld.value) > CURRENT_YEAR) {
+                showFieldError(anoFld, 'err_ano_fabrico');
+                if (!firstBad) firstBad = anoFld;
+                ok = false;
+            }
+            var dateFld = pane.querySelector('[name="data_aquisicao"]');
+            if (dateFld && dateFld.value.trim() && dateFld.value > TODAY_STR) {
+                showFieldError(dateFld, 'err_data_aquisicao');
+                if (!firstBad) firstBad = dateFld;
+                ok = false;
+            }
+            var custoFld = pane.querySelector('[name="custo_aquisicao"]');
+            if (custoFld && custoFld.value.trim() && !/^\d+([.,]\d{1,4})?$/.test(custoFld.value.trim())) {
+                showFieldError(custoFld, 'err_custo_aquisicao');
+                if (!firstBad) firstBad = custoFld;
+                ok = false;
+            }
+        }
+        if (!ok && firstBad) firstBad.focus();
+        return ok;
+    }
+
+    function mhsActivateTab(tabName, skipValidation) {
+        var curBtn = document.querySelector('.mhs-detail-tab.active');
+        var curTab = curBtn ? curBtn.dataset.tab : null;
+        if (!skipValidation && curTab && curTab !== tabName) {
+            if (!mhsValidateTab(curTab)) return;
+        }
         var btn  = document.querySelector('.mhs-detail-tab[data-tab="' + tabName + '"]');
         var pane = document.getElementById('tab-' + tabName);
         if (!btn || !pane) return;
@@ -244,13 +321,117 @@ document.addEventListener('click', function (e) {
     }
 
     document.querySelectorAll('.mhs-detail-tab').forEach(function (btn) {
-        btn.addEventListener('click', function () { mhsActivateTab(btn.dataset.tab); });
+        btn.addEventListener('click', function () { mhsActivateTab(btn.dataset.tab, false); });
     });
 
-    // Activar tab via URL param (ex: ?tab=assistencia)
     var tab = new URLSearchParams(window.location.search).get('tab');
-    if (tab) mhsActivateTab(tab);
+    if (tab) mhsActivateTab(tab, true);
 })();
+
+// ============================================================
+// Sidebar toggle (desktop) — botão abre/fecha sem hover
+// ============================================================
+function mhsToggleSidebar() {
+    var closed = document.body.classList.toggle('mhs-sb-closed');
+    try { localStorage.setItem('mhsSbClosed', closed ? '1' : ''); } catch (e) {}
+}
+(function () {
+    try { if (localStorage.getItem('mhsSbClosed') === '1') { document.body.classList.add('mhs-sb-closed'); } } catch (e) {}
+})();
+
+// ============================================================
+// Auto-preencher formulário com dados de demonstração
+// nextCode é calculado em PHP (próximo código disponível na BD)
+// ============================================================
+function mhsAutoFillDemo(nextCode) {
+    var dados = [
+        { des:'Monitor de Sinais Vitais', marc:'Philips', mod:'IntelliVue MX40', ser:'SN-2024-001', fab:'Philips Healthcare', ano:2022, cus:'4500.00', ent:'Compra', est:'Ativo', crit:'Alta' },
+        { des:'Ventilador Pulmonar', marc:'Draeger', mod:'Evita V800', ser:'DR-2023-042', fab:'Draegerwerk AG', ano:2021, cus:'18000.00', ent:'Compra', est:'Ativo', crit:'Suporte de vida' },
+        { des:'Bomba Infusora', marc:'Fresenius Kabi', mod:'Agilia SP MC', ser:'FRE-2022-018', fab:'Fresenius Kabi GmbH', ano:2020, cus:'2200.00', ent:'Doacao', est:'Ativo', crit:'Media' },
+        { des:'Desfibrilhador', marc:'Zoll', mod:'R Series', ser:'ZL-2023-007', fab:'Zoll Medical', ano:2023, cus:'9800.00', ent:'Compra', est:'Ativo', crit:'Suporte de vida' },
+        { des:'Oximetro de Pulso', marc:'Masimo', mod:'Rad-97', ser:'MS-2022-055', fab:'Masimo Corporation', ano:2022, cus:'1200.00', ent:'Compra', est:'Ativo', crit:'Alta' }
+    ];
+    var d = dados[Math.floor(Math.random() * dados.length)];
+    var s = function (n, v) { var el = document.querySelector('[name="' + n + '"]'); if (el) el.value = v; };
+    s('codigo_inventario', nextCode || 'EQ-001');
+    s('designacao', d.des); s('marca', d.marc); s('modelo', d.mod);
+    s('numero_serie', d.ser); s('fabricante', d.fab); s('ano_fabrico', d.ano);
+    s('custo_aquisicao', d.cus); s('tipo_entrada', d.ent);
+    s('estado', d.est); s('criticidade', d.crit);
+    var today = new Date().toISOString().slice(0, 10);
+    var dpEl = document.querySelector('[name="data_aquisicao"]');
+    if (dpEl) { dpEl.value = today; if (dpEl._flatpickr) dpEl._flatpickr.setDate(today, false); }
+}
+
+// ============================================================
+// Auto-preencher Localização
+// ============================================================
+function mhsAutoFillLocalizacao() {
+    var dados = [
+        { ed:'Bloco A', piso:'Piso 1', srv:'Urgência', sala:'Sala 101' },
+        { ed:'Bloco B', piso:'Piso 2', srv:'Cardiologia', sala:'Sala 204' },
+        { ed:'Bloco Central', piso:'Piso 0', srv:'Bloco Operatório', sala:'BO 3' },
+        { ed:'Bloco C', piso:'Piso 3', srv:'Pediatria', sala:'Sala 310' },
+        { ed:'Bloco A', piso:'Piso 2', srv:'UCI', sala:'UCI-A' }
+    ];
+    var d = dados[Math.floor(Math.random() * dados.length)];
+    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
+    s('edificio',d.ed); s('piso',d.piso); s('servico',d.srv); s('sala',d.sala);
+}
+
+// ============================================================
+// Auto-preencher Fornecedor
+// ============================================================
+function mhsAutoFillFornecedor() {
+    var dados = [
+        { nome:'MedTech Solutions SA', nif:'501234567', tipo:'Distribuidor', tel:'222 333 444', email:'geral@medtech.pt', morada:'Rua das Flores 12, 4000-001 Porto', web:'https://www.medtech.pt', cont:'Ana Silva', tcon:'912 345 678' },
+        { nome:'Philips Healthcare Portugal', nif:'502345678', tipo:'Fabricante', tel:'213 456 789', email:'info@philips.pt', morada:'Av. da Liberdade 110, 1250-001 Lisboa', web:'https://www.philips.pt', cont:'João Costa', tcon:'913 456 789' },
+        { nome:'B. Braun Portugal Lda', nif:'503456789', tipo:'Assistência Técnica', tel:'214 567 890', email:'support@bbraun.pt', morada:'Parque Industrial de Sintra, 2710-001 Sintra', web:'https://www.bbraun.pt', cont:'Maria Ferreira', tcon:'914 567 890' },
+        { nome:'Siemens Healthineers Portugal', nif:'504567890', tipo:'Fabricante', tel:'215 678 901', email:'healthineers@siemens.pt', morada:'Rua Alfredo da Silva 1, 2610-016 Amadora', web:'https://www.siemens-healthineers.pt', cont:'Carlos Mendes', tcon:'915 678 901' }
+    ];
+    var d = dados[Math.floor(Math.random() * dados.length)];
+    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
+    s('nome',d.nome); s('nif',d.nif); s('tipo_fornecedor',d.tipo);
+    s('telefone',d.tel); s('email',d.email); s('morada',d.morada);
+    s('website',d.web); s('pessoa_contacto',d.cont); s('tel_contacto',d.tcon);
+}
+
+// ============================================================
+// Auto-preencher Garantia/Contrato (firstEqId vem de PHP)
+// ============================================================
+function mhsAutoFillGarantia(firstEqId) {
+    var hoje = new Date();
+    var fim  = new Date(); fim.setFullYear(fim.getFullYear() + 2);
+    var fmt = function(d){ return d.toISOString().slice(0,10); };
+    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
+    var entidades = ['MedTech Solutions SA','Philips Healthcare Portugal','B. Braun Portugal Lda','Siemens Healthineers Portugal'];
+    var tipos = ['Manutenção Preventiva','Manutenção Corretiva','Garantia Fabricante','Contrato de Suporte'];
+    var per = ['Anual','Semestral','Trimestral'];
+    var ri = Math.floor(Math.random()*entidades.length);
+    if (firstEqId) s('id_equipamento', firstEqId);
+    s('data_inicio', fmt(hoje)); s('data_fim', fmt(fim));
+    s('tipo_contrato', tipos[ri % tipos.length]);
+    s('entidade_responsavel', entidades[ri]);
+    s('periodicidade', per[ri % per.length]);
+    var cb = document.querySelector('[name="tem_contrato"]'); if(cb) cb.checked=true;
+    ['data_inicio','data_fim'].forEach(function(n){
+        var el=document.querySelector('[name="'+n+'"]'); if(el&&el._flatpickr) el._flatpickr.setDate(el.value,false);
+    });
+}
+
+// ============================================================
+// Auto-preencher Utilizador
+// ============================================================
+function mhsAutoFillUtilizador() {
+    var dados = [
+        { email:'tecnico01@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
+        { email:'tecnico02@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
+        { email:'admin02@medsolutions.pt',   pw:'Admin2024!',   perfil:'admin'   }
+    ];
+    var d = dados[Math.floor(Math.random()*dados.length)];
+    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
+    s('email',d.email); s('password',d.pw); s('profile',d.perfil);
+}
 
 // ============================================================
 // Exportar PDF — lista de equipamentos
@@ -534,8 +715,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var notifBtn = document.querySelector('[data-toggle-notif]');
     if (notifBtn) notifBtn.addEventListener('click', toggleNotifMenu);
 
-    var avatarBtn = document.querySelector('.mhs-avatar-btn');
-    if (avatarBtn) avatarBtn.addEventListener('click', toggleAvatarMenu);
+    // toggleAvatarMenu já está ligado via onclick no HTML — não duplicar
 });
 
 // Confirmação de formulários via atributo data-confirm

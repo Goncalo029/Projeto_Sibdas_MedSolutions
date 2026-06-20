@@ -5,10 +5,10 @@ redirect_if_not_logged();
 
 try {
     $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT);
-    if ($mysqli->connect_error) die('Erro na conexão: ' . $mysqli->connect_error);
+    if ($mysqli->connect_error) throw new \RuntimeException('Erro na conexão: ' . $mysqli->connect_error);
     $mysqli->set_charset('utf8mb4');
 } catch (Exception $e) {
-    die('Erro: ' . $e->getMessage());
+    throw new \RuntimeException($e->getMessage(), 0, $e);
 }
 
 $equipamentos_estado   = [];

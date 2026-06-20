@@ -17,6 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'O campo Nome é obrigatório.';
         header('Location: novo.php'); exit;
     }
+    if (!$pessoa_contacto || !$tel_contacto) {
+        $_SESSION['error_message'] = 'O contacto de assistência técnica (nome e telefone) é obrigatório.';
+        header('Location: novo.php'); exit;
+    }
     try {
         mhs_pdo()->prepare("INSERT INTO fornecedores (nome,nif,tipo_fornecedor,telefone,email,morada,website,pessoa_contacto,tel_contacto,observacoes,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,NOW())")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null]);
@@ -47,7 +51,10 @@ include __DIR__ . '/../../includes/header.php';
   <div class="card mhs-data-card">
     <div class="mhs-tab-body">
       <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-address-card"></i> Dados gerais</div>
+        <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
+          <span><i class="fa-solid fa-address-card"></i> Dados gerais</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillFornecedor()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
+        </div>
         <div class="row g-3 mt-1">
           <div class="col-md-8">
             <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
@@ -87,15 +94,15 @@ include __DIR__ . '/../../includes/header.php';
       </div>
 
       <div class="mhs-info-group mt-3">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-user"></i> Pessoa de contacto</div>
+        <div class="mhs-info-group-title"><i class="fa-solid fa-headset"></i> Contacto de Assistência Técnica <span class="text-danger">*</span></div>
         <div class="row g-3 mt-1">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Nome do contacto</label>
-            <input type="text" name="pessoa_contacto" class="form-control" placeholder="Nome do contacto" maxlength="100" />
+            <label class="form-label fw-semibold">Nome do contacto <span class="text-danger">*</span></label>
+            <input type="text" name="pessoa_contacto" class="form-control" placeholder="Nome do técnico/responsável" maxlength="100" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Tel. Contacto</label>
-            <input type="text" name="tel_contacto" class="form-control" placeholder="Contacto direto" maxlength="20" />
+            <label class="form-label fw-semibold">Tel. Assistência <span class="text-danger">*</span></label>
+            <input type="text" name="tel_contacto" class="form-control" placeholder="Contacto direto" maxlength="20" required />
           </div>
           <div class="col-12">
             <label class="form-label fw-semibold">Observações</label>

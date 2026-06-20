@@ -42,7 +42,10 @@ include __DIR__ . '/../../includes/header.php';
   <div class="card mhs-data-card">
     <div class="mhs-tab-body">
       <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-location-dot"></i> Informação da localização</div>
+        <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
+          <span><i class="fa-solid fa-location-dot"></i> Informação da localização</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillLocalizacao()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
+        </div>
         <div class="row g-3 mt-1">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Edifício</label>

@@ -427,26 +427,38 @@ body.mhs-detail-page dl.row dd{padding-top:0}
 .dash-panel-head{flex-direction:column;align-items:flex-start;gap:.6rem}
 }
 
-/* ── Sidebar colapsável ── */
+/* ── Sidebar colapsável (botão toggle, sem hover) ── */
 :root{--mhs-sidebar-collapsed-width:64px}
 @media(min-width:992px){
-.mhs-main-content{margin-left:calc(18px + var(--mhs-sidebar-collapsed-width) + 12px)!important;padding-top:72px!important;transition:margin-left .28s ease .12s!important}
-.mhs-sidebar:hover ~ .mhs-main-content{margin-left:calc(18px + var(--mhs-sidebar-width) + 12px)!important;transition:margin-left .22s ease!important}
-.mhs-sidebar{width:var(--mhs-sidebar-collapsed-width);overflow:hidden;transition:width .28s ease .12s}
-.mhs-sidebar:hover{width:var(--mhs-sidebar-width);overflow-y:auto;overflow-x:hidden;transition:width .22s ease}
-.mhs-sidebar .mhs-sidebar-copy,.mhs-sidebar .mhs-nav-section{display:none}
-.mhs-sidebar:hover .mhs-sidebar-copy,.mhs-sidebar:hover .mhs-nav-section{display:block}
-.mhs-sidebar .mhs-sidebar-logo-copy,.mhs-sidebar .mhs-nav-link span{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transition:opacity .18s ease,max-width .22s ease}
-.mhs-sidebar:hover .mhs-sidebar-logo-copy,.mhs-sidebar:hover .mhs-nav-link span{opacity:1;max-width:200px}
-.mhs-sidebar .mhs-sidebar-header{padding:18px 8px 12px}
-.mhs-sidebar:hover .mhs-sidebar-header{padding:18px 22px 12px}
-.mhs-sidebar .mhs-sidebar-logo{gap:0}
-.mhs-sidebar:hover .mhs-sidebar-logo{gap:12px}
-.mhs-sidebar .mhs-sidebar-nav{padding:8px 0}
-.mhs-sidebar:hover .mhs-sidebar-nav{padding:8px 10px}
-.mhs-sidebar .mhs-nav-link{gap:0;justify-content:center;padding:9px 0}
-.mhs-sidebar:hover .mhs-nav-link{gap:10px;justify-content:flex-start;padding:9px 12px}
+.mhs-sidebar{width:var(--mhs-sidebar-width);overflow-y:auto;overflow-x:hidden;transition:width .26s ease}
+.mhs-main-content{margin-left:calc(18px + var(--mhs-sidebar-width) + 12px)!important;padding-top:72px!important;transition:margin-left .26s ease!important}
+body.mhs-sb-closed .mhs-sidebar{width:var(--mhs-sidebar-collapsed-width);overflow:hidden}
+body.mhs-sb-closed .mhs-main-content{margin-left:calc(18px + var(--mhs-sidebar-collapsed-width) + 12px)!important}
+body.mhs-sb-closed .mhs-sidebar .mhs-sidebar-copy,
+body.mhs-sb-closed .mhs-sidebar .mhs-nav-section{display:none}
+body.mhs-sb-closed .mhs-sidebar .mhs-sidebar-logo-copy,
+body.mhs-sb-closed .mhs-sidebar .mhs-nav-link span{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;pointer-events:none;transition:opacity .18s ease,max-width .22s ease}
+body.mhs-sb-closed .mhs-sidebar .mhs-sidebar-header{padding:18px 8px 12px}
+body.mhs-sb-closed .mhs-sidebar .mhs-sidebar-logo{gap:0;justify-content:center}
+body.mhs-sb-closed .mhs-sidebar .mhs-sidebar-nav{padding:8px 0}
+body.mhs-sb-closed .mhs-sidebar .mhs-nav-link{gap:0;justify-content:center;padding:9px 0}
+body.mhs-sb-closed .mhs-sidebar .mhs-nav-link i{width:auto}
 }
+/* ── Botão toggle sidebar (desktop) ── */
+.mhs-sb-toggle-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.78rem;padding:0;transition:background .18s,border-color .18s;line-height:1;flex-shrink:0}
+.mhs-sb-toggle-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);color:#fff}
+.mhs-sb-toggle-wrap{padding:6px 12px 12px;display:flex;justify-content:flex-end;border-top:1px solid rgba(255,255,255,.08);margin-top:auto}
+body.mhs-sb-closed .mhs-sidebar .mhs-sb-toggle-wrap{justify-content:center;padding:6px 0 12px}
+body.mhs-sb-closed .mhs-sb-toggle-btn .fa-angles-left{transform:rotate(180deg)}
+/* ── Tabs de lista de equipamentos (Em Serviço / Inativos) ── */
+.mhs-eq-tabs{display:flex;gap:4px;margin-bottom:1rem}
+.mhs-eq-tab{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;font-size:.84rem;font-weight:600;color:var(--mhs-muted);text-decoration:none;border:1px solid var(--mhs-border);background:#fff;transition:var(--mhs-transition)}
+.mhs-eq-tab:hover,.mhs-eq-tab.active{color:var(--mhs-primary);border-color:var(--mhs-primary);background:var(--mhs-primary-soft)}
+.mhs-eq-tab-count{background:rgba(13,110,168,.15);color:var(--mhs-primary);font-size:.68rem;padding:1px 7px;border-radius:999px;font-weight:700}
+/* ── Erros inline nos campos do formulário ── */
+.mhs-field-error{display:none;color:var(--mhs-danger);font-size:.76rem;font-weight:600;margin-top:.3rem}
+.mhs-field-error.visible{display:block}
+.mhs-invalid{border-color:var(--mhs-danger)!important;box-shadow:0 0 0 3px rgba(220,38,38,.1)!important}
 
 /* ── Controles flutuantes (data, notificações, avatar) ── */
 .mhs-float-toggle{position:absolute;top:18px;left:18px;z-index:1050;width:42px;height:42px;border:1px solid var(--mhs-border);border-radius:10px;background:#fff;color:#334155;cursor:pointer;display:grid;place-items:center}

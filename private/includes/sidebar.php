@@ -30,6 +30,7 @@ function mhs_mensagens_nao_lidas(): int
 }
 $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
 ?>
+<?php $mhs_profile = $_SESSION['profile'] ?? ''; ?>
 <aside class="mhs-sidebar" id="mhsSidebar">
     <div class="mhs-sidebar-header">
         <a href="<?= BASE_URL ?>/private/home.php" class="mhs-sidebar-logo">
@@ -50,13 +51,15 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
 
         <div class="mhs-nav-section">Gestão</div>
         <a href="<?= BASE_URL ?>/private/views/fornecedores/lista.php" class="mhs-nav-link<?= mhs_active('fornecedores'); ?>"><i class="fa-solid fa-truck fa-fw"></i><span>Fornecedores</span></a>
+        <?php if ($mhs_profile === 'admin'): ?>
         <a href="<?= BASE_URL ?>/private/views/documentos/lista.php" class="mhs-nav-link<?= mhs_active('documentos'); ?>"><i class="fa-solid fa-file-lines fa-fw"></i><span>Documentos</span></a>
         <a href="<?= BASE_URL ?>/private/views/garantias-contrato/lista.php" class="mhs-nav-link<?= mhs_active('garantias'); ?>"><i class="fa-solid fa-shield-halved fa-fw"></i><span>Garantias-Contrato</span></a>
+        <?php endif; ?>
 
         <div class="mhs-nav-section">Ferramentas</div>
         <a href="<?= BASE_URL ?>/private/views/pesquisa/pesquisa.php" class="mhs-nav-link<?= mhs_active('pesquisa'); ?>"><i class="fa-solid fa-magnifying-glass fa-fw"></i><span>Pesquisa</span></a>
 
-        <?php if (is_admin()): ?>
+        <?php if ($mhs_profile === 'admin'): ?>
         <div class="mhs-nav-section">Comunicação</div>
         <a href="<?= BASE_URL ?>/private/views/mensagens/lista.php" class="mhs-nav-link<?= mhs_active('mensagens'); ?>" style="position:relative">
             <i class="fa-solid fa-envelope fa-fw"></i>
@@ -65,15 +68,19 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
             <span class="badge bg-danger ms-auto" style="font-size:.65rem;padding:2px 6px;border-radius:10px"><?= $_sidebar_msgs_nao_lidas ?></span>
             <?php endif; ?>
         </a>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['profile']) && $_SESSION['profile'] === 'admin'): ?>
         <div class="mhs-nav-section">Administração</div>
         <a href="<?= BASE_URL ?>/private/views/utilizadores/lista.php" class="mhs-nav-link<?= mhs_active('utilizadores'); ?>"><i class="fa-solid fa-users fa-fw"></i><span>Utilizadores</span></a>
         <a href="<?= BASE_URL ?>/private/views/historico/lista.php" class="mhs-nav-link<?= mhs_active('historico'); ?>"><i class="fa-solid fa-clock-rotate-left fa-fw"></i><span>Histórico de Alterações</span></a>
         <a href="<?= BASE_URL ?>/private/views/website/editar.php" class="mhs-nav-link<?= mhs_active('website'); ?>"><i class="fa-solid fa-globe fa-fw"></i><span>Website Público</span></a>
         <?php endif; ?>
     </nav>
+
+    <!-- Botão toggle sidebar (visível apenas em desktop) -->
+    <div class="mhs-sb-toggle-wrap d-none d-lg-flex">
+        <button type="button" class="mhs-sb-toggle-btn" onclick="mhsToggleSidebar()" title="Fechar/abrir menu">
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+    </div>
 </aside>
 
 <div class="mhs-sidebar-overlay" onclick="document.body.classList.remove('mhs-sidebar-open')"></div>

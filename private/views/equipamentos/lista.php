@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['accao'] ?? ''), [
             $_SESSION['error_message'] = 'Não foi possível confirmar a manutenção.';
         }
     }
-    $qs = http_build_query(array_filter(['estado' => $_POST['estado'] ?? '', 'filtro' => $_POST['filtro'] ?? '']));
+    $qs = http_build_query(array_filter(['estado' => $_POST['estado'] ?? '', 'filtro' => $_POST['filtro'] ?? '', 'ver' => $_POST['ver'] ?? '']));
     header('Location: lista.php' . ($qs ? '?' . $qs : ''));
     exit;
 }
@@ -29,10 +29,15 @@ $page_title = 'Equipamentos - Lista';
 $equipamentos = [];
 $erro_bd = '';
 
-// Filtros vindos das notificações / dashboard (ou de links diretos)
+// Filtros
 $f_estado = trim($_GET['estado'] ?? '');
 $f_critic = trim($_GET['criticidade'] ?? '');
 $f_filtro = trim($_GET['filtro'] ?? '');
+$f_ver    = trim($_GET['ver'] ?? '');    // 'inativos' | ''
+
+// Inativos/abatidos via estado GET ou ver=inativos
+$show_inativos = ($f_ver === 'inativos' || $f_estado === 'Inativo' || $f_estado === 'Abatido');
+if ($show_inativos) { $f_ver = 'inativos'; }
 
 $where  = "e.eliminado_em IS NULL";
 $params = [];
@@ -40,6 +45,11 @@ $params = [];
 if ($f_estado !== '') {
     $where .= " AND e.estado = ?";
     $params[] = $f_estado;
+} elseif ($show_inativos) {
+    $where .= " AND e.estado IN ('Inativo','Abatido')";
+} else {
+    // Vista padrão: excluir inativos/abatidos (NULL tratado como em serviço)
+    $where .= " AND (e.estado IS NULL OR e.estado NOT IN ('Inativo','Abatido'))";
 }
 if ($f_critic !== '') {
     $where .= " AND e.criticidade = ?";
@@ -74,24 +84,25 @@ $filtro_label = match(true) {
 };
 
 try {
-    $stmt = mhs_pdo()->prepare("
+    $pdo_main = mhs_pdo();
+    $stmt = $pdo_main->prepare("
         SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
                e.estado, e.criticidade,
-               c.nome AS categoria, l.servico,
-               COUNT(d.id) AS total_documentos
+               c.nome AS categoria, l.servico
         FROM equipamentos e
         LEFT JOIN categorias c ON c.id = e.id_categoria
         LEFT JOIN localizacoes l ON l.id = e.id_localizacao
-        LEFT JOIN documentos d ON d.id_equipamento = e.id AND d.eliminado_em IS NULL
         WHERE $where
-        GROUP BY e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo, e.numero_serie,
-                 e.estado, e.criticidade, c.nome, l.servico
         ORDER BY e.codigo_inventario
     ");
     $stmt->execute($params);
     $equipamentos = $stmt->fetchAll();
+    // Contagens para as tabs (sem filtros adicionais)
+    $n_servico  = (int)$pdo_main->query("SELECT COUNT(*) FROM equipamentos WHERE eliminado_em IS NULL AND estado NOT IN ('Inativo','Abatido')")->fetchColumn();
+    $n_inativos = (int)$pdo_main->query("SELECT COUNT(*) FROM equipamentos WHERE eliminado_em IS NULL AND estado IN ('Inativo','Abatido')")->fetchColumn();
 } catch (PDOException $e) {
     $erro_bd = 'Nao foi possivel carregar equipamentos.';
+    $n_servico = 0; $n_inativos = 0;
 }
 
 // ── Exportação inline ──────────────────────────────────────────────────
@@ -101,12 +112,12 @@ if ($export === 'csv' && !$erro_bd) {
     header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
     fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
-    fputcsv($out, ['Código', 'Designação', 'Marca', 'Modelo', 'Nº Série', 'Categoria', 'Serviço', 'Estado', 'Criticidade', 'Documentos']);
+    fputcsv($out, ['Código', 'Designação', 'Marca', 'Modelo', 'Nº Série', 'Categoria', 'Serviço', 'Estado', 'Criticidade']);
     foreach ($equipamentos as $eq) {
         fputcsv($out, [
             $eq->codigo_inventario, $eq->designacao, $eq->marca,
             $eq->modelo, $eq->numero_serie, $eq->categoria,
-            $eq->servico, $eq->estado, $eq->criticidade, (int)$eq->total_documentos,
+            $eq->servico, $eq->estado, $eq->criticidade,
         ]);
     }
     fclose($out);
@@ -125,7 +136,6 @@ if ($export === 'json' && !$erro_bd) {
         'servico'           => $eq->servico,
         'estado'            => $eq->estado,
         'criticidade'       => $eq->criticidade,
-        'total_documentos'  => (int)$eq->total_documentos,
     ], $equipamentos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -215,10 +225,25 @@ include __DIR__ . '/../../includes/header.php';
 
 <?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
 
+<?php
+$qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro]));
+?>
+<!-- Tabs Em Serviço / Inativos -->
+<div class="mhs-eq-tabs">
+  <a href="lista.php<?= $qs_sem_ver ? '?' . esc($qs_sem_ver) : '' ?>" class="mhs-eq-tab<?= $f_ver !== 'inativos' ? ' active' : '' ?>">
+    <i class="fa-solid fa-circle-check"></i> Em Serviço
+    <span class="mhs-eq-tab-count"><?= $n_servico ?></span>
+  </a>
+  <a href="lista.php?ver=inativos<?= $qs_sem_ver ? '&' . esc($qs_sem_ver) : '' ?>" class="mhs-eq-tab<?= $f_ver === 'inativos' ? ' active' : '' ?>">
+    <i class="fa-solid fa-power-off"></i> Inativos / Abatidos
+    <span class="mhs-eq-tab-count"><?= $n_inativos ?></span>
+  </a>
+</div>
+
 <?php if ($filtro_label !== '') : ?>
 <div class="alert alert-info d-flex align-items-center justify-content-between mb-3">
   <span><i class="fa-solid fa-filter me-2"></i>Filtro ativo: <strong><?= esc($filtro_label) ?></strong> — <?= count($equipamentos) ?> resultado<?= count($equipamentos) !== 1 ? 's' : '' ?></span>
-  <a href="lista.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-xmark me-1"></i>Limpar filtro</a>
+  <a href="lista.php<?= $f_ver === 'inativos' ? '?ver=inativos' : '' ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-xmark me-1"></i>Limpar filtro</a>
 </div>
 <?php endif; ?>
 
@@ -258,7 +283,6 @@ include __DIR__ . '/../../includes/header.php';
             <th>Serviço</th>
             <th>Estado</th>
             <th>Criticidade</th>
-            <th>Docs</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -272,7 +296,6 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= esc($eq->servico) ?></td>
               <td><?= get_estado_badge($eq->estado) ?></td>
               <td><?= get_criticidade_badge($eq->criticidade) ?></td>
-              <td><span class="mhs-docs-count"><?= (int)$eq->total_documentos ?></span></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
                   <?php if (in_array($eq->estado, ['Em manutenção', 'Em calibração', 'Em quarentena'], true)): ?>
@@ -281,6 +304,7 @@ include __DIR__ . '/../../includes/header.php';
                     <input type="hidden" name="id_equipamento" value="<?= (int)$eq->id ?>">
                     <input type="hidden" name="estado" value="<?= esc($f_estado) ?>">
                     <input type="hidden" name="filtro" value="<?= esc($f_filtro) ?>">
+                    <input type="hidden" name="ver" value="<?= esc($f_ver) ?>">
                     <button type="submit" class="btn btn-sm btn-success" title="Confirmar manutenção concluída"><i class="fa-solid fa-circle-check"></i></button>
                   </form>
                   <?php elseif (in_array($eq->estado, ['Inativo', 'Abatido'], true)): ?>
@@ -289,6 +313,7 @@ include __DIR__ . '/../../includes/header.php';
                     <input type="hidden" name="id_equipamento" value="<?= (int)$eq->id ?>">
                     <input type="hidden" name="estado" value="<?= esc($f_estado) ?>">
                     <input type="hidden" name="filtro" value="<?= esc($f_filtro) ?>">
+                    <input type="hidden" name="ver" value="<?= esc($f_ver) ?>">
                     <button type="submit" class="btn btn-sm btn-success" title="Tornar ativo"><i class="fa-solid fa-power-off"></i></button>
                   </form>
                   <?php endif; ?>

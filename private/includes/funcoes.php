@@ -1,6 +1,29 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
+// Captura exceções não tratadas → modal de erro em vez de página em branco
+if (!ob_get_level()) { ob_start(); }
+set_exception_handler(static function (\Throwable $e): void {
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    $is_db = $e instanceof PDOException
+          || stripos($e->getMessage(), 'SQLSTATE') !== false
+          || stripos($e->getMessage(), 'connect') !== false
+          || stripos($e->getMessage(), 'Access denied') !== false;
+    $msg = $is_db
+        ? 'Sem ligação à base de dados. O servidor pode estar temporariamente indisponível.'
+        : 'Ocorreu um erro inesperado. Por favor, tente novamente.';
+    http_response_code(503);
+    echo '<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Erro — MedSolutions</title>
+<style>*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}body{background:#f0f4f8;min-height:100vh;display:grid;place-items:center;padding:1rem}.card{background:#fff;border-radius:16px;overflow:hidden;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.12)}.hd{background:#fee2e2;padding:18px 22px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #fca5a5}.hd h2{color:#dc2626;font-size:1rem;font-weight:700;margin:0}.bd{padding:24px}.bd p{color:#1e293b;font-weight:600;margin:0 0 8px;font-size:.95rem}.bd small{color:#64748b;font-size:.85rem;line-height:1.5;display:block}.ft{padding:16px 22px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end}button{padding:9px 18px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#334155}.bp{background:linear-gradient(135deg,#0d6ea8,#0bb37e);color:#fff;border:0}</style>
+</head><body><div class="card">
+<div class="hd"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><h2>Erro de ligação</h2></div>
+<div class="bd"><p>' . htmlspecialchars($msg) . '</p><small>Se o problema persistir, verifique a sua ligação à rede ou contacte o administrador do sistema.</small></div>
+<div class="ft"><button onclick="history.back()">Voltar</button><button class="bp" onclick="location.reload()">Tentar novamente</button></div>
+</div></body></html>';
+    exit;
+});
+
 function mhs_pdo() {
     static $pdo = null;
 

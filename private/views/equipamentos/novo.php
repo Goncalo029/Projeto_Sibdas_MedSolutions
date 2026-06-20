@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $custo_aquisicao   = trim($_POST['custo_aquisicao'] ?? '') ?: null;
     $tipo_entrada      = trim($_POST['tipo_entrada'] ?? '') ?: null;
     $id_localizacao    = (int)($_POST['id_localizacao'] ?? 0) ?: null;
-    $estado            = trim($_POST['estado'] ?? '') ?: null;
+    $estado            = trim($_POST['estado'] ?? '') ?: 'Ativo';
     $criticidade       = trim($_POST['criticidade'] ?? '') ?: null;
     $observacoes       = trim($_POST['observacoes'] ?? '') ?: null;
 
@@ -23,8 +23,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'Código de Inventário e Designação são obrigatórios.';
         header('Location: novo.php'); exit;
     }
+    if (!preg_match('/^EQ-\d{3,}$/', $codigo_inventario)) {
+        $_SESSION['error_message'] = 'O código de inventário deve seguir o formato EQ-001, EQ-002, etc.';
+        header('Location: novo.php'); exit;
+    }
+    if ($numero_serie && !preg_match('/^[A-Z0-9]{2,}-\d{4}-\d{3,}$/', $numero_serie)) {
+        $_SESSION['error_message'] = 'O número de série deve seguir o formato ex: SN-2024-001 (PREFIXO-ANO-SEQUÊNCIA).';
+        header('Location: novo.php'); exit;
+    }
     try {
         $pdo = mhs_pdo();
+        // Verificar código duplicado
+        $chk = $pdo->prepare("SELECT id FROM equipamentos WHERE codigo_inventario = ? AND eliminado_em IS NULL");
+        $chk->execute([$codigo_inventario]);
+        if ($chk->fetch()) {
+            $_SESSION['error_message'] = 'Já existe um equipamento com o código "' . htmlspecialchars($codigo_inventario) . '".';
+            header('Location: novo.php'); exit;
+        }
         $pdo->prepare("INSERT INTO equipamentos (codigo_inventario,designacao,id_categoria,marca,modelo,numero_serie,fabricante,data_aquisicao,ano_fabrico,custo_aquisicao,tipo_entrada,id_localizacao,estado,criticidade,observacoes,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())")
             ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes]);
 
@@ -96,11 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pdo = mhs_pdo();
 $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fetchAll();
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
+// Próximo código disponível no formato EQ-XXX
+$_nr = $pdo->query("SELECT MAX(CAST(REGEXP_REPLACE(codigo_inventario,'[^0-9]','') AS UNSIGNED)) AS mx FROM equipamentos WHERE eliminado_em IS NULL AND codigo_inventario REGEXP '^EQ-[0-9]'")->fetchColumn();
+$next_code = 'EQ-' . str_pad((int)$_nr + 1, 3, '0', STR_PAD_LEFT);
 
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
-$tipos_doc    = ['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'];
+$tipos_doc    = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
 
 $page_title = 'Equipamentos - Novo';
 include __DIR__ . '/../../includes/header.php';
@@ -129,7 +147,6 @@ include __DIR__ . '/../../includes/header.php';
       <button type="button" class="mhs-detail-tab active" data-tab="ficha"><i class="fa-solid fa-barcode"></i> Ficha Técnica</button>
       <button type="button" class="mhs-detail-tab" data-tab="aquisicao"><i class="fa-solid fa-receipt"></i> Aquisição</button>
       <button type="button" class="mhs-detail-tab" data-tab="localizacao"><i class="fa-solid fa-location-dot"></i> Localização e Estado</button>
-      <button type="button" class="mhs-detail-tab" data-tab="assistencia"><i class="fa-solid fa-headset"></i> Assistência Técnica</button>
       <button type="button" class="mhs-detail-tab" data-tab="documentos"><i class="fa-solid fa-file-lines"></i> Documentos</button>
     </div>
 
@@ -137,15 +154,22 @@ include __DIR__ . '/../../includes/header.php';
     <div class="mhs-tab-pane active" id="tab-ficha">
       <div class="mhs-tab-body">
         <div class="mhs-info-group">
-          <div class="mhs-info-group-title"><i class="fa-solid fa-barcode"></i> Identificação</div>
+          <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
+            <span><i class="fa-solid fa-barcode"></i> Identificação</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillDemo('<?= htmlspecialchars($next_code, ENT_QUOTES) ?>')" title="Preencher com dados de exemplo">
+              <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)
+            </button>
+          </div>
           <div class="row g-3 mt-1">
             <div class="col-md-4">
               <label class="form-label fw-semibold">Código Inventário <span class="text-danger">*</span></label>
-              <input type="text" name="codigo_inventario" class="form-control" placeholder="Ex.: EQ-001" required maxlength="50" value="<?= htmlspecialchars($_POST['codigo_inventario'] ?? '') ?>" />
+              <input type="text" name="codigo_inventario" id="codigo_inventario" class="form-control" placeholder="EQ-001" required maxlength="50" value="<?= htmlspecialchars($_POST['codigo_inventario'] ?? '') ?>" pattern="EQ-\d{3,}" title="Formato: EQ-001, EQ-002, ..." />
+              <p class="mhs-field-error" id="err_codigo_inventario">Campo obrigatório.</p>
             </div>
             <div class="col-md-8">
               <label class="form-label fw-semibold">Designação <span class="text-danger">*</span></label>
-              <input type="text" name="designacao" class="form-control" placeholder="Nome do equipamento" required maxlength="200" value="<?= htmlspecialchars($_POST['designacao'] ?? '') ?>" />
+              <input type="text" name="designacao" id="designacao" class="form-control" placeholder="Nome do equipamento" required maxlength="200" value="<?= htmlspecialchars($_POST['designacao'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_designacao">Campo obrigatório.</p>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Categoria</label>
@@ -166,7 +190,8 @@ include __DIR__ . '/../../includes/header.php';
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Número de Série</label>
-              <input type="text" name="numero_serie" class="form-control" placeholder="Número de série" maxlength="100" />
+              <input type="text" name="numero_serie" id="numero_serie" class="form-control" placeholder="Ex: SN-2024-001" maxlength="100" />
+              <p class="mhs-field-error" id="err_numero_serie">Formato inválido. Use ex: SN-2024-001</p>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Fabricante</label>
@@ -185,15 +210,18 @@ include __DIR__ . '/../../includes/header.php';
           <div class="row g-3 mt-1">
             <div class="col-md-3">
               <label class="form-label fw-semibold">Data Aquisição</label>
-              <input type="text" name="data_aquisicao" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+              <input type="text" name="data_aquisicao" id="data_aquisicao" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+              <p class="mhs-field-error" id="err_data_aquisicao">A data não pode ser futura.</p>
             </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold">Ano Fabrico</label>
-              <input type="number" name="ano_fabrico" class="form-control" min="1900" max="2099" placeholder="<?= date('Y') ?>" />
+              <input type="number" name="ano_fabrico" id="ano_fabrico" class="form-control" min="1900" max="<?= date('Y') ?>" placeholder="<?= date('Y') ?>" />
+              <p class="mhs-field-error" id="err_ano_fabrico">O ano não pode ser futuro (máx. <?= date('Y') ?>).</p>
             </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold">Custo Aquisição (€)</label>
-              <input type="text" name="custo_aquisicao" class="form-control" placeholder="0.00" />
+              <input type="text" name="custo_aquisicao" id="custo_aquisicao" class="form-control" placeholder="0.00" />
+              <p class="mhs-field-error" id="err_custo_aquisicao">Apenas números são aceites (ex: 1500.00).</p>
             </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold">Tipo de Entrada</label>
@@ -245,39 +273,6 @@ include __DIR__ . '/../../includes/header.php';
             <div class="col-12">
               <label class="form-label fw-semibold">Observações</label>
               <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas sobre o equipamento"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Assistência Técnica -->
-    <div class="mhs-tab-pane" id="tab-assistencia">
-      <div class="mhs-tab-body">
-        <div class="mhs-info-group">
-          <div class="mhs-info-group-title"><i class="fa-solid fa-headset"></i> Assistência Técnica <small class="fw-normal text-muted">(opcional)</small></div>
-          <div class="row g-3 mt-1">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Empresa / Marca</label>
-              <input type="text" name="at_empresa" class="form-control" placeholder="Ex: MedTech SA" maxlength="255" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Nome do contacto</label>
-              <input type="text" name="at_nome_contacto" class="form-control" placeholder="Ex: João Silva" maxlength="255" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Telefone</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
-                <input type="text" name="at_telefone" class="form-control" placeholder="222 XXX XXX" maxlength="50" />
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Email</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                <input type="email" name="at_email" class="form-control" placeholder="assistencia@empresa.pt" maxlength="255" />
-              </div>
             </div>
           </div>
         </div>

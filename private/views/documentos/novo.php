@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $equipamentos = mhs_pdo()->query("SELECT id, codigo_inventario, designacao FROM equipamentos ORDER BY codigo_inventario")->fetchAll();
-$tipos = ['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'];
+$tipos = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
 
 $page_title = 'Documentos - Novo';
 include __DIR__ . '/../../includes/header.php';

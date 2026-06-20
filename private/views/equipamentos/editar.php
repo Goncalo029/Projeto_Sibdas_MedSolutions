@@ -132,7 +132,7 @@ $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fe
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
-$tipos_doc    = ['Manual','Certificado','Contrato','Relatório','Ficha técnica','Outro'];
+$tipos_doc    = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
 $documentos_eq = $pdo->query("SELECT id, tipo_documento, nome_documento, nome_ficheiro, (ficheiro_conteudo IS NOT NULL) AS tem_ficheiro FROM documentos WHERE id_equipamento = " . (int)$id . " AND eliminado_em IS NULL ORDER BY id")->fetchAll();
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
 
