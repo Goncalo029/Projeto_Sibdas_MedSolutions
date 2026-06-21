@@ -39,7 +39,6 @@ include __DIR__ . '/../../includes/header.php';
     <h1 class="mhs-page-title">Editar Categoria</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href="detalhes.php?id=<?= $row->id ?>" class="btn btn-outline-secondary"><i class="fa-solid fa-eye me-2"></i>Ver</a>
     <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
   </div>
 </div>
@@ -48,9 +47,9 @@ include __DIR__ . '/../../includes/header.php';
   <input type="hidden" name="id" value="<?= $row->id ?>">
   <div class="card mhs-data-card">
     <div class="mhs-tab-body">
-      <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-tags"></i> Informação da categoria</div>
-        <div class="row g-3 mt-1">
+      <div class="mhs-form-section">
+        <div class="mhs-form-section-title"><i class="fa-solid fa-tags"></i> Informação da categoria</div>
+        <div class="row g-3">
           <div class="col-12">
             <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
             <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($row->nome) ?>" required maxlength="100" />

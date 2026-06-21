@@ -123,22 +123,6 @@ if ($export === 'csv' && !$erro_bd) {
     fclose($out);
     exit;
 }
-if ($export === 'json' && !$erro_bd) {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.json"');
-    echo json_encode(array_map(fn($eq) => [
-        'codigo_inventario' => $eq->codigo_inventario,
-        'designacao'        => $eq->designacao,
-        'marca'             => $eq->marca,
-        'modelo'            => $eq->modelo,
-        'numero_serie'      => $eq->numero_serie,
-        'categoria'         => $eq->categoria,
-        'servico'           => $eq->servico,
-        'estado'            => $eq->estado,
-        'criticidade'       => $eq->criticidade,
-    ], $equipamentos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    exit;
-}
 if ($export === 'pdf' && !$erro_bd) {
     // Geração de PDF descarregável (inline, sem dependências externas)
     $W = 595.28; $H = 841.89; $M = 36;
@@ -258,9 +242,6 @@ $qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade
       <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro])); ?>
       <a href="?export=csv<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-csv me-1"></i>Exportar CSV
-      </a>
-      <a href="?export=json<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-brackets-curly me-1"></i>Exportar JSON
       </a>
       <a href="?export=pdf<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF

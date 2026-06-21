@@ -98,104 +98,18 @@ $(document).ready(function () {
 // Flatpickr - inicializacao padrao para campos de data
 // ============================================================
 document.querySelectorAll('.mhs-datepicker').forEach(function (el) {
-    flatpickr(el, {
+    var opts = {
         dateFormat: 'Y-m-d',
         allowInput: true,
-        locale: {
-            firstDayOfWeek: 1
-        }
-    });
+        appendTo: document.body,
+        locale: { firstDayOfWeek: 1 }
+    };
+    var maxD = el.getAttribute('data-maxdate');
+    var minD = el.getAttribute('data-mindate');
+    if (maxD) opts.maxDate = maxD === 'today' ? new Date() : maxD;
+    if (minD) opts.minDate = minD === 'today' ? new Date() : minD;
+    flatpickr(el, opts);
 });
-
-// ============================================================
-// Validacao client-side - Formulario Equipamento
-// ============================================================
-function validarFormEquipamento() {
-    const obrigatorios = [
-        { id: 'codigo_inventario', label: 'Codigo de inventario' },
-        { id: 'designacao', label: 'Designacao' },
-        { id: 'id_categoria', label: 'Categoria' },
-        { id: 'id_localizacao', label: 'Localizacao' },
-        { id: 'estado', label: 'Estado' },
-        { id: 'criticidade', label: 'Criticidade' }
-    ];
-
-    for (const campo of obrigatorios) {
-        const el = document.getElementById(campo.id);
-        if (!el || !el.value.trim()) {
-            alert('O campo "' + campo.label + '" e obrigatorio.');
-            if (el) el.focus();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// ============================================================
-// Validacao client-side - Formulario Fornecedor
-// ============================================================
-function validarFormFornecedor() {
-    const nome = document.getElementById('nome');
-    if (!nome || !nome.value.trim()) {
-        alert('O campo "Nome" e obrigatorio.');
-        if (nome) nome.focus();
-        return false;
-    }
-    return true;
-}
-
-// ============================================================
-// Validacao client-side - Formulario Localizacao
-// ============================================================
-function validarFormLocalizacao() {
-    const servico = document.getElementById('servico');
-    if (!servico || !servico.value.trim()) {
-        alert('O campo "Servico" e obrigatorio.');
-        if (servico) servico.focus();
-        return false;
-    }
-    return true;
-}
-
-function validarFormDocumento() {
-    const campos = [
-        { id: 'id_equipamento', label: 'Equipamento' },
-        { id: 'tipo_documento', label: 'Tipo de documento' }
-    ];
-
-    for (const campo of campos) {
-        const el = document.getElementById(campo.id);
-        if (!el || !el.value.trim()) {
-            alert('O campo "' + campo.label + '" e obrigatorio.');
-            if (el) el.focus();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// ============================================================
-// Validacao client-side - Formulario Garantia/Contrato
-// ============================================================
-function validarFormGarantia() {
-    const campos = [
-        { id: 'id_equipamento', label: 'Equipamento' },
-        { id: 'data_fim', label: 'Data de fim' }
-    ];
-
-    for (const campo of campos) {
-        const el = document.getElementById(campo.id);
-        if (!el || !el.value.trim()) {
-            alert('O campo "' + campo.label + '" e obrigatorio.');
-            if (el) el.focus();
-            return false;
-        }
-    }
-
-    return true;
-}
 
 // ============================================================
 // Toast automatico - fecha apos 4s
@@ -295,7 +209,7 @@ document.addEventListener('click', function (e) {
                 ok = false;
             }
             var custoFld = pane.querySelector('[name="custo_aquisicao"]');
-            if (custoFld && custoFld.value.trim() && !/^\d+([.,]\d{1,4})?$/.test(custoFld.value.trim())) {
+            if (custoFld && custoFld.value.trim() && !/^[\d\s.,]+$/.test(custoFld.value.trim())) {
                 showFieldError(custoFld, 'err_custo_aquisicao');
                 if (!firstBad) firstBad = custoFld;
                 ok = false;
@@ -333,67 +247,133 @@ document.addEventListener('click', function (e) {
 // ============================================================
 function mhsToggleSidebar() {
     var closed = document.body.classList.toggle('mhs-sb-closed');
-    try { localStorage.setItem('mhsSbClosed', closed ? '1' : ''); } catch (e) {}
+    try { localStorage.setItem('mhsSbClosed', closed ? '1' : '0'); } catch (e) {}
 }
 (function () {
-    try { if (localStorage.getItem('mhsSbClosed') === '1') { document.body.classList.add('mhs-sb-closed'); } } catch (e) {}
+    // Por defeito fechada; só abre se o utilizador tiver aberto explicitamente
+    try { if (localStorage.getItem('mhsSbClosed') !== '0') { document.body.classList.add('mhs-sb-closed'); } } catch (e) { document.body.classList.add('mhs-sb-closed'); }
 })();
 
 // ============================================================
-// Auto-preencher formulário com dados de demonstração
-// nextCode é calculado em PHP (próximo código disponível na BD)
+// Auto-preencher Equipamento
+// nextCode e eqIdx calculados em PHP; locIds = array de IDs de localizações existentes
 // ============================================================
-function mhsAutoFillDemo(nextCode) {
+function mhsAutoFillDemo(nextCode, eqIdx, locIds) {
+    var YEAR = new Date().getFullYear();
     var dados = [
-        { des:'Monitor de Sinais Vitais', marc:'Philips', mod:'IntelliVue MX40', ser:'SN-2024-001', fab:'Philips Healthcare', ano:2022, cus:'4500.00', ent:'Compra', est:'Ativo', crit:'Alta' },
-        { des:'Ventilador Pulmonar', marc:'Draeger', mod:'Evita V800', ser:'DR-2023-042', fab:'Draegerwerk AG', ano:2021, cus:'18000.00', ent:'Compra', est:'Ativo', crit:'Suporte de vida' },
-        { des:'Bomba Infusora', marc:'Fresenius Kabi', mod:'Agilia SP MC', ser:'FRE-2022-018', fab:'Fresenius Kabi GmbH', ano:2020, cus:'2200.00', ent:'Doacao', est:'Ativo', crit:'Media' },
-        { des:'Desfibrilhador', marc:'Zoll', mod:'R Series', ser:'ZL-2023-007', fab:'Zoll Medical', ano:2023, cus:'9800.00', ent:'Compra', est:'Ativo', crit:'Suporte de vida' },
-        { des:'Oximetro de Pulso', marc:'Masimo', mod:'Rad-97', ser:'MS-2022-055', fab:'Masimo Corporation', ano:2022, cus:'1200.00', ent:'Compra', est:'Ativo', crit:'Alta' }
+        { des:'Monitor de Sinais Vitais',   marc:'Philips',        pre:'PHL', mod:'IntelliVue MX40',  fab:'Philips Healthcare',    cat:'Monitorização',   ano:2022, cus:'4500.00',  ent:'Compra', est:'Ativo', crit:'Alta',            obs:'Equipamento de monitorização contínua de sinais vitais. Adquirido para UCI.',          at_emp:'Philips Healthcare Portugal',   at_nom:'João Costa',    at_tel:'213 456 789', at_eml:'suporte@philips.pt' },
+        { des:'Ventilador Pulmonar',        marc:'Draeger',        pre:'DRA', mod:'Evita V800',       fab:'Draegerwerk AG',        cat:'Suporte de vida', ano:2021, cus:'18000.00', ent:'Compra', est:'Ativo', crit:'Suporte de vida', obs:'Ventilador de cuidados intensivos com suporte a múltiplos modos ventilatórios.',      at_emp:'Draeger Portugal Lda',          at_nom:'Pedro Sousa',   at_tel:'214 567 890', at_eml:'servico@draeger.pt' },
+        { des:'Bomba Infusora',             marc:'Fresenius Kabi', pre:'FRE', mod:'Agilia SP MC',     fab:'Fresenius Kabi GmbH',  cat:'Terapia',         ano:2020, cus:'2200.00',  ent:'Doação', est:'Ativo', crit:'Média',            obs:'Bomba de seringa para administração controlada de medicação IV.',                     at_emp:'MedTech Solutions SA',          at_nom:'Ana Silva',     at_tel:'222 333 444', at_eml:'geral@medtech.pt' },
+        { des:'Desfibrilhador',             marc:'Zoll',           pre:'ZLL', mod:'R Series',         fab:'Zoll Medical',          cat:'Suporte de vida', ano:2023, cus:'9800.00',  ent:'Compra', est:'Ativo', crit:'Suporte de vida', obs:'Desfibrilhador bifásico com monitor ECG integrado e suporte a RCP guiada.',          at_emp:'Zoll Medical Portugal',         at_nom:'Carla Nunes',   at_tel:'215 678 901', at_eml:'care@zoll.pt' },
+        { des:'Oxímetro de Pulso',          marc:'Masimo',         pre:'MSM', mod:'Rad-97',           fab:'Masimo Corporation',    cat:'Monitorização',   ano:2022, cus:'1200.00',  ent:'Compra', est:'Ativo', crit:'Alta',             obs:'Oxímetro portátil de alta precisão com medição de SpO2, frequência cardíaca e CO.', at_emp:'Siemens Healthineers Portugal', at_nom:'Carlos Mendes', at_tel:'215 678 902', at_eml:'healthineers@siemens.pt' },
+        { des:'Electrocardiograma',         marc:'GE Healthcare',  pre:'GEH', mod:'MAC 5500 HD',      fab:'GE Healthcare',         cat:'Diagnóstico',     ano:2021, cus:'6700.00',  ent:'Compra', est:'Ativo', crit:'Alta',             obs:'ECG de 12 derivações com interpretação automática e conectividade DICOM.',            at_emp:'GE Healthcare Portugal',        at_nom:'Rui Tavares',   at_tel:'213 567 890', at_eml:'service@gehealthcare.pt' },
+        { des:'Ecógrafo Portátil',          marc:'Mindray',        pre:'MDR', mod:'TE7 Max',          fab:'Mindray Medical',       cat:'Imagiologia',     ano:2023, cus:'22000.00', ent:'Compra', est:'Ativo', crit:'Alta',             obs:'Ecógrafo de alto desempenho com sondas intercambiáveis e registo digital.',          at_emp:'Mindray Portugal',              at_nom:'Sandra Lima',   at_tel:'218 765 432', at_eml:'suporte@mindray.pt' },
+        { des:'Cama Articulada Hospitalar', marc:'Stryker',        pre:'STR', mod:'ProCuity',         fab:'Stryker Corporation',   cat:'Reabilitação',    ano:2020, cus:'3800.00',  ent:'Compra', est:'Ativo', crit:'Baixa',            obs:'Cama hospitalar elétrica com grades laterais e sistema de pesagem integrado.',       at_emp:'Stryker Portugal',              at_nom:'Miguel Faria',  at_tel:'214 321 987', at_eml:'service@stryker.pt' }
     ];
-    var d = dados[Math.floor(Math.random() * dados.length)];
-    var s = function (n, v) { var el = document.querySelector('[name="' + n + '"]'); if (el) el.value = v; };
+
+    var idx = (eqIdx !== undefined && eqIdx !== null) ? eqIdx : 0;
+    var d   = dados[idx % dados.length];
+    var num = String(idx + 1).padStart(3, '0');
+    var serie = d.pre + '-' + YEAR + '-' + num;
+
+    var s = function(n, v) {
+        var el = document.querySelector('[name="' + n + '"]');
+        if (!el) return;
+        el.value = v;
+    };
+    var sel = function(n, v) {
+        var el = document.querySelector('[name="' + n + '"]');
+        if (!el || el.tagName !== 'SELECT') return;
+        for (var k = 0; k < el.options.length; k++) {
+            if (el.options[k].value === v || el.options[k].text === v) { el.selectedIndex = k; return; }
+        }
+    };
+
+    // Ficha Técnica
     s('codigo_inventario', nextCode || 'EQ-001');
     s('designacao', d.des); s('marca', d.marc); s('modelo', d.mod);
-    s('numero_serie', d.ser); s('fabricante', d.fab); s('ano_fabrico', d.ano);
-    s('custo_aquisicao', d.cus); s('tipo_entrada', d.ent);
-    s('estado', d.est); s('criticidade', d.crit);
+    s('numero_serie', serie); s('fabricante', d.fab);
+
+    // Categoria — procura opção cujo texto contém o nome
+    var catSel = document.querySelector('[name="id_categoria"]');
+    if (catSel) {
+        for (var i = 0; i < catSel.options.length; i++) {
+            if (catSel.options[i].text.indexOf(d.cat) !== -1) { catSel.selectedIndex = i; break; }
+        }
+    }
+
+    // Aquisição
     var today = new Date().toISOString().slice(0, 10);
     var dpEl = document.querySelector('[name="data_aquisicao"]');
     if (dpEl) { dpEl.value = today; if (dpEl._flatpickr) dpEl._flatpickr.setDate(today, false); }
+    s('ano_fabrico', d.ano); s('custo_aquisicao', d.cus); sel('tipo_entrada', d.ent);
+
+    // Localização e Estado
+    if (locIds && locIds.length) {
+        var locSel = document.querySelector('[name="id_localizacao"]');
+        if (locSel) {
+            var pickId = String(locIds[idx % locIds.length]);
+            for (var j = 0; j < locSel.options.length; j++) {
+                if (locSel.options[j].value === pickId) { locSel.selectedIndex = j; break; }
+            }
+        }
+    }
+    sel('estado', d.est); sel('criticidade', d.crit); s('observacoes', d.obs);
+
+    // Assistência Técnica
+    s('at_empresa', d.at_emp); s('at_nome_contacto', d.at_nom);
+    s('at_telefone', d.at_tel); s('at_email', d.at_eml);
 }
 
 // ============================================================
-// Auto-preencher Localização
+// Auto-preencher Localização (existentes = array de "servico|sala" já na BD)
 // ============================================================
-function mhsAutoFillLocalizacao() {
+function mhsAutoFillLocalizacao(existentes) {
     var dados = [
-        { ed:'Bloco A', piso:'Piso 1', srv:'Urgência', sala:'Sala 101' },
-        { ed:'Bloco B', piso:'Piso 2', srv:'Cardiologia', sala:'Sala 204' },
-        { ed:'Bloco Central', piso:'Piso 0', srv:'Bloco Operatório', sala:'BO 3' },
-        { ed:'Bloco C', piso:'Piso 3', srv:'Pediatria', sala:'Sala 310' },
-        { ed:'Bloco A', piso:'Piso 2', srv:'UCI', sala:'UCI-A' }
+        { ed:'Bloco A',       piso:'Piso 1', srv:'Urgência',            sala:'Sala Técnica' },
+        { ed:'Bloco B',       piso:'Piso 2', srv:'Cardiologia',         sala:'Sala de Exames' },
+        { ed:'Bloco Central', piso:'Piso 0', srv:'Bloco Operatório',    sala:'Sala de Reanimação' },
+        { ed:'Bloco C',       piso:'Piso 3', srv:'Pediatria',           sala:'Sala de Tratamentos' },
+        { ed:'Bloco A',       piso:'Piso 2', srv:'UCI',                 sala:'Sala de Observação' },
+        { ed:'Bloco B',       piso:'Piso 1', srv:'Oncologia',           sala:'Sala de Procedimentos' },
+        { ed:'Bloco Central', piso:'Piso 2', srv:'Ortopedia',           sala:'Sala de Equipamentos' },
+        { ed:'Bloco A',       piso:'Piso 3', srv:'Neurologia',          sala:'Sala de Diagnóstico' },
+        { ed:'Bloco C',       piso:'Piso 1', srv:'Medicina Interna',    sala:'Sala de Apoio' },
+        { ed:'Bloco B',       piso:'Piso 3', srv:'Radiologia',          sala:'Sala de Imagiologia' }
     ];
-    var d = dados[Math.floor(Math.random() * dados.length)];
-    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
-    s('edificio',d.ed); s('piso',d.piso); s('servico',d.srv); s('sala',d.sala);
+    var ex = Array.isArray(existentes) ? existentes : [];
+    var d = null;
+    for (var i = 0; i < dados.length; i++) {
+        var chave = dados[i].srv + '|' + dados[i].sala;
+        if (ex.indexOf(chave) === -1) { d = dados[i]; break; }
+    }
+    if (!d) { alert('Todos os dados de demonstração já foram usados.'); return; }
+    var s = function(n, v) { var el = document.querySelector('[name="' + n + '"]'); if (el) el.value = v; };
+    s('edificio', d.ed); s('piso', d.piso); s('servico', d.srv); s('sala', d.sala);
 }
 
 // ============================================================
-// Auto-preencher Fornecedor
+// Auto-preencher Fornecedor (existentes = array de nomes já na BD)
 // ============================================================
-function mhsAutoFillFornecedor() {
+function mhsAutoFillFornecedor(existentes) {
     var dados = [
-        { nome:'MedTech Solutions SA', nif:'501234567', tipo:'Distribuidor', tel:'222 333 444', email:'geral@medtech.pt', morada:'Rua das Flores 12, 4000-001 Porto', web:'https://www.medtech.pt', cont:'Ana Silva', tcon:'912 345 678' },
-        { nome:'Philips Healthcare Portugal', nif:'502345678', tipo:'Fabricante', tel:'213 456 789', email:'info@philips.pt', morada:'Av. da Liberdade 110, 1250-001 Lisboa', web:'https://www.philips.pt', cont:'João Costa', tcon:'913 456 789' },
-        { nome:'B. Braun Portugal Lda', nif:'503456789', tipo:'Assistência Técnica', tel:'214 567 890', email:'support@bbraun.pt', morada:'Parque Industrial de Sintra, 2710-001 Sintra', web:'https://www.bbraun.pt', cont:'Maria Ferreira', tcon:'914 567 890' },
-        { nome:'Siemens Healthineers Portugal', nif:'504567890', tipo:'Fabricante', tel:'215 678 901', email:'healthineers@siemens.pt', morada:'Rua Alfredo da Silva 1, 2610-016 Amadora', web:'https://www.siemens-healthineers.pt', cont:'Carlos Mendes', tcon:'915 678 901' }
+        { nome:'MedTech Solutions SA',          nif:'501234567', tipo:'Distribuidor',        tel:'222 333 444', email:'geral@medtech.pt',           morada:'Rua das Flores 12, 4000-001 Porto',                        web:'https://www.medtech.pt',              cont:'Ana Silva',       tcon:'912 345 678' },
+        { nome:'Philips Healthcare Portugal',   nif:'502345678', tipo:'Fabricante',           tel:'213 456 789', email:'info@philips.pt',             morada:'Av. da Liberdade 110, 1250-001 Lisboa',                    web:'https://www.philips.pt',              cont:'João Costa',      tcon:'913 456 789' },
+        { nome:'B. Braun Portugal Lda',         nif:'503456789', tipo:'Assistência Técnica',  tel:'214 567 890', email:'support@bbraun.pt',           morada:'Parque Industrial de Sintra, 2710-001 Sintra',             web:'https://www.bbraun.pt',               cont:'Maria Ferreira',  tcon:'914 567 890' },
+        { nome:'Siemens Healthineers Portugal', nif:'504567890', tipo:'Fabricante',           tel:'215 678 901', email:'healthineers@siemens.pt',     morada:'Rua Alfredo da Silva 1, 2610-016 Amadora',                 web:'https://www.siemens-healthineers.pt', cont:'Carlos Mendes',   tcon:'915 678 901' },
+        { nome:'Draeger Portugal Lda',          nif:'505678901', tipo:'Assistência Técnica',  tel:'214 789 012', email:'servico@draeger.pt',          morada:'Quinta da Fonte, Edif. D. João I, 2770-071 Paço de Arcos', web:'https://www.draeger.com',             cont:'Pedro Sousa',     tcon:'916 789 012' },
+        { nome:'GE Healthcare Portugal',        nif:'506789012', tipo:'Fabricante',           tel:'213 890 123', email:'service@gehealthcare.pt',     morada:'Rua Galileu Galilei 2, 1500-392 Lisboa',                   web:'https://www.gehealthcare.com',        cont:'Rui Tavares',     tcon:'917 890 123' }
     ];
-    var d = dados[Math.floor(Math.random() * dados.length)];
-    var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
-    s('nome',d.nome); s('nif',d.nif); s('tipo_fornecedor',d.tipo);
-    s('telefone',d.tel); s('email',d.email); s('morada',d.morada);
-    s('website',d.web); s('pessoa_contacto',d.cont); s('tel_contacto',d.tcon);
+    var ex = Array.isArray(existentes) ? existentes : [];
+    var d = null;
+    for (var i = 0; i < dados.length; i++) {
+        if (ex.indexOf(dados[i].nome) === -1) { d = dados[i]; break; }
+    }
+    if (!d) { alert('Todos os fornecedores de demonstração já foram inseridos.'); return; }
+    var s = function(n, v) { var el = document.querySelector('[name="' + n + '"]'); if (el) el.value = v; };
+    s('nome', d.nome); s('nif', d.nif); s('tipo_fornecedor', d.tipo);
+    s('telefone', d.tel); s('email', d.email); s('morada', d.morada);
+    s('website', d.web); s('pessoa_contacto', d.cont); s('tel_contacto', d.tcon);
 }
 
 // ============================================================
@@ -422,42 +402,92 @@ function mhsAutoFillGarantia(firstEqId) {
 // ============================================================
 // Auto-preencher Utilizador
 // ============================================================
-function mhsAutoFillUtilizador() {
+function mhsAutoFillUtilizador(n) {
     var dados = [
         { email:'tecnico01@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
         { email:'tecnico02@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
-        { email:'admin02@medsolutions.pt',   pw:'Admin2024!',   perfil:'admin'   }
+        { email:'tecnico03@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
+        { email:'admin02@medsolutions.pt',   pw:'Admin2024!',   perfil:'admin'   },
+        { email:'admin03@medsolutions.pt',   pw:'Admin2024!',   perfil:'admin'   }
     ];
-    var d = dados[Math.floor(Math.random()*dados.length)];
+    var idx = (n !== undefined && n !== null) ? n : 0;
+    var d = dados[idx % dados.length];
     var s = function(n,v){ var el=document.querySelector('[name="'+n+'"]'); if(el) el.value=v; };
     s('email',d.email); s('password',d.pw); s('profile',d.perfil);
 }
 
 // ============================================================
-// Exportar PDF — lista de equipamentos
+// Validador genérico para formulários planos (class="mhs-validate-form")
 // ============================================================
-function mhsExportarPDF() {
-    var table = document.getElementById('equipamentosTable');
-    var total = table ? (table.dataset.total || '?') : '?';
-    var rows  = '';
-    document.querySelectorAll('#equipamentosTable tbody tr').forEach(function (tr) {
-        var tds = tr.querySelectorAll('td');
-        if (tds.length < 8) return;
-        rows += '<tr>';
-        for (var i = 0; i < 7; i++) rows += '<td>' + tds[i].textContent.trim() + '</td>';
-        rows += '</tr>';
+function mhsValidateForm(form) {
+    var ok = true;
+    var firstBad = null;
+
+    form.querySelectorAll('.mhs-field-error').forEach(function(el) { el.classList.remove('visible'); });
+    form.querySelectorAll('.mhs-invalid').forEach(function(el) { el.classList.remove('mhs-invalid'); });
+
+    function badField(field, errId, msg) {
+        field.classList.add('mhs-invalid');
+        var el = document.getElementById(errId || ('err_' + field.name));
+        if (el) { if (msg) el.textContent = msg; el.classList.add('visible'); }
+        if (!firstBad) firstBad = field;
+        ok = false;
+    }
+
+    // Campos required vazios
+    form.querySelectorAll('[required]').forEach(function(field) {
+        var val = (field.tagName === 'SELECT') ? field.value : field.value.trim();
+        if (!val) badField(field, 'err_' + field.name, 'Campo obrigatório.');
     });
-    var w = window.open('', '_blank', 'width=1100,height=800');
-    w.document.write('<html><head><title>Equipamentos</title>');
-    w.document.write('<style>*{font-family:Arial,sans-serif;font-size:11px}body{padding:20px}h2{font-size:14px;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#0d6ea8;color:#fff;padding:7px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px}td{padding:6px 8px;border-bottom:1px solid #e2e8f0}tr:nth-child(even) td{background:#f8fafc}.foot{margin-top:10px;font-size:10px;color:#94a3b8}</style>');
-    w.document.write('</head><body>');
-    w.document.write('<h2>Lista de Equipamentos &mdash; ' + new Date().toLocaleDateString('pt-PT') + '</h2>');
-    w.document.write('<table><thead><tr><th>Código</th><th>Designação</th><th>Marca</th><th>Categoria</th><th>Serviço</th><th>Estado</th><th>Criticidade</th></tr></thead><tbody>' + rows + '</tbody></table>');
-    w.document.write('<p class="foot">Total: ' + total + ' equipamentos</p>');
-    w.document.write('<scr' + 'ipt>window.onload=function(){window.print();window.close()}<\/scr' + 'ipt>');
-    w.document.write('</body></html>');
-    w.document.close();
+
+    // Serviço: deve conter letras, mín 3 chars, não pode ser só números
+    var srv = form.querySelector('[name="servico"]');
+    if (srv && srv.value.trim()) {
+        if (srv.value.trim().length < 3 || !/[a-zA-ZÀ-ú]/.test(srv.value)) {
+            badField(srv, 'err_servico', 'Indique um serviço válido (ex: Urgência, Cardiologia).');
+        }
+    }
+
+    // NIF: 9 dígitos exactos
+    var nif = form.querySelector('[name="nif"]');
+    if (nif && nif.value.trim() && !/^\d{9}$/.test(nif.value.trim())) {
+        badField(nif, 'err_nif', 'O NIF deve ter exatamente 9 dígitos.');
+    }
+
+    // Email: formato válido
+    var emailFld = form.querySelector('[name="email"]');
+    if (emailFld && emailFld.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFld.value.trim())) {
+        badField(emailFld, 'err_email', 'Endereço de email inválido.');
+    }
+
+    // Telefones: mín 9 dígitos
+    ['telefone', 'tel_contacto'].forEach(function(nm) {
+        var tel = form.querySelector('[name="' + nm + '"]');
+        if (tel && tel.value.trim() && tel.value.replace(/\D/g,'').length < 9) {
+            badField(tel, 'err_' + nm, 'Número de telefone inválido (mín. 9 dígitos).');
+        }
+    });
+
+    // Datas: data_fim deve ser >= data_inicio
+    var di = form.querySelector('[name="data_inicio"]');
+    var df = form.querySelector('[name="data_fim"]');
+    if (di && df && di.value && df.value && df.value < di.value) {
+        badField(df, 'err_data_fim', 'A data de fim deve ser posterior à data de início.');
+    }
+
+    if (!ok && firstBad) firstBad.focus();
+    return ok;
 }
+
+(function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('form.mhs-validate-form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                if (!mhsValidateForm(form)) e.preventDefault();
+            });
+        });
+    });
+})();
 
 // ============================================================
 // Imprimir secção — detalhes de equipamento
@@ -725,3 +755,58 @@ document.addEventListener('submit', function (e) {
         e.preventDefault();
     }
 }, true);
+
+// ============================================================
+// Ligação perdida — interceta navegação e mostra modal
+// ============================================================
+(function () {
+    'use strict';
+    var _dest = null;
+
+    function modalEl() { return document.getElementById('mhsConnModal'); }
+    function show(dest) { _dest = dest; modalEl().classList.add('open'); }
+    function hide() { modalEl().classList.remove('open'); _dest = null; }
+
+    function check(url, onOk) {
+        fetch(url, { method: 'HEAD', cache: 'no-store' })
+            .then(function () { onOk(); })
+            .catch(function () { show(_dest !== null ? _dest : url); });
+    }
+
+    window.mhsConnBack = function () { hide(); };
+
+    window.mhsConnRetry = function () {
+        var saved = _dest;
+        hide();
+        if (!saved) { window.location.reload(); return; }
+        if (typeof saved === 'string') {
+            check(saved, function () { window.location.href = saved; });
+        } else {
+            check(saved.action || window.location.href, function () { saved.submit(); });
+        }
+    };
+
+    // Interceta cliques em links internos
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.charAt(0) === '#' || a.target === '_blank') return;
+        if (/^(javascript|mailto|tel):/.test(href) || /^https?:\/\//.test(href)) return;
+        e.preventDefault();
+        var full = a.href;
+        _dest = full;
+        check(full, function () { window.location.href = full; });
+    }, true);
+
+    // Interceta submissão de formulários internos
+    document.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;
+        var form = e.target;
+        var action = form.getAttribute('action') || '';
+        if (/^https?:\/\//.test(action)) return;
+        e.preventDefault();
+        _dest = form;
+        check(form.action || window.location.href, function () { form.submit(); });
+    }, true);
+})();

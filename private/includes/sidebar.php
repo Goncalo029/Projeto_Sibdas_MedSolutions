@@ -41,17 +41,20 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
         </a>
     </div>
 
-    <nav class="mhs-sidebar-nav">
+    <nav class="mhs-sidebar-nav<?= $mhs_profile === 'admin' ? ' mhs-nav--spread' : '' ?>">
         <div class="mhs-nav-section">Principal</div>
         <a href="<?= BASE_URL ?>/private/home.php" class="mhs-nav-link<?= mhs_active('dashboard'); ?>"><i class="fa-solid fa-gauge-high fa-fw"></i><span>Dashboard</span></a>
 
         <div class="mhs-nav-section">Inventário</div>
         <a href="<?= BASE_URL ?>/private/views/equipamentos/lista.php" class="mhs-nav-link<?= mhs_active('equipamentos'); ?>"><i class="fa-solid fa-stethoscope fa-fw"></i><span>Equipamentos</span></a>
         <a href="<?= BASE_URL ?>/private/views/localizacoes/lista.php" class="mhs-nav-link<?= mhs_active('localizacoes'); ?>"><i class="fa-solid fa-location-dot fa-fw"></i><span>Localizações</span></a>
+        <?php if ($mhs_profile !== 'admin'): ?>
+        <a href="<?= BASE_URL ?>/private/views/fornecedores/lista.php" class="mhs-nav-link<?= mhs_active('fornecedores'); ?>"><i class="fa-solid fa-truck fa-fw"></i><span>Fornecedores</span></a>
+        <?php endif; ?>
 
+        <?php if ($mhs_profile === 'admin'): ?>
         <div class="mhs-nav-section">Gestão</div>
         <a href="<?= BASE_URL ?>/private/views/fornecedores/lista.php" class="mhs-nav-link<?= mhs_active('fornecedores'); ?>"><i class="fa-solid fa-truck fa-fw"></i><span>Fornecedores</span></a>
-        <?php if ($mhs_profile === 'admin'): ?>
         <a href="<?= BASE_URL ?>/private/views/documentos/lista.php" class="mhs-nav-link<?= mhs_active('documentos'); ?>"><i class="fa-solid fa-file-lines fa-fw"></i><span>Documentos</span></a>
         <a href="<?= BASE_URL ?>/private/views/garantias-contrato/lista.php" class="mhs-nav-link<?= mhs_active('garantias'); ?>"><i class="fa-solid fa-shield-halved fa-fw"></i><span>Garantias-Contrato</span></a>
         <?php endif; ?>

@@ -31,6 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'O número de série deve seguir o formato ex: SN-2024-001 (PREFIXO-ANO-SEQUÊNCIA).';
         header('Location: novo.php'); exit;
     }
+    if ($data_aquisicao && $data_aquisicao > date('Y-m-d')) {
+        $_SESSION['error_message'] = 'A data de aquisição não pode ser uma data futura.';
+        header('Location: novo.php'); exit;
+    }
+    if ($ano_fabrico && $ano_fabrico > (int)date('Y')) {
+        $_SESSION['error_message'] = 'O ano de fabrico não pode ser futuro (máx. ' . date('Y') . ').';
+        header('Location: novo.php'); exit;
+    }
+    if ($custo_aquisicao && !preg_match('/^\d+([.,]\d{1,4})?$/', $custo_aquisicao)) {
+        $_SESSION['error_message'] = 'O custo de aquisição deve ser um valor numérico (ex: 1500.00).';
+        header('Location: novo.php'); exit;
+    }
     try {
         $pdo = mhs_pdo();
         // Verificar código duplicado
@@ -114,6 +126,9 @@ $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY
 // Próximo código disponível no formato EQ-XXX
 $_nr = $pdo->query("SELECT MAX(CAST(REGEXP_REPLACE(codigo_inventario,'[^0-9]','') AS UNSIGNED)) AS mx FROM equipamentos WHERE eliminado_em IS NULL AND codigo_inventario REGEXP '^EQ-[0-9]'")->fetchColumn();
 $next_code = 'EQ-' . str_pad((int)$_nr + 1, 3, '0', STR_PAD_LEFT);
+// Índice para auto-preenchimento determinístico (0-based)
+$_eq_idx     = (int)$_nr;
+$_loc_ids    = array_values(array_column($localizacoes, 'id'));
 
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
@@ -147,6 +162,7 @@ include __DIR__ . '/../../includes/header.php';
       <button type="button" class="mhs-detail-tab active" data-tab="ficha"><i class="fa-solid fa-barcode"></i> Ficha Técnica</button>
       <button type="button" class="mhs-detail-tab" data-tab="aquisicao"><i class="fa-solid fa-receipt"></i> Aquisição</button>
       <button type="button" class="mhs-detail-tab" data-tab="localizacao"><i class="fa-solid fa-location-dot"></i> Localização e Estado</button>
+      <button type="button" class="mhs-detail-tab" data-tab="assistencia"><i class="fa-solid fa-headset"></i> Assistência Técnica</button>
       <button type="button" class="mhs-detail-tab" data-tab="documentos"><i class="fa-solid fa-file-lines"></i> Documentos</button>
     </div>
 
@@ -156,7 +172,7 @@ include __DIR__ . '/../../includes/header.php';
         <div class="mhs-info-group">
           <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
             <span><i class="fa-solid fa-barcode"></i> Identificação</span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillDemo('<?= htmlspecialchars($next_code, ENT_QUOTES) ?>')" title="Preencher com dados de exemplo">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillDemo('<?= htmlspecialchars($next_code, ENT_QUOTES) ?>',<?= $_eq_idx ?>,<?= json_encode($_loc_ids) ?>)" title="Preencher com dados de exemplo">
               <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)
             </button>
           </div>
@@ -210,7 +226,7 @@ include __DIR__ . '/../../includes/header.php';
           <div class="row g-3 mt-1">
             <div class="col-md-3">
               <label class="form-label fw-semibold">Data Aquisição</label>
-              <input type="text" name="data_aquisicao" id="data_aquisicao" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+              <input type="text" name="data_aquisicao" id="data_aquisicao" class="form-control mhs-datepicker" data-maxdate="today" placeholder="AAAA-MM-DD" />
               <p class="mhs-field-error" id="err_data_aquisicao">A data não pode ser futura.</p>
             </div>
             <div class="col-md-3">
@@ -273,6 +289,39 @@ include __DIR__ . '/../../includes/header.php';
             <div class="col-12">
               <label class="form-label fw-semibold">Observações</label>
               <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas sobre o equipamento"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assistência Técnica -->
+    <div class="mhs-tab-pane" id="tab-assistencia">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-headset"></i> Contacto de assistência técnica <small class="fw-normal text-muted">(opcional)</small></div>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Empresa / Marca</label>
+              <input type="text" name="at_empresa" class="form-control" placeholder="Ex: MedTech SA" maxlength="255" value="<?= htmlspecialchars($_POST['at_empresa'] ?? '') ?>" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nome do contacto</label>
+              <input type="text" name="at_nome_contacto" class="form-control" placeholder="Ex: João Silva" maxlength="255" value="<?= htmlspecialchars($_POST['at_nome_contacto'] ?? '') ?>" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Telefone</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                <input type="text" name="at_telefone" class="form-control" placeholder="222 XXX XXX" maxlength="50" value="<?= htmlspecialchars($_POST['at_telefone'] ?? '') ?>" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" name="at_email" class="form-control" placeholder="assistencia@empresa.pt" maxlength="255" value="<?= htmlspecialchars($_POST['at_email'] ?? '') ?>" />
+              </div>
             </div>
           </div>
         </div>

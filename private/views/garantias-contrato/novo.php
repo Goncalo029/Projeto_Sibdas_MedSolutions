@@ -15,6 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'O campo Equipamento é obrigatório.';
         header('Location: novo.php'); exit;
     }
+    if ($data_inicio && $data_fim && $data_fim < $data_inicio) {
+        $_SESSION['error_message'] = 'A data de fim deve ser posterior à data de início.';
+        header('Location: novo.php'); exit;
+    }
     // Importar ficheiro PDF do contrato (guardado na base de dados, opcional)
     $erro_upload = null;
     $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
@@ -65,7 +69,7 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
-<form method="POST" action="" enctype="multipart/form-data">
+<form method="POST" action="" enctype="multipart/form-data" class="mhs-validate-form" novalidate>
   <div class="card mhs-data-card">
     <div class="mhs-tab-body">
       <div class="mhs-info-group">
@@ -86,11 +90,12 @@ include __DIR__ . '/../../includes/header.php';
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Data Início</label>
-            <input type="text" name="data_inicio" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+            <input type="text" name="data_inicio" id="data_inicio" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Data Fim</label>
-            <input type="text" name="data_fim" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+            <input type="text" name="data_fim" id="data_fim" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+            <p class="mhs-field-error" id="err_data_fim">A data de fim deve ser posterior à data de início.</p>
           </div>
           <div class="col-md-4 d-flex align-items-end">
             <div class="form-check">

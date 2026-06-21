@@ -21,31 +21,38 @@ $garantias_vencimento  = [];
 $r = $mysqli->query("SELECT estado, COUNT(*) as total FROM equipamentos GROUP BY estado ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $equipamentos_estado[] = $row;
 
-$r = $mysqli->query("SELECT c.nome, COUNT(e.id) as total FROM categorias c LEFT JOIN equipamentos e ON c.id = e.id_categoria GROUP BY c.id, c.nome ORDER BY total DESC");
+$r = $mysqli->query("SELECT c.id, c.nome, COUNT(e.id) as total FROM categorias c LEFT JOIN equipamentos e ON c.id = e.id_categoria GROUP BY c.id, c.nome ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $equipamentos_categoria[] = $row;
 
-$r = $mysqli->query("SELECT tipo_documento as tipo, COUNT(*) as total FROM documentos GROUP BY tipo_documento ORDER BY total DESC");
+$_dash_profile = $_SESSION['profile'] ?? '';
+$_doc_where = $_dash_profile === 'admin' ? '' : "WHERE tipo_documento NOT IN ('Contrato','Garantia')";
+$r = $mysqli->query("SELECT tipo_documento as tipo, COUNT(*) as total FROM documentos $_doc_where GROUP BY tipo_documento ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $documentos_tipo[] = $row;
 
 $r = $mysqli->query("SELECT f.nome, COUNT(ef.id_equipamento) as total FROM fornecedores f LEFT JOIN equipamentos_fornecedores ef ON f.id = ef.id_fornecedor GROUP BY f.id, f.nome ORDER BY total DESC LIMIT 8");
 while ($row = $r->fetch_assoc()) $fornecedores_uso[] = $row;
 
-$r = $mysqli->query("SELECT CONCAT(l.servico, IF(l.sala IS NOT NULL AND l.sala != '', CONCAT(' · ', l.sala), '')) as nome, COUNT(e.id) as total FROM localizacoes l LEFT JOIN equipamentos e ON l.id = e.id_localizacao GROUP BY l.id ORDER BY total DESC LIMIT 6");
+$r = $mysqli->query("SELECT l.id, CONCAT(l.servico, IF(l.sala IS NOT NULL AND l.sala != '', CONCAT(' · ', l.sala), '')) as nome, COUNT(e.id) as total FROM localizacoes l LEFT JOIN equipamentos e ON l.id = e.id_localizacao GROUP BY l.id ORDER BY total DESC LIMIT 6");
 while ($row = $r->fetch_assoc()) $localizacoes_uso[] = $row;
 
-$r = $mysqli->query("SELECT DATE_FORMAT(data_fim,'%Y-%m') as mes, COUNT(*) as total FROM garantias_contratos WHERE data_fim IS NOT NULL GROUP BY DATE_FORMAT(data_fim,'%Y-%m') ORDER BY mes ASC LIMIT 12");
-while ($row = $r->fetch_assoc()) $garantias_vencimento[] = $row;
+if ($_dash_profile === 'admin') {
+    $r = $mysqli->query("SELECT DATE_FORMAT(data_fim,'%Y-%m') as mes, COUNT(*) as total FROM garantias_contratos WHERE data_fim IS NOT NULL GROUP BY DATE_FORMAT(data_fim,'%Y-%m') ORDER BY mes ASC LIMIT 12");
+    while ($row = $r->fetch_assoc()) $garantias_vencimento[] = $row;
+}
 
 $stats_equipamentos        = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 $stats_ativos              = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Ativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 $stats_manutencao          = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Em manutenção' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 $stats_inativos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Inativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_garantias_expiradas = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim < CURDATE() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 $stats_sem_doc             = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos e WHERE e.ativo=1 AND e.eliminado_em IS NULL AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento=e.id AND d.ativo=1 AND d.eliminado_em IS NULL)")->fetch_assoc()['t'];
-$stats_documentos          = (int)$mysqli->query("SELECT COUNT(*) as t FROM documentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_fornecedores        = (int)$mysqli->query("SELECT COUNT(*) as t FROM fornecedores WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_garantias           = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
 $stats_criticos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade='Alta' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+if ($_dash_profile === 'admin') {
+    $stats_garantias_expiradas = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim < CURDATE() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+    $stats_garantias           = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+} else {
+    $stats_garantias_expiradas = 0;
+    $stats_garantias           = 0;
+}
 
 $page_title = 'Dashboard';
 include __DIR__ . '/includes/header.php';
@@ -87,6 +94,7 @@ include __DIR__ . '/includes/header.php';
             <div class="dash-stat-num" data-count="<?= $stats_inativos ?>">0</div>
             <div class="dash-stat-lbl">Fora de serviço</div>
         </a>
+        <?php if ($_dash_profile === 'admin'): ?>
         <a href="<?= $GAR ?>?filtro=vigor" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-shield-halved"></i> &nbsp;Garantias</div>
             <div class="dash-stat-num" data-count="<?= $stats_garantias ?>">0</div>
@@ -97,6 +105,7 @@ include __DIR__ . '/includes/header.php';
             <div class="dash-stat-num" data-count="<?= $stats_garantias_expiradas ?>">0</div>
             <div class="dash-stat-lbl">Garantias expiradas</div>
         </a>
+        <?php endif; ?>
         <a href="<?= $EQ ?>?filtro=sem_docs" class="dash-stat">
             <div class="dash-stat-icon"><i class="fas fa-file-circle-xmark"></i> &nbsp;Sem Docs</div>
             <div class="dash-stat-num" data-count="<?= $stats_sem_doc ?>">0</div>
@@ -203,6 +212,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<?php if ($_dash_profile === 'admin'): ?>
 <!-- ════════════════════════════════════════════════════════════
      ROW 4 — Garantias timeline (full width)
 ════════════════════════════════════════════════════════════ -->
@@ -220,6 +230,7 @@ include __DIR__ . '/includes/header.php';
         <canvas id="cGarantias" style="max-height:280px"></canvas>
     </div>
 </div>
+<?php endif; ?>
 
 <script>
 (function () {

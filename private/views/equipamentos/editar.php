@@ -26,6 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'Código de Inventário e Designação são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
+    if ($data_aquisicao && $data_aquisicao > date('Y-m-d')) {
+        $_SESSION['error_message'] = 'A data de aquisição não pode ser uma data futura.';
+        header("Location: editar.php?id=$id"); exit;
+    }
+    if ($ano_fabrico && $ano_fabrico > (int)date('Y')) {
+        $_SESSION['error_message'] = 'O ano de fabrico não pode ser futuro (máx. ' . date('Y') . ').';
+        header("Location: editar.php?id=$id"); exit;
+    }
+    if ($custo_aquisicao && !preg_match('/^[\d\s.,]+$/', $custo_aquisicao)) {
+        $_SESSION['error_message'] = 'O custo de aquisição deve ser um valor numérico (ex: 1500.00).';
+        header("Location: editar.php?id=$id"); exit;
+    }
 
     try {
         $pdo = mhs_pdo();
@@ -305,7 +317,7 @@ include __DIR__ . '/../../includes/header.php';
         <div class="row g-3">
           <div class="col-md-3">
             <label class="form-label">Data de aquisição</label>
-            <input type="text" name="data_aquisicao" class="form-control mhs-datepicker" value="<?= esc($row->data_aquisicao ?? '') ?>" placeholder="AAAA-MM-DD" />
+            <input type="text" name="data_aquisicao" class="form-control mhs-datepicker" data-maxdate="today" value="<?= esc($row->data_aquisicao ?? '') ?>" placeholder="AAAA-MM-DD" />
           </div>
           <div class="col-md-3">
             <label class="form-label">Ano de fabrico</label>
@@ -379,11 +391,6 @@ include __DIR__ . '/../../includes/header.php';
       <div class="mhs-form-section">
         <div class="mhs-form-section-title"><i class="fa-solid fa-headset"></i> Contacto de assistência técnica</div>
         <div class="row g-3">
-          <?php if (!$at): ?>
-          <div class="col-12">
-            <div class="alert alert-info py-2 mb-0"><i class="fa-solid fa-circle-info me-1"></i>Contacto pré-preenchido a partir do fornecedor de assistência técnica. Pode editá-lo para definir um contacto próprio deste equipamento.</div>
-          </div>
-          <?php endif; ?>
           <div class="col-md-6">
             <label class="form-label">Empresa / Marca</label>
             <input type="text" name="at_empresa" class="form-control"

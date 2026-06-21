@@ -19,7 +19,6 @@ if (in_array($mhs_page_file, ['detalhes.php', 'perfil.php'])) {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>" />
     <title><?php echo APP_NAME; ?></title>
     <link rel="shortcut icon" href="<?= BASE_URL ?>/public/assets/images/logo-medsoft.svg" type="image/svg+xml">
     <!-- Google Fonts -->

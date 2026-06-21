@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
+$_n_users = (int)mhs_pdo()->query("SELECT COUNT(*) FROM utilizadores WHERE eliminado_em IS NULL")->fetchColumn();
 $page_title = 'Utilizadores - Novo';
 include __DIR__ . '/../../includes/header.php';
 ?>
@@ -18,7 +19,7 @@ include __DIR__ . '/../../includes/header.php';
   <div class="card-body">
     <form style="max-width:760px">
       <div class="d-flex justify-content-end mb-3">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillUtilizador()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillUtilizador(<?= $_n_users ?>)"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
       </div>
       <div class="row g-3">
         <div class="col-md-6"><label for="email" class="form-label fw-semibold">Email <span class="text-danger">*</span></label><input type="email" class="form-control" id="email" name="email" placeholder="utilizador@hospital.pt" required maxlength="190" /></div>

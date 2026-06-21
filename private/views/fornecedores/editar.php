@@ -47,7 +47,6 @@ include __DIR__ . '/../../includes/header.php';
     <h1 class="mhs-page-title">Editar Fornecedor</h1>
   </div>
   <div class="mhs-page-actions">
-    <a href="detalhes.php?id=<?= $row->id ?>" class="btn btn-outline-secondary"><i class="fa-solid fa-eye me-2"></i>Ver</a>
     <a href="lista.php" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Voltar</a>
   </div>
 </div>
@@ -55,60 +54,75 @@ include __DIR__ . '/../../includes/header.php';
 <form method="POST" action="">
   <input type="hidden" name="id" value="<?= $row->id ?>">
   <div class="card mhs-data-card">
-    <div class="mhs-tab-body">
-      <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-address-card"></i> Dados gerais</div>
-        <div class="row g-3 mt-1">
-          <div class="col-md-8">
-            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
-            <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($row->nome) ?>" required maxlength="150" />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">NIF</label>
-            <input type="text" name="nif" class="form-control" value="<?= htmlspecialchars($row->nif ?? '') ?>" maxlength="9" pattern="[0-9]{9}" />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Tipo de Fornecedor</label>
-            <select name="tipo_fornecedor" class="form-select">
-              <option value="">-- Selecione --</option>
-              <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $opt): ?>
-              <option <?= ($row->tipo_fornecedor ?? '') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Telefone</label>
-            <input type="text" name="telefone" class="form-control" value="<?= htmlspecialchars($row->telefone ?? '') ?>" maxlength="20" />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($row->email ?? '') ?>" maxlength="100" />
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Morada</label>
-            <input type="text" name="morada" class="form-control" value="<?= htmlspecialchars($row->morada ?? '') ?>" maxlength="250" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Website</label>
-            <input type="url" name="website" class="form-control" value="<?= htmlspecialchars($row->website ?? '') ?>" maxlength="150" />
+    <div class="mhs-detail-tabs">
+      <button type="button" class="mhs-detail-tab active" data-tab="dados-gerais">
+        <i class="fa-solid fa-address-card"></i> Dados Gerais
+      </button>
+      <button type="button" class="mhs-detail-tab" data-tab="contacto">
+        <i class="fa-solid fa-user"></i> Pessoa de Contacto
+      </button>
+    </div>
+
+    <div class="mhs-tab-pane active" id="tab-dados-gerais">
+      <div class="mhs-tab-body">
+        <div class="mhs-form-section">
+          <div class="mhs-form-section-title"><i class="fa-solid fa-address-card"></i> Dados gerais</div>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+              <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($row->nome) ?>" required maxlength="150" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">NIF</label>
+              <input type="text" name="nif" class="form-control" value="<?= htmlspecialchars($row->nif ?? '') ?>" maxlength="9" pattern="[0-9]{9}" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo de Fornecedor</label>
+              <select name="tipo_fornecedor" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $opt): ?>
+                <option <?= ($row->tipo_fornecedor ?? '') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Telefone</label>
+              <input type="text" name="telefone" class="form-control" value="<?= htmlspecialchars($row->telefone ?? '') ?>" maxlength="20" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($row->email ?? '') ?>" maxlength="100" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Morada</label>
+              <input type="text" name="morada" class="form-control" value="<?= htmlspecialchars($row->morada ?? '') ?>" maxlength="250" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Website</label>
+              <input type="url" name="website" class="form-control" value="<?= htmlspecialchars($row->website ?? '') ?>" maxlength="150" />
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="mhs-info-group mt-3">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-user"></i> Pessoa de contacto</div>
-        <div class="row g-3 mt-1">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Nome do contacto</label>
-            <input type="text" name="pessoa_contacto" class="form-control" value="<?= htmlspecialchars($row->pessoa_contacto ?? '') ?>" maxlength="100" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Tel. Contacto</label>
-            <input type="text" name="tel_contacto" class="form-control" value="<?= htmlspecialchars($row->tel_contacto ?? '') ?>" maxlength="20" />
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Observações</label>
-            <textarea name="observacoes" class="form-control" rows="3"><?= htmlspecialchars($row->observacoes ?? '') ?></textarea>
+    <div class="mhs-tab-pane" id="tab-contacto">
+      <div class="mhs-tab-body">
+        <div class="mhs-form-section">
+          <div class="mhs-form-section-title"><i class="fa-solid fa-user"></i> Pessoa de contacto</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nome do contacto</label>
+              <input type="text" name="pessoa_contacto" class="form-control" value="<?= htmlspecialchars($row->pessoa_contacto ?? '') ?>" maxlength="100" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Tel. Contacto</label>
+              <input type="text" name="tel_contacto" class="form-control" value="<?= htmlspecialchars($row->tel_contacto ?? '') ?>" maxlength="20" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea name="observacoes" class="form-control" rows="3"><?= htmlspecialchars($row->observacoes ?? '') ?></textarea>
+            </div>
           </div>
         </div>
       </div>
