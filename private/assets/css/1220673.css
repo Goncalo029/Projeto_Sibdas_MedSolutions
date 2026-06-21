@@ -383,12 +383,12 @@ body.mhs-detail-page dl.row dd{padding-top:0}
 .dash-refresh-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font-size:.8rem;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s;text-decoration:none;white-space:nowrap}
 .dash-refresh-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.35);color:#fff}
 .dash-stats{display:flex;flex-wrap:wrap;margin-top:2.25rem;border-top:1px solid rgba(255,255,255,.1)}
-.dash-stat{flex:1;min-width:110px;padding:1.4rem 1.5rem 1.6rem;position:relative;cursor:default;transition:background .2s;display:flex;flex-direction:column;justify-content:flex-end}
+.dash-stat{flex:1;min-width:110px;padding:1.4rem 1.5rem 1.6rem;position:relative;cursor:default;transition:background .2s;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
 .dash-stat:hover{background:rgba(255,255,255,.05)}
 .dash-stat+.dash-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.15)}
-.dash-stat-icon{font-size:.75rem;opacity:.82;margin-bottom:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:5px}
+.dash-stat-icon{font-size:.75rem;opacity:.82;margin-bottom:.6rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dash-stat-num{font-family:'Sora',sans-serif;font-size:2.2rem;font-weight:800;line-height:1;color:#fff;margin-bottom:.35rem}
-.dash-stat-lbl{font-size:.68rem;opacity:.82;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:rgba(255,255,255,.9);white-space:nowrap}
+.dash-stat-lbl{font-size:.68rem;opacity:.82;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:rgba(255,255,255,.9);line-height:1.3}
 .dash-panel{background:rgba(255,255,255,.88);border-radius:18px;border:1px solid rgba(148,163,184,.14);box-shadow:0 2px 18px rgba(15,23,42,.05);overflow:hidden;opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
 .dash-panel.in{opacity:1;transform:none}
 .dash-panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.1rem 1.6rem;border-bottom:1px solid rgba(148,163,184,.1)}
@@ -541,7 +541,7 @@ body.mhs-edit-page .card{border-top:3px solid #0d6ea8!important}
 .mhs-table-toolbar-btn{display:inline-flex!important;align-items:center;gap:7px;padding:8px 16px!important;font-size:.85rem!important;font-weight:700!important;border-radius:0!important}
 
 /* Células especiais */
-.mhs-code{font-family:'Courier New',monospace;font-size:.82rem;font-weight:700;color:#0a3a5c;background:#f0f9ff;padding:3px 7px;border-radius:3px;border:1px solid #bae6fd}
+.mhs-code{font-family:'Courier New',monospace;font-size:.82rem;font-weight:700;color:#0a3a5c;background:#f0f9ff;padding:3px 7px;border-radius:3px;border:1px solid #bae6fd;white-space:nowrap}
 .mhs-td-primary{font-weight:600;color:#0f172a!important}
 
 /* ── DataTables redesign ── */

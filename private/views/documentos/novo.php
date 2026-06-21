@@ -43,12 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$equipamentos = mhs_pdo()->query("SELECT id, codigo_inventario, designacao FROM equipamentos ORDER BY codigo_inventario")->fetchAll();
+$equipamentos = mhs_pdo()->query("SELECT id, codigo_inventario, designacao FROM equipamentos WHERE eliminado_em IS NULL ORDER BY codigo_inventario")->fetchAll();
 $tipos = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
+$first_eq_id = !empty($equipamentos) ? $equipamentos[0]->id : 0;
 
 $page_title = 'Documentos - Novo';
 include __DIR__ . '/../../includes/header.php';
 ?>
+<script>window.MHS_DOC_EQ = <?= (int)$first_eq_id ?>;</script>
 
 <div class="mhs-page-header">
   <div>
@@ -64,7 +66,10 @@ include __DIR__ . '/../../includes/header.php';
   <div class="card mhs-data-card">
     <div class="mhs-tab-body">
       <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-file-lines"></i> Informação do documento</div>
+        <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
+          <span><i class="fa-solid fa-file-lines"></i> Informação do documento</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillDocumento(window.MHS_DOC_EQ)"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
+        </div>
         <div class="row g-3 mt-1">
           <div class="col-12">
             <label class="form-label fw-semibold">Equipamento <span class="text-danger">*</span></label>

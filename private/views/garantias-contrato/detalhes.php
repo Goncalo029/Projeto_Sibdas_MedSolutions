@@ -18,6 +18,56 @@ if (!$g) { header('Location: lista.php'); exit; }
 
 $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
 
+// ── Export PDF ─────────────────────────────────────────────
+if (($_GET['export'] ?? '') === 'pdf') {
+    $W = 595.28; $H = 841.89; $M = 40;
+    $encf = function (string $s): string {
+        $s = iconv('UTF-8', 'Windows-1252//TRANSLIT', $s);
+        return str_replace(['\\','(',')'], ['\\\\','\\(','\\)'], $s ?: '');
+    };
+    $rows = [
+        ['Equipamento',        $g->codigo_inventario . ' — ' . $g->designacao],
+        ['Data de início',     $fmt($g->data_inicio)],
+        ['Data de fim',        $fmt($g->data_fim)],
+        ['Tem contrato',       $g->tem_contrato ? 'Sim' : 'Não'],
+        ['Tipo',               $g->tipo_contrato ?: '—'],
+        ['Entidade responsável', $g->entidade_responsavel ?: '—'],
+        ['Periodicidade',      $g->periodicidade ?: '—'],
+        ['Observações',        $g->observacoes ?: '—'],
+    ];
+    $c  = "0.051 0.102 0.196 rg $M " . ($H - $M - 44) . " " . ($W - 2 * $M) . " 44 re f 1 1 1 rg\n";
+    $c .= "BT /F2 15 Tf " . ($M + 12) . " " . ($H - $M - 20) . " Td (" . $encf('Garantia/Contrato') . ") Tj ET\n";
+    $c .= "BT /F1 9 Tf " . ($M + 12) . " " . ($H - $M - 35) . " Td (" . $encf('MedSolutions  —  ' . $g->codigo_inventario . '  —  ' . date('d/m/Y H:i')) . ") Tj ET\n0 0 0 rg\n";
+    $y = $H - $M - 70;
+    foreach ($rows as [$label, $value]) {
+        $c .= "0.94 0.96 0.99 rg $M " . ($y - 4) . " " . ($W - 2 * $M) . " 18 re f 0 0 0 rg\n";
+        $c .= "BT /F2 9 Tf " . ($M + 6) . " $y Td (" . $encf($label) . ") Tj ET\n";
+        $c .= "BT /F1 9 Tf " . ($M + 160) . " $y Td (" . $encf(mb_strimwidth((string)$value, 0, 80, '...', 'UTF-8')) . ") Tj ET\n";
+        $c .= "0.88 0.88 0.88 RG 0.3 w $M " . ($y - 4) . " m " . ($W - $M) . " " . ($y - 4) . " l S\n";
+        $y -= 22;
+    }
+    $fReg = 4; $fBold = 5;
+    $objs = [
+        1 => "<< /Type /Catalog /Pages 2 0 R >>",
+        2 => "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3 => "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 $W $H] /Resources << /Font << /F1 $fReg 0 R /F2 $fBold 0 R >> >> /Contents 6 0 R >>",
+        6 => "<< /Length " . strlen($c) . " >>\nstream\n" . $c . "endstream",
+        $fReg  => "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+        $fBold => "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+    ];
+    ksort($objs);
+    $pdf = "%PDF-1.4\n"; $off = [];
+    foreach ($objs as $num => $body) { $off[$num] = strlen($pdf); $pdf .= "$num 0 obj\n$body\nendobj\n"; }
+    $xref = strlen($pdf); $cnt = max(array_keys($objs)) + 1;
+    $pdf .= "xref\n0 $cnt\n0000000000 65535 f \n";
+    for ($i = 1; $i < $cnt; $i++) { $pdf .= isset($off[$i]) ? sprintf("%010d 00000 n \n", $off[$i]) : "0000000000 65535 f \n"; }
+    $pdf .= "trailer\n<< /Size $cnt /Root 1 0 R >>\nstartxref\n$xref\n%%EOF";
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="garantia_' . $g->codigo_inventario . '_' . date('Ymd') . '.pdf"');
+    header('Content-Length: ' . strlen($pdf));
+    echo $pdf; exit;
+}
+
 $page_title = 'Garantias-Contrato - Detalhes';
 include __DIR__ . '/../../includes/header.php';
 ?>

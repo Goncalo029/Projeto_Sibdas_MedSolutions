@@ -73,79 +73,96 @@ include __DIR__ . '/../../includes/header.php';
 
 <form method="POST" action="" class="mhs-validate-form" novalidate>
   <div class="card mhs-data-card">
-    <div class="mhs-tab-body">
-      <div class="mhs-info-group">
-        <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
-          <span><i class="fa-solid fa-address-card"></i> Dados gerais</span>
-          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillFornecedor(window.MHS_FORN_EX)"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
-        </div>
-        <div class="row g-3 mt-1">
-          <div class="col-md-8">
-            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
-            <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome do fornecedor" required maxlength="150"
-                   value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_nome">Campo obrigatório.</p>
+    <div class="mhs-detail-tabs">
+      <button type="button" class="mhs-detail-tab active" data-tab="dados-gerais">
+        <i class="fa-solid fa-address-card"></i> Dados Gerais
+      </button>
+      <button type="button" class="mhs-detail-tab" data-tab="contacto">
+        <i class="fa-solid fa-user"></i> Pessoa de Contacto
+      </button>
+    </div>
+
+    <!-- Dados Gerais -->
+    <div class="mhs-tab-pane active" id="tab-dados-gerais">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title d-flex align-items-center justify-content-between">
+            <span><i class="fa-solid fa-address-card"></i> Dados gerais</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="mhsAutoFillFornecedor(window.MHS_FORN_EX)"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Auto-preencher (demo)</button>
           </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">NIF</label>
-            <input type="text" name="nif" id="nif" class="form-control" placeholder="9 dígitos" maxlength="9"
-                   value="<?= htmlspecialchars($_POST['nif'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_nif">O NIF deve ter exatamente 9 dígitos.</p>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Tipo de Fornecedor</label>
-            <select name="tipo_fornecedor" class="form-select">
-              <option value="">-- Selecione --</option>
-              <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $t): ?>
-              <option <?= ($_POST['tipo_fornecedor'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Telefone</label>
-            <input type="text" name="telefone" id="telefone" class="form-control" placeholder="222 333 444" maxlength="20"
-                   value="<?= htmlspecialchars($_POST['telefone'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_telefone">Número inválido (mín. 9 dígitos).</p>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="email@fornecedor.pt" maxlength="100"
-                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_email">Endereço de email inválido.</p>
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Morada</label>
-            <input type="text" name="morada" class="form-control" placeholder="Rua, número, código postal, cidade" maxlength="250"
-                   value="<?= htmlspecialchars($_POST['morada'] ?? '') ?>" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Website</label>
-            <input type="url" name="website" class="form-control" placeholder="https://www.exemplo.pt" maxlength="150"
-                   value="<?= htmlspecialchars($_POST['website'] ?? '') ?>" />
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+              <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome do fornecedor" required maxlength="150"
+                     value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_nome">Campo obrigatório.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">NIF</label>
+              <input type="text" name="nif" id="nif" class="form-control" placeholder="9 dígitos" maxlength="9"
+                     value="<?= htmlspecialchars($_POST['nif'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_nif">O NIF deve ter exatamente 9 dígitos.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo de Fornecedor</label>
+              <select name="tipo_fornecedor" class="form-select">
+                <option value="">-- Selecione --</option>
+                <?php foreach (['Fabricante','Distribuidor','Assistência Técnica','Outro'] as $t): ?>
+                <option <?= ($_POST['tipo_fornecedor'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Telefone</label>
+              <input type="text" name="telefone" id="telefone" class="form-control" placeholder="222 333 444" maxlength="20"
+                     value="<?= htmlspecialchars($_POST['telefone'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_telefone">Número inválido (mín. 9 dígitos).</p>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" id="email" class="form-control" placeholder="email@fornecedor.pt" maxlength="100"
+                     value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_email">Endereço de email inválido.</p>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Morada</label>
+              <input type="text" name="morada" class="form-control" placeholder="Rua, número, código postal, cidade" maxlength="250"
+                     value="<?= htmlspecialchars($_POST['morada'] ?? '') ?>" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Website</label>
+              <input type="url" name="website" class="form-control" placeholder="https://www.exemplo.pt" maxlength="150"
+                     value="<?= htmlspecialchars($_POST['website'] ?? '') ?>" />
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="mhs-info-group mt-3">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-headset"></i> Contacto de Assistência Técnica <span class="text-danger">*</span></div>
-        <div class="row g-3 mt-1">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Nome do contacto <span class="text-danger">*</span></label>
-            <input type="text" name="pessoa_contacto" id="pessoa_contacto" class="form-control"
-                   placeholder="Nome do técnico/responsável" maxlength="100" required
-                   value="<?= htmlspecialchars($_POST['pessoa_contacto'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_pessoa_contacto">Campo obrigatório.</p>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Tel. Assistência <span class="text-danger">*</span></label>
-            <input type="text" name="tel_contacto" id="tel_contacto" class="form-control"
-                   placeholder="912 345 678" maxlength="20" required
-                   value="<?= htmlspecialchars($_POST['tel_contacto'] ?? '') ?>" />
-            <p class="mhs-field-error" id="err_tel_contacto">Número inválido (mín. 9 dígitos).</p>
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Observações</label>
-            <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas internas"><?= htmlspecialchars($_POST['observacoes'] ?? '') ?></textarea>
+    <!-- Pessoa de Contacto -->
+    <div class="mhs-tab-pane" id="tab-contacto">
+      <div class="mhs-tab-body">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-user"></i> Pessoa de contacto <span class="text-danger">*</span></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nome do contacto <span class="text-danger">*</span></label>
+              <input type="text" name="pessoa_contacto" id="pessoa_contacto" class="form-control"
+                     placeholder="Nome do técnico/responsável" maxlength="100" required
+                     value="<?= htmlspecialchars($_POST['pessoa_contacto'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_pessoa_contacto">Campo obrigatório.</p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Tel. Assistência <span class="text-danger">*</span></label>
+              <input type="text" name="tel_contacto" id="tel_contacto" class="form-control"
+                     placeholder="912 345 678" maxlength="20" required
+                     value="<?= htmlspecialchars($_POST['tel_contacto'] ?? '') ?>" />
+              <p class="mhs-field-error" id="err_tel_contacto">Número inválido (mín. 9 dígitos).</p>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas internas"><?= htmlspecialchars($_POST['observacoes'] ?? '') ?></textarea>
+            </div>
           </div>
         </div>
       </div>

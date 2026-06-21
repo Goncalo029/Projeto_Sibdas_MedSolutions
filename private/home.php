@@ -249,6 +249,26 @@ include __DIR__ . '/includes/header.php';
         cGarantias:    { labels: <?= json_encode(array_column($garantias_vencimento,  'mes'))    ?>, values: <?= json_encode(array_map('intval', array_column($garantias_vencimento,  'total'))) ?> }
     };
 
+    /* ── IDs para navegação nos gráficos ────────────────────── */
+    const chartIds = {
+        cCategorias:   <?= json_encode(array_values(array_column($equipamentos_categoria, 'id'))) ?>,
+        cLocalizacoes: <?= json_encode(array_values(array_column($localizacoes_uso,       'id'))) ?>,
+    };
+
+    /* ── URLs de destino ao clicar num segmento ─────────────── */
+    const _EQ  = '<?= BASE_URL ?>/private/views/equipamentos/lista.php';
+    const _DOC = '<?= BASE_URL ?>/private/views/documentos/lista.php';
+    const _FOR = '<?= BASE_URL ?>/private/views/fornecedores/lista.php';
+    const _GAR = '<?= BASE_URL ?>/private/views/garantias-contrato/lista.php';
+    const chartLinkFns = {
+        cEstados:      (idx, label) => _EQ + '?estado='         + encodeURIComponent(label),
+        cCategorias:   (idx)        => _EQ + '?id_categoria='   + (chartIds.cCategorias[idx]   || ''),
+        cLocalizacoes: (idx)        => _EQ + '?id_localizacao=' + (chartIds.cLocalizacoes[idx] || ''),
+        cDocumentos:   ()           => _DOC,
+        cFornecedores: ()           => _FOR,
+        cGarantias:    ()           => _GAR,
+    };
+
     /* ── Chart instance registry ─────────────────────────────── */
     const instances = {};
 
@@ -327,6 +347,16 @@ include __DIR__ . '/includes/header.php';
                 responsive: true,
                 maintainAspectRatio: true,
                 animation: { duration: 640, easing: 'easeOutQuart' },
+                onClick: chartLinkFns[canvasId] ? function (evt, elements) {
+                    if (!elements.length) return;
+                    const fn = chartLinkFns[canvasId];
+                    const idx = elements[0].index;
+                    const label = d.labels[idx];
+                    window.location.href = fn(idx, label);
+                } : undefined,
+                onHover: chartLinkFns[canvasId] ? function (evt, elements) {
+                    evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                } : undefined,
                 plugins: {
                     legend: {
                         display: circular,

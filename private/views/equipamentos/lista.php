@@ -30,10 +30,12 @@ $equipamentos = [];
 $erro_bd = '';
 
 // Filtros
-$f_estado = trim($_GET['estado'] ?? '');
-$f_critic = trim($_GET['criticidade'] ?? '');
-$f_filtro = trim($_GET['filtro'] ?? '');
-$f_ver    = trim($_GET['ver'] ?? '');    // 'inativos' | ''
+$f_estado      = trim($_GET['estado'] ?? '');
+$f_critic      = trim($_GET['criticidade'] ?? '');
+$f_filtro      = trim($_GET['filtro'] ?? '');
+$f_ver         = trim($_GET['ver'] ?? '');    // 'inativos' | ''
+$f_categoria   = (int)($_GET['id_categoria'] ?? 0);
+$f_localizacao = (int)($_GET['id_localizacao'] ?? 0);
 
 // Inativos/abatidos via estado GET ou ver=inativos
 $show_inativos = ($f_ver === 'inativos' || $f_estado === 'Inativo' || $f_estado === 'Abatido');
@@ -57,6 +59,14 @@ if ($f_critic !== '') {
 }
 if ($f_filtro === 'sem_docs') {
     $where .= " AND NOT EXISTS (SELECT 1 FROM documentos d2 WHERE d2.id_equipamento = e.id AND d2.eliminado_em IS NULL)";
+}
+if ($f_categoria > 0) {
+    $where .= " AND e.id_categoria = ?";
+    $params[] = $f_categoria;
+}
+if ($f_localizacao > 0) {
+    $where .= " AND e.id_localizacao = ?";
+    $params[] = $f_localizacao;
 }
 if ($f_filtro === 'manutencao_atraso') {
     $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
@@ -82,6 +92,14 @@ $filtro_label = match(true) {
     $f_filtro === 'emprestimo_30dias'  => 'Empréstimos em curso há mais de 30 dias',
     default                            => '',
 };
+if ($filtro_label === '' && $f_categoria > 0) {
+    $cat_nome = mhs_pdo()->query("SELECT nome FROM categorias WHERE id = $f_categoria")->fetchColumn();
+    $filtro_label = 'Categoria: ' . ($cat_nome ?: 'Desconhecida');
+}
+if ($filtro_label === '' && $f_localizacao > 0) {
+    $loc = mhs_pdo()->query("SELECT servico, sala FROM localizacoes WHERE id = $f_localizacao")->fetch(PDO::FETCH_OBJ);
+    $filtro_label = 'Localização: ' . ($loc ? $loc->servico . ($loc->sala ? ' · ' . $loc->sala : '') : 'Desconhecida');
+}
 
 try {
     $pdo_main = mhs_pdo();
@@ -97,9 +115,28 @@ try {
     ");
     $stmt->execute($params);
     $equipamentos = $stmt->fetchAll();
-    // Contagens para as tabs (sem filtros adicionais)
-    $n_servico  = (int)$pdo_main->query("SELECT COUNT(*) FROM equipamentos WHERE eliminado_em IS NULL AND estado NOT IN ('Inativo','Abatido')")->fetchColumn();
-    $n_inativos = (int)$pdo_main->query("SELECT COUNT(*) FROM equipamentos WHERE eliminado_em IS NULL AND estado IN ('Inativo','Abatido')")->fetchColumn();
+
+    // Contagens para as tabs — aplicam os mesmos filtros exceto estado
+    $wc = "eliminado_em IS NULL";
+    $pc = [];
+    if ($f_critic !== '')  { $wc .= " AND criticidade = ?";    $pc[] = $f_critic; }
+    if ($f_categoria > 0)  { $wc .= " AND id_categoria = ?";   $pc[] = $f_categoria; }
+    if ($f_localizacao > 0){ $wc .= " AND id_localizacao = ?"; $pc[] = $f_localizacao; }
+    if ($f_filtro === 'sem_docs') {
+        $wc .= " AND NOT EXISTS (SELECT 1 FROM documentos d2 WHERE d2.id_equipamento = equipamentos.id AND d2.eliminado_em IS NULL)";
+    } elseif ($f_filtro === 'manutencao_atraso') {
+        $wc .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp WHERE mp.id_equipamento = equipamentos.id AND mp.proxima_manutencao < CURDATE() AND mp.estado NOT IN ('Concluída','Cancelada') AND mp.eliminado_em IS NULL)";
+    } elseif ($f_filtro === 'manutencao_7dias') {
+        $wc .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp WHERE mp.id_equipamento = equipamentos.id AND mp.proxima_manutencao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND mp.estado NOT IN ('Concluída','Cancelada') AND mp.eliminado_em IS NULL)";
+    } elseif ($f_filtro === 'emprestimo_30dias') {
+        $wc .= " AND EXISTS (SELECT 1 FROM emprestimos_equipamentos ee WHERE ee.id_equipamento = equipamentos.id AND ee.data_devolucao IS NULL AND ee.data_saida < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND ee.eliminado_em IS NULL)";
+    }
+    $sc = $pdo_main->prepare("SELECT COUNT(*) FROM equipamentos WHERE $wc AND (estado IS NULL OR estado NOT IN ('Inativo','Abatido'))");
+    $sc->execute($pc);
+    $n_servico = (int)$sc->fetchColumn();
+    $sc2 = $pdo_main->prepare("SELECT COUNT(*) FROM equipamentos WHERE $wc AND estado IN ('Inativo','Abatido')");
+    $sc2->execute($pc);
+    $n_inativos = (int)$sc2->fetchColumn();
 } catch (PDOException $e) {
     $erro_bd = 'Nao foi possivel carregar equipamentos.';
     $n_servico = 0; $n_inativos = 0;

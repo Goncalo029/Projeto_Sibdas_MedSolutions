@@ -417,6 +417,37 @@ function mhsAutoFillUtilizador(n) {
 }
 
 // ============================================================
+// Auto-preencher Documento
+// ============================================================
+function mhsAutoFillDocumento(firstEqId) {
+    var dados = [
+        { tipo:'Manual',        nome:'Manual do utilizador',        obs:'Manual técnico de operação do equipamento fornecido pelo fabricante.', val:null },
+        { tipo:'Certificado',   nome:'Certificado de calibração',   obs:'Certificado de calibração anual emitido por entidade acreditada.',     val:2    },
+        { tipo:'Contrato',      nome:'Contrato de manutenção',      obs:'Contrato de manutenção preventiva anual com o fornecedor.',            val:1    },
+        { tipo:'Ficha técnica', nome:'Ficha técnica do fabricante', obs:'Especificações técnicas e elétricas do equipamento.',                  val:null },
+        { tipo:'Outro',         nome:'Declaração de conformidade',  obs:'Declaração CE de conformidade do equipamento.',                        val:3    }
+    ];
+    var d = dados[Math.floor(Math.random() * dados.length)];
+    var hoje = new Date();
+    var fmt = function(dt){ return dt.toISOString().slice(0,10); };
+    var s = function(nm,v){ var el=document.querySelector('[name="'+nm+'"]'); if(el) el.value=v; };
+    if (firstEqId) s('id_equipamento', firstEqId);
+    s('tipo_documento', d.tipo);
+    s('nome_documento', d.nome);
+    s('data_documento', fmt(hoje));
+    if (d.val) {
+        var val = new Date(hoje); val.setFullYear(val.getFullYear() + d.val);
+        s('data_validade', fmt(val));
+    } else {
+        s('data_validade', '');
+    }
+    s('observacoes', d.obs);
+    ['data_documento','data_validade'].forEach(function(nm){
+        var el=document.querySelector('[name="'+nm+'"]'); if(el&&el._flatpickr) el._flatpickr.setDate(el.value,false);
+    });
+}
+
+// ============================================================
 // Validador genérico para formulários planos (class="mhs-validate-form")
 // ============================================================
 function mhsValidateForm(form) {
@@ -764,8 +795,8 @@ document.addEventListener('submit', function (e) {
     var _dest = null;
 
     function modalEl() { return document.getElementById('mhsConnModal'); }
-    function show(dest) { _dest = dest; modalEl().classList.add('open'); }
-    function hide() { modalEl().classList.remove('open'); _dest = null; }
+    function show(dest) { _dest = dest; var m = modalEl(); if (m) m.classList.add('open'); }
+    function hide() { var m = modalEl(); if (m) m.classList.remove('open'); _dest = null; }
 
     function check(url, onOk) {
         fetch(url, { method: 'HEAD', cache: 'no-store' })

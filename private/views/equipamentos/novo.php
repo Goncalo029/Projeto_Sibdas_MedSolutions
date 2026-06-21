@@ -130,6 +130,10 @@ $next_code = 'EQ-' . str_pad((int)$_nr + 1, 3, '0', STR_PAD_LEFT);
 $_eq_idx     = (int)$_nr;
 $_loc_ids    = array_values(array_column($localizacoes, 'id'));
 
+$marcas      = $pdo->query("SELECT DISTINCT marca FROM equipamentos WHERE marca IS NOT NULL AND marca != '' AND eliminado_em IS NULL ORDER BY marca")->fetchAll(PDO::FETCH_COLUMN);
+$modelos     = $pdo->query("SELECT DISTINCT modelo FROM equipamentos WHERE modelo IS NOT NULL AND modelo != '' AND eliminado_em IS NULL ORDER BY modelo")->fetchAll(PDO::FETCH_COLUMN);
+$fabricantes = $pdo->query("SELECT nome FROM fornecedores WHERE eliminado_em IS NULL ORDER BY nome")->fetchAll(PDO::FETCH_COLUMN);
+
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
@@ -198,11 +202,17 @@ include __DIR__ . '/../../includes/header.php';
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Marca</label>
-              <input type="text" name="marca" class="form-control" placeholder="Marca" maxlength="100" />
+              <input type="text" name="marca" class="form-control" placeholder="Marca" maxlength="100" list="dl-marcas" autocomplete="off" />
+              <datalist id="dl-marcas">
+                <?php foreach ($marcas as $m): ?><option value="<?= htmlspecialchars($m) ?>"><?php endforeach; ?>
+              </datalist>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Modelo</label>
-              <input type="text" name="modelo" class="form-control" placeholder="Modelo" maxlength="100" />
+              <input type="text" name="modelo" class="form-control" placeholder="Modelo" maxlength="100" list="dl-modelos" autocomplete="off" />
+              <datalist id="dl-modelos">
+                <?php foreach ($modelos as $m): ?><option value="<?= htmlspecialchars($m) ?>"><?php endforeach; ?>
+              </datalist>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Número de Série</label>
@@ -211,7 +221,10 @@ include __DIR__ . '/../../includes/header.php';
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Fabricante</label>
-              <input type="text" name="fabricante" class="form-control" placeholder="Fabricante" maxlength="150" />
+              <input type="text" name="fabricante" class="form-control" placeholder="Fabricante" maxlength="150" list="dl-fabricantes" autocomplete="off" />
+              <datalist id="dl-fabricantes">
+                <?php foreach ($fabricantes as $f): ?><option value="<?= htmlspecialchars($f) ?>"><?php endforeach; ?>
+              </datalist>
             </div>
           </div>
         </div>
