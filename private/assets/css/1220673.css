@@ -702,3 +702,67 @@ a.dash-stat:hover .dash-stat-num{filter:brightness(1.05)}
 .mhs-conn-foot{padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end}
 .mhs-conn-foot button{padding:9px 18px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#334155}
 .mhs-conn-foot .mhs-conn-btn-primary{background:linear-gradient(135deg,#0d6ea8,#0bb37e);color:#fff;border:0}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD — modernização (movido de home.php)
+   ════════════════════════════════════════════════════════════ */
+/* ── Dashboard moderna (paleta do site: azul #0d6ea8 + teal #0bb37e) ── */
+.dash-hero{background:linear-gradient(135deg,#0a5580 0%,#0d6ea8 48%,#0bb37e 100%);
+    box-shadow:0 22px 60px -30px rgba(13,110,168,.6)}
+.dash-hero::after{background:radial-gradient(circle,rgba(11,179,126,.30),transparent 70%);filter:blur(8px)}
+
+.dash-panel{background:linear-gradient(180deg,#ffffff 0%,#f4faff 100%);
+    border:1px solid var(--mhs-border-strong);border-radius:20px;
+    box-shadow:0 14px 36px -22px rgba(13,110,168,.28)}
+.dash-panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,#0d6ea8,#0bb37e,#6366f1,#0d6ea8);
+    background-size:300% 100%;animation:mhsHue 9s linear infinite;opacity:.9}
+@keyframes mhsHue{to{background-position:300% 0}}
+.dash-panel.in:hover{transform:translateY(-4px);
+    box-shadow:0 26px 50px -24px rgba(13,110,168,.34);transition:transform .25s ease,box-shadow .25s ease}
+.dash-panel-head{background:linear-gradient(180deg,rgba(223,240,248,.55),transparent);
+    border-bottom:1px solid rgba(148,163,184,.12)}
+.dash-panel-title{font-size:.95rem;letter-spacing:-.01em}
+.dash-panel-title i{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+    color:#fff;background:linear-gradient(135deg,#0d6ea8,#0bb37e);box-shadow:0 6px 14px -6px rgba(13,110,168,.7);font-size:.85rem}
+.dash-toggle{background:rgba(13,110,168,.08);border-radius:12px;padding:4px}
+.dash-toggle-btn{border-radius:9px}
+.dash-toggle-btn.active{background:#fff;color:var(--mhs-primary);box-shadow:0 3px 10px -2px rgba(13,110,168,.3)}
+
+/* KPI cards com brilho subtil no hover */
+a.dash-stat::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;pointer-events:none;
+    background:radial-gradient(120% 80% at 50% 0%,rgba(255,255,255,.16),transparent 70%)}
+a.dash-stat:hover::after{opacity:1}
+a.dash-stat:hover{transform:translateY(-3px)}
+.dash-stat-num{text-shadow:0 2px 18px rgba(255,255,255,.18)}
+
+/* ── Monitor de Suporte de Vida (ECG) ── */
+.mhs-vitals{position:relative;border:1px solid var(--mhs-border-strong);border-radius:20px;overflow:hidden;margin-bottom:1.5rem;
+    background:linear-gradient(135deg,#ffffff 0%,#f1faf6 55%,#eaf3fb 100%);
+    box-shadow:0 16px 40px -22px rgba(13,110,168,.35)}
+.mhs-vitals::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:linear-gradient(rgba(13,110,168,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(13,110,168,.05) 1px,transparent 1px);
+    background-size:26px 26px}
+.mhs-vitals-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;position:relative;z-index:2}
+.mhs-vitals-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.02em;color:var(--mhs-text);text-transform:uppercase}
+.mhs-vitals-title i{color:#0bb37e;margin-right:9px}
+.mhs-vitals-body{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;padding:0 22px 22px;position:relative;z-index:2}
+.mhs-vitals-ecg{flex:1 1 340px;min-height:170px;position:relative;display:flex;align-items:center}
+.mhs-vitals-ecg svg{position:absolute;inset:0;width:100%;height:100%}
+.mhs-ecg-line{fill:none;stroke:#0bb37e;stroke-width:2.6;filter:drop-shadow(0 0 4px rgba(11,179,126,.45));
+    animation:mhsEcgScroll 3.6s linear infinite}
+@keyframes mhsEcgScroll{from{transform:translateX(0)}to{transform:translateX(-600px)}}
+.mhs-vitals-count{position:relative;z-index:3;margin-left:auto;text-align:right;padding-right:4px;align-self:center}
+.mhs-vitals-count .num{display:block;font-family:'Sora',sans-serif;font-weight:800;font-size:4.6rem;line-height:.9;
+    color:#0d6ea8;animation:mhsBeat 1.2s ease-in-out infinite}
+@keyframes mhsBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.06)}28%{transform:scale(1)}}
+.mhs-vitals-count .lbl{display:block;margin-top:6px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mhs-muted)}
+.mhs-vitals-count .bpm{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:.72rem;font-weight:600;color:#0bb37e}
+.mhs-vitals-channels{flex:1 1 100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:6px}
+.mhs-vch{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;text-decoration:none;
+    background:#fff;border:1px solid var(--mhs-border-strong);transition:background .15s,transform .15s,border-color .15s,box-shadow .15s}
+.mhs-vch:hover{background:var(--mhs-primary-soft);border-color:var(--mhs-primary);transform:translateY(-2px);box-shadow:0 10px 20px -12px rgba(13,110,168,.5)}
+.mhs-vch-dot{width:10px;height:10px;border-radius:50%;background:#0bb37e;box-shadow:0 0 0 4px rgba(11,179,126,.14);flex:0 0 auto}
+.mhs-vch-name{flex:1;color:var(--mhs-text);font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mhs-vch-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;color:#0d6ea8}
+.mhs-vitals-empty{padding:30px 22px;color:var(--mhs-muted);position:relative;z-index:2}

@@ -135,34 +135,6 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
-<script>
-(function () {
-    // Aguarda o DataTable estar pronto
-    function waitForDT(cb) {
-        var t = setInterval(function () {
-            if ($.fn.DataTable && $('#historicoTable').length && $.fn.DataTable.isDataTable('#historicoTable')) {
-                clearInterval(t);
-                cb($('#historicoTable').DataTable());
-            }
-        }, 100);
-    }
-    waitForDT(function (dt) {
-        document.querySelectorAll('[data-hist-sec]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('[data-hist-sec]').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                var sec = this.dataset.histSec;
-                if (sec === '__todos') {
-                    dt.column(3).search('').draw();
-                } else {
-                    // Pesquisa pelo texto da secção visível na coluna 3
-                    var label = this.textContent.trim().replace(/\d+$/, '').trim();
-                    dt.column(3).search(label, false, false).draw();
-                }
-            });
-        });
-    });
-})();
-</script>
+<!-- JS (filtro por secção na DataTable) movido para private/assets/js/1220673.js -->
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

@@ -867,3 +867,396 @@ document.addEventListener('submit', function (e) {
         check(form.action || window.location.href, function () { form.submit(); });
     }, true);
 })();
+
+// ============================================================
+// DASHBOARD — gráficos (movido de home.php; dados via window.MHS_DASH)
+// ============================================================
+(function () {
+    if (!window.MHS_DASH || typeof Chart === 'undefined') return;
+
+    /* ── Palette ─────────────────────────────────────────────── */
+    const P = ['#3b82f6','#8b5cf6','#10b981','#f59e0b',
+               '#ef4444','#06b6d4','#ec4899','#84cc16',
+               '#f97316','#6366f1','#14b8a6','#a855f7'];
+
+    /* ── Dados do PHP (via bootstrap inline) ─────────────────── */
+    const chartData = window.MHS_DASH.chartData;
+    const chartIds  = window.MHS_DASH.chartIds;
+    const _BASE     = window.MHS_DASH.base;
+
+    /* ── URLs de destino ao clicar num segmento ─────────────── */
+    const _EQ  = _BASE + '/private/views/equipamentos/lista.php';
+    const _DOC = _BASE + '/private/views/documentos/lista.php';
+    const _FOR = _BASE + '/private/views/fornecedores/lista.php';
+    const _GAR = _BASE + '/private/views/garantias-contrato/lista.php';
+    const chartLinkFns = {
+        cEstados:      (idx, label) => _EQ + '?estado='         + encodeURIComponent(label),
+        cCategorias:   (idx)        => _EQ + '?id_categoria='   + (chartIds.cCategorias[idx]   || ''),
+        cLocalizacoes: (idx, label) => _EQ + '?edificio=' + encodeURIComponent(label),
+        cDocumentos:   (idx, label) => _EQ + '?servico=' + encodeURIComponent(label),
+        cFornecedores: (idx, label) => _EQ + '?fabricante=' + encodeURIComponent(label),
+        cGarantias:    (idx, label) => _GAR + '?vence=' + encodeURIComponent(label),
+    };
+
+    /* ── Chart instance registry ─────────────────────────────── */
+    const instances = {};
+
+    /* ── Build / rebuild a chart ─────────────────────────────── */
+    function buildChart(canvasId, type) {
+        const el = document.getElementById(canvasId);
+        if (!el) return;
+        const d = chartData[canvasId];
+        if (!d) return;
+
+        if (instances[canvasId]) instances[canvasId].destroy();
+
+        const isHBar    = type === 'bar-h';
+        const chartType = isHBar ? 'bar' : type;
+        const circular  = ['pie','doughnut','polarArea'].includes(chartType);
+        const isLine    = chartType === 'line';
+
+        const ctx = el.getContext('2d');
+        /* Background colors */
+        let bg, border;
+        if (circular) {
+            bg     = P.slice(0, d.values.length);
+            border = '#fff';
+        } else if (isLine) {
+            const grad = ctx.createLinearGradient(0, 0, 0, 280);
+            grad.addColorStop(0, P[0] + '45');
+            grad.addColorStop(1, P[0] + '00');
+            bg     = grad;
+            border = P[0];
+        } else {
+            /* barras com gradiente (cor sólida → translúcida) */
+            bg = d.values.map((_, i) => {
+                const c = P[i % P.length];
+                const g = isHBar ? ctx.createLinearGradient(0, 0, 480, 0)
+                                 : ctx.createLinearGradient(0, 0, 0, 280);
+                g.addColorStop(0, c + 'FF');
+                g.addColorStop(1, c + '82');
+                return g;
+            });
+            border = 'transparent';
+        }
+
+        const dataset = {
+            label: 'Total',
+            data:  d.values,
+            backgroundColor:   bg,
+            borderColor:       border,
+            borderWidth:       circular ? 3 : isLine ? 3 : 0,
+            borderRadius:      circular ? 12 : isLine ? 0 : 9,
+            borderSkipped:     false,
+            spacing:           circular ? 2 : 0,
+            hoverOffset:       circular ? 12 : 0,
+            barPercentage:     0.6,
+            categoryPercentage: 0.7,
+            fill:              isLine,
+            tension:           isLine ? 0.45 : 0,
+            pointBackgroundColor: isLine ? '#fff' : undefined,
+            pointBorderColor:     isLine ? P[0]  : undefined,
+            pointBorderWidth:     isLine ? 3 : undefined,
+            pointRadius:          isLine ? 5 : undefined,
+            pointHoverRadius:     isLine ? 8.5 : undefined,
+        };
+
+        /* Plugin: total no centro do donut */
+        const centerTextPlugin = {
+            id: 'centerText',
+            afterDraw(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                const arr = chart.data.datasets[0].data;
+                const total = arr.reduce((a, b) => a + (Number(b) || 0), 0);
+                const meta = chart.getDatasetMeta(0);
+                const arc = meta.data[0];
+                if (!arc) return;
+                const c = chart.ctx;
+                c.save();
+                c.textAlign = 'center'; c.textBaseline = 'middle';
+                c.fillStyle = '#0d6ea8';
+                c.font = '800 32px Sora, sans-serif';
+                c.fillText(total, arc.x, arc.y - 6);
+                c.fillStyle = '#94a3b8';
+                c.font = '700 10px Inter, sans-serif';
+                c.fillText('TOTAL', arc.x, arc.y + 17);
+                c.restore();
+            }
+        };
+        /* Plugin: valor no topo/fim de cada barra */
+        const barValuePlugin = {
+            id: 'barValues',
+            afterDatasetsDraw(chart) {
+                if (chart.config.type !== 'bar') return;
+                const horiz = chart.options.indexAxis === 'y';
+                const c = chart.ctx;
+                const meta = chart.getDatasetMeta(0);
+                const data = chart.data.datasets[0].data;
+                c.save();
+                c.fillStyle = '#475569';
+                c.font = '800 11.5px Inter, sans-serif';
+                meta.data.forEach((bar, i) => {
+                    const v = data[i];
+                    if (!v) return;
+                    if (horiz) { c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(v, bar.x + 8, bar.y); }
+                    else       { c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(v, bar.x, bar.y - 6); }
+                });
+                c.restore();
+            }
+        };
+
+        const tooltipDefs = {
+            backgroundColor: '#0f172a',
+            titleColor:      '#fff',
+            bodyColor:       'rgba(255,255,255,.72)',
+            padding:         13,
+            cornerRadius:    11,
+            titleFont: { weight: '700', size: 12.5, family: 'Inter' },
+            bodyFont:  { size: 12, family: 'Inter' },
+            usePointStyle:  true,
+            boxWidth:  9,
+            boxHeight: 9,
+        };
+
+        const scaleBase = {
+            grid:   { color: 'rgba(148,163,184,.1)', drawBorder: false },
+            border: { display: false },
+            ticks:  { font: { size: 11, family: 'Inter' }, color: '#94a3b8', padding: 6 },
+            beginAtZero: true,
+        };
+
+        instances[canvasId] = new Chart(el, {
+            type: chartType,
+            data: { labels: d.labels, datasets: [dataset] },
+            plugins: [centerTextPlugin, barValuePlugin],
+            options: {
+                indexAxis: isHBar ? 'y' : 'x',
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: chartType === 'doughnut' ? '70%' : undefined,
+                layout: { padding: { right: isHBar ? 32 : 0, top: (!circular && !isHBar) ? 18 : 0 } },
+                animation: { duration: 700, easing: 'easeOutQuart' },
+                onClick: chartLinkFns[canvasId] ? function (evt, elements) {
+                    if (!elements.length) return;
+                    const fn = chartLinkFns[canvasId];
+                    const idx = elements[0].index;
+                    const label = d.labels[idx];
+                    window.location.href = fn(idx, label);
+                } : undefined,
+                onHover: chartLinkFns[canvasId] ? function (evt, elements) {
+                    evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                } : undefined,
+                plugins: {
+                    legend: {
+                        display: circular,
+                        position: 'bottom',
+                        labels: {
+                            padding: 18,
+                            font: { size: 11.5, weight: '600', family: 'Inter' },
+                            usePointStyle: true,
+                            pointStyleWidth: 9,
+                            color: '#334155',
+                        }
+                    },
+                    tooltip: tooltipDefs,
+                },
+                scales: circular ? {} : {
+                    x: { ...scaleBase, grid: { ...scaleBase.grid, display: isHBar }, ticks: { ...scaleBase.ticks, ...(isHBar ? { stepSize: 1, precision: 0 } : {}) } },
+                    y: { ...scaleBase, grid: { ...scaleBase.grid, display: !isHBar }, ticks: { ...scaleBase.ticks, stepSize: 1, precision: 0 } },
+                },
+            }
+        });
+
+        /* Remove shimmer */
+        const body = document.getElementById('body-' + canvasId);
+        if (body) body.classList.remove('loading');
+    }
+
+    /* ── Animate stat counters ───────────────────────────────── */
+    function animateCounter(el) {
+        const target   = parseInt(el.dataset.count, 10) || 0;
+        const duration = 1100;
+        const fps      = 60;
+        const steps    = Math.ceil(duration / (1000 / fps));
+        let current    = 0;
+        let frame      = 0;
+        const timer = setInterval(() => {
+            frame++;
+            const progress = frame / steps;
+            /* ease-out-quart */
+            const ease = 1 - Math.pow(1 - progress, 4);
+            current = Math.round(target * ease);
+            el.textContent = current.toLocaleString('pt-PT');
+            if (frame >= steps) { el.textContent = target.toLocaleString('pt-PT'); clearInterval(timer); }
+        }, 1000 / fps);
+    }
+    document.querySelectorAll('.dash-stat-num').forEach(animateCounter);
+
+    /* ── Toggle buttons ─────────────────────────────────────── */
+    document.querySelectorAll('.dash-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const group = this.closest('.dash-toggle');
+            group.querySelectorAll('.dash-toggle-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            buildChart(this.dataset.canvas, this.dataset.type);
+        });
+    });
+
+    /* ── Intersection observer → fade panels in ─────────────── */
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('in');
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.06 });
+
+    const panels = document.querySelectorAll('.dash-panel');
+    panels.forEach(p => observer.observe(p));
+
+    /* ── Initial render after first intersection ─────────────── */
+    const panelChartMap = {
+        'body-cEstados':      ['cEstados',      'pie'],
+        'body-cCategorias':   ['cCategorias',   'bar-h'],
+        'body-cLocalizacoes': ['cLocalizacoes', 'doughnut'],
+        'body-cDocumentos':   ['cDocumentos',   'doughnut'],
+        'body-cFornecedores': ['cFornecedores', 'bar-h'],
+        'body-cGarantias':    ['cGarantias',    'line'],
+    };
+
+    const renderObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting && e.target.classList.contains('loading')) {
+                const key = e.target.id;
+                if (panelChartMap[key]) buildChart(...panelChartMap[key]);
+                renderObserver.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.05 });
+
+    Object.keys(panelChartMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) renderObserver.observe(el);
+    });
+
+    /* Kick above-the-fold immediately */
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.dash-panel').forEach(p => {
+            if (p.getBoundingClientRect().top < window.innerHeight + 100) {
+                p.classList.add('in');
+            }
+        });
+        Object.keys(panelChartMap).forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top < window.innerHeight + 100) {
+                buildChart(...panelChartMap[id]);
+            }
+        });
+    });
+})();
+
+// ============================================================
+// EQUIPAMENTOS — Novo: modo pai/filho dos documentos + limpar ficheiro
+// (movido de equipamentos/novo.php — só corre na página de novo equipamento)
+// ============================================================
+(function () {
+    if (!document.getElementById('btn-add-doc-extra-wrap')) return;
+    var codInput  = document.getElementById('codigo_inventario');
+    var selPai    = document.getElementById('select_eq_pai');
+    var extraRows = Array.from(document.querySelectorAll('.doc-row-extra'));
+    var addWrap   = document.getElementById('btn-add-doc-extra-wrap');
+    var addBtn    = document.getElementById('btn-add-doc-extra');
+    var nextReveal = 0;
+
+    function isFilho() {
+        var cod = codInput ? codInput.value.trim() : '';
+        var pai = selPai  ? selPai.value           : '';
+        return /^\d{2}\.\d{3}\.\d{2}$/.test(cod) || pai !== '';
+    }
+
+    function applyMode() {
+        var filho = isFilho();
+        if (!filho) {
+            // Modo pai: mostrar todos os extras
+            extraRows.forEach(function (r) { r.style.display = ''; });
+            if (addWrap) addWrap.style.display = 'none';
+            nextReveal = extraRows.length; // tudo revelado
+        } else {
+            // Modo filho: esconder extras, limpar nomes para PHP não os guardar
+            extraRows.forEach(function (r) {
+                r.style.display = 'none';
+                var nomeInp = r.querySelector('input[name^="doc_nomes"]');
+                if (nomeInp) nomeInp.value = '';
+            });
+            nextReveal = 0;
+            if (addWrap) addWrap.style.display = '';
+            if (addBtn)  addBtn.style.display  = '';
+        }
+    }
+
+    if (addBtn) {
+        addBtn.addEventListener('click', function () {
+            if (nextReveal < extraRows.length) {
+                extraRows[nextReveal].style.display = '';
+                nextReveal++;
+                if (nextReveal >= extraRows.length) addBtn.style.display = 'none';
+            }
+        });
+    }
+
+    if (codInput) codInput.addEventListener('input', applyMode);
+    if (selPai)   selPai.addEventListener('change', applyMode);
+
+    applyMode(); // estado inicial
+
+    // Botão × para limpar ficheiro selecionado
+    function attachFileClear(inp, clrBtn) {
+        inp.addEventListener('change', function () {
+            clrBtn.style.display = this.files.length ? '' : 'none';
+        });
+        clrBtn.addEventListener('click', function () {
+            var fresh = inp.cloneNode(false);
+            inp.parentNode.replaceChild(fresh, inp);
+            inp = fresh;
+            clrBtn.style.display = 'none';
+            attachFileClear(inp, clrBtn);
+        });
+    }
+    document.querySelectorAll('.mhs-file-inp').forEach(function (inp) {
+        var clrBtn = inp.nextElementSibling;
+        if (clrBtn && clrBtn.classList.contains('mhs-file-clr')) attachFileClear(inp, clrBtn);
+    });
+})();
+
+// ============================================================
+// HISTÓRICO — filtro por secção na DataTable
+// (movido de historico/lista.php — só corre na página do histórico)
+// ============================================================
+(function () {
+    if (!document.getElementById('historicoTable')) return;
+    function waitForDT(cb) {
+        var t = setInterval(function () {
+            if ($.fn.DataTable && $('#historicoTable').length && $.fn.DataTable.isDataTable('#historicoTable')) {
+                clearInterval(t);
+                cb($('#historicoTable').DataTable());
+            }
+        }, 100);
+    }
+    waitForDT(function (dt) {
+        document.querySelectorAll('[data-hist-sec]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('[data-hist-sec]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                var sec = this.dataset.histSec;
+                if (sec === '__todos') {
+                    dt.column(3).search('').draw();
+                } else {
+                    // Pesquisa pelo texto da secção visível na coluna 3
+                    var label = this.textContent.trim().replace(/\d+$/, '').trim();
+                    dt.column(3).search(label, false, false).draw();
+                }
+            });
+        });
+    });
+})();

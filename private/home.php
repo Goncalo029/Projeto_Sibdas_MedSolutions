@@ -141,9 +141,9 @@ if ($_dash_profile === 'admin') {
 $suporte_vida_servico = [];
 $r = $mysqli->query("SELECT COALESCE(l.servico,'Sem localização') AS servico, COUNT(e.id) AS total
     FROM equipamentos e
-    JOIN categorias c ON c.id = e.id_categoria
+    LEFT JOIN categorias c ON c.id = e.id_categoria
     LEFT JOIN localizacoes l ON l.id = e.id_localizacao
-    WHERE c.nome LIKE 'Suporte%' AND e.eliminado_em IS NULL
+    WHERE (e.criticidade LIKE 'Suporte%' OR c.nome LIKE 'Suporte%') AND e.eliminado_em IS NULL
     GROUP BY l.servico ORDER BY total DESC");
 if ($r) while ($row = $r->fetch_assoc()) $suporte_vida_servico[] = $row;
 $sv_total = array_sum(array_map(fn($x) => (int)$x['total'], $suporte_vida_servico));
@@ -152,37 +152,7 @@ $page_title = 'Dashboard';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-/* ── Dashboard moderna (paleta do site: azul #0d6ea8 + teal #0bb37e) ── */
-.dash-hero{background:linear-gradient(135deg,#0a5580 0%,#0d6ea8 48%,#0bb37e 100%);
-    box-shadow:0 22px 60px -30px rgba(13,110,168,.6)}
-.dash-hero::after{background:radial-gradient(circle,rgba(11,179,126,.30),transparent 70%);filter:blur(8px)}
-
-.dash-panel{background:linear-gradient(180deg,#ffffff 0%,#f4faff 100%);
-    border:1px solid var(--mhs-border-strong);border-radius:20px;
-    box-shadow:0 14px 36px -22px rgba(13,110,168,.28)}
-.dash-panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    background:linear-gradient(90deg,#0d6ea8,#0bb37e,#6366f1,#0d6ea8);
-    background-size:300% 100%;animation:mhsHue 9s linear infinite;opacity:.9}
-@keyframes mhsHue{to{background-position:300% 0}}
-.dash-panel.in:hover{transform:translateY(-4px);
-    box-shadow:0 26px 50px -24px rgba(13,110,168,.34);transition:transform .25s ease,box-shadow .25s ease}
-.dash-panel-head{background:linear-gradient(180deg,rgba(223,240,248,.55),transparent);
-    border-bottom:1px solid rgba(148,163,184,.12)}
-.dash-panel-title{font-size:.95rem;letter-spacing:-.01em}
-.dash-panel-title i{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
-    color:#fff;background:linear-gradient(135deg,#0d6ea8,#0bb37e);box-shadow:0 6px 14px -6px rgba(13,110,168,.7);font-size:.85rem}
-.dash-toggle{background:rgba(13,110,168,.08);border-radius:12px;padding:4px}
-.dash-toggle-btn{border-radius:9px}
-.dash-toggle-btn.active{background:#fff;color:var(--mhs-primary);box-shadow:0 3px 10px -2px rgba(13,110,168,.3)}
-
-/* KPI cards com brilho subtil no hover */
-a.dash-stat::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;pointer-events:none;
-    background:radial-gradient(120% 80% at 50% 0%,rgba(255,255,255,.16),transparent 70%)}
-a.dash-stat:hover::after{opacity:1}
-a.dash-stat:hover{transform:translateY(-3px)}
-.dash-stat-num{text-shadow:0 2px 18px rgba(255,255,255,.18)}
-</style>
+<!-- estilos da dashboard movidos para private/assets/css/1220673.css -->
 
 <!-- ════════════════════════════════════════════════════════════
      HERO
@@ -358,40 +328,10 @@ a.dash-stat:hover{transform:translateY(-3px)}
 <!-- ════════════════════════════════════════════════════════════
      ROW 5 — Suporte de vida por serviço
 ════════════════════════════════════════════════════════════ -->
-<style>
-.mhs-vitals{position:relative;border:1px solid var(--mhs-border-strong);border-radius:20px;overflow:hidden;margin-bottom:1.5rem;
-    background:linear-gradient(135deg,#ffffff 0%,#f1faf6 55%,#eaf3fb 100%);
-    box-shadow:0 16px 40px -22px rgba(13,110,168,.35)}
-.mhs-vitals::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.55;
-    background-image:linear-gradient(rgba(13,110,168,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(13,110,168,.05) 1px,transparent 1px);
-    background-size:26px 26px}
-.mhs-vitals-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;position:relative;z-index:2}
-.mhs-vitals-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.02em;color:var(--mhs-text);text-transform:uppercase}
-.mhs-vitals-title i{color:#0bb37e;margin-right:9px}
-.mhs-vitals-body{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;padding:0 22px 22px;position:relative;z-index:2}
-.mhs-vitals-ecg{flex:1 1 340px;min-height:170px;position:relative;display:flex;align-items:center}
-.mhs-vitals-ecg svg{position:absolute;inset:0;width:100%;height:100%}
-.mhs-ecg-line{fill:none;stroke:#0bb37e;stroke-width:2.6;filter:drop-shadow(0 0 4px rgba(11,179,126,.45));
-    animation:mhsEcgScroll 3.6s linear infinite}
-@keyframes mhsEcgScroll{from{transform:translateX(0)}to{transform:translateX(-600px)}}
-.mhs-vitals-count{position:relative;z-index:3;margin-left:auto;text-align:right;padding-right:4px;align-self:center}
-.mhs-vitals-count .num{display:block;font-family:'Sora',sans-serif;font-weight:800;font-size:4.6rem;line-height:.9;
-    color:#0d6ea8;animation:mhsBeat 1.2s ease-in-out infinite}
-@keyframes mhsBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.06)}28%{transform:scale(1)}}
-.mhs-vitals-count .lbl{display:block;margin-top:6px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mhs-muted)}
-.mhs-vitals-count .bpm{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:.72rem;font-weight:600;color:#0bb37e}
-.mhs-vitals-channels{flex:1 1 100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:6px}
-.mhs-vch{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;text-decoration:none;
-    background:#fff;border:1px solid var(--mhs-border-strong);transition:background .15s,transform .15s,border-color .15s,box-shadow .15s}
-.mhs-vch:hover{background:var(--mhs-primary-soft);border-color:var(--mhs-primary);transform:translateY(-2px);box-shadow:0 10px 20px -12px rgba(13,110,168,.5)}
-.mhs-vch-dot{width:10px;height:10px;border-radius:50%;background:#0bb37e;box-shadow:0 0 0 4px rgba(11,179,126,.14);flex:0 0 auto}
-.mhs-vch-name{flex:1;color:var(--mhs-text);font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mhs-vch-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;color:#0d6ea8}
-.mhs-vitals-empty{padding:30px 22px;color:var(--mhs-muted);position:relative;z-index:2}
-</style>
+<!-- estilos do monitor de suporte de vida movidos para private/assets/css/1220673.css -->
 <div class="dash-panel mhs-vitals dash-gap" style="transition-delay:.35s">
     <div class="mhs-vitals-head">
-        <span class="mhs-vitals-title"><i class="fas fa-heart-pulse"></i> Monitor de Suporte de Vida</span>
+        <span class="mhs-vitals-title"><i class="fas fa-heart-pulse"></i> Equipamentos de Suporte de Vida</span>
     </div>
     <?php if (empty($suporte_vida_servico)): ?>
     <div class="mhs-vitals-empty"><i class="fa-solid fa-heart-pulse me-2"></i>Sem equipamentos de suporte de vida registados.</div>
@@ -422,299 +362,22 @@ a.dash-stat:hover{transform:translateY(-3px)}
 </div>
 
 <script>
-(function () {
-    /* ── Palette ─────────────────────────────────────────────── */
-    const P = ['#3b82f6','#8b5cf6','#10b981','#f59e0b',
-               '#ef4444','#06b6d4','#ec4899','#84cc16',
-               '#f97316','#6366f1','#14b8a6','#a855f7'];
-
-    /* ── Data from PHP ───────────────────────────────────────── */
-    const chartData = {
+/* Dados da dashboard para o motor de gráficos (private/assets/js/1220673.js) */
+window.MHS_DASH = {
+    chartData: {
         cEstados:      { labels: <?= json_encode(array_column($equipamentos_estado,   'estado')) ?>, values: <?= json_encode(array_map('intval', array_column($equipamentos_estado,   'total'))) ?> },
         cCategorias:   { labels: <?= json_encode(array_column($equipamentos_categoria,'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($equipamentos_categoria,'total'))) ?> },
         cLocalizacoes: { labels: <?= json_encode(array_column($localizacoes_uso,      'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($localizacoes_uso,      'total'))) ?> },
         cDocumentos:   { labels: <?= json_encode(array_column($equipamentos_servico,   'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($equipamentos_servico,   'total'))) ?> },
         cFornecedores: { labels: <?= json_encode(array_column($fornecedores_uso,      'nome'))   ?>, values: <?= json_encode(array_map('intval', array_column($fornecedores_uso,      'total'))) ?> },
         cGarantias:    { labels: <?= json_encode(array_column($garantias_vencimento,  'mes'))    ?>, values: <?= json_encode(array_map('intval', array_column($garantias_vencimento,  'total'))) ?> }
-    };
-
-    /* ── IDs para navegação nos gráficos ────────────────────── */
-    const chartIds = {
+    },
+    chartIds: {
         cCategorias:   <?= json_encode(array_values(array_column($equipamentos_categoria, 'id'))) ?>,
-        cLocalizacoes: <?= json_encode(array_values(array_column($localizacoes_uso,       'id'))) ?>,
-    };
-
-    /* ── URLs de destino ao clicar num segmento ─────────────── */
-    const _EQ  = '<?= BASE_URL ?>/private/views/equipamentos/lista.php';
-    const _DOC = '<?= BASE_URL ?>/private/views/documentos/lista.php';
-    const _FOR = '<?= BASE_URL ?>/private/views/fornecedores/lista.php';
-    const _GAR = '<?= BASE_URL ?>/private/views/garantias-contrato/lista.php';
-    const chartLinkFns = {
-        cEstados:      (idx, label) => _EQ + '?estado='         + encodeURIComponent(label),
-        cCategorias:   (idx)        => _EQ + '?id_categoria='   + (chartIds.cCategorias[idx]   || ''),
-        cLocalizacoes: (idx, label) => _EQ + '?edificio=' + encodeURIComponent(label),
-        cDocumentos:   (idx, label) => _EQ + '?servico=' + encodeURIComponent(label),
-        cFornecedores: (idx, label) => _EQ + '?fabricante=' + encodeURIComponent(label),
-        cGarantias:    (idx, label) => _GAR + '?vence=' + encodeURIComponent(label),
-    };
-
-    /* ── Chart instance registry ─────────────────────────────── */
-    const instances = {};
-
-    /* ── Build / rebuild a chart ─────────────────────────────── */
-    function buildChart(canvasId, type) {
-        const el = document.getElementById(canvasId);
-        if (!el) return;
-        const d = chartData[canvasId];
-        if (!d) return;
-
-        if (instances[canvasId]) instances[canvasId].destroy();
-
-        const isHBar    = type === 'bar-h';
-        const chartType = isHBar ? 'bar' : type;
-        const circular  = ['pie','doughnut','polarArea'].includes(chartType);
-        const isLine    = chartType === 'line';
-
-        const ctx = el.getContext('2d');
-        /* Background colors */
-        let bg, border;
-        if (circular) {
-            bg     = P.slice(0, d.values.length);
-            border = '#fff';
-        } else if (isLine) {
-            const grad = ctx.createLinearGradient(0, 0, 0, 280);
-            grad.addColorStop(0, P[0] + '45');
-            grad.addColorStop(1, P[0] + '00');
-            bg     = grad;
-            border = P[0];
-        } else {
-            /* barras com gradiente (cor sólida → translúcida) */
-            bg = d.values.map((_, i) => {
-                const c = P[i % P.length];
-                const g = isHBar ? ctx.createLinearGradient(0, 0, 480, 0)
-                                 : ctx.createLinearGradient(0, 0, 0, 280);
-                g.addColorStop(0, c + 'FF');
-                g.addColorStop(1, c + '82');
-                return g;
-            });
-            border = 'transparent';
-        }
-
-        const dataset = {
-            label: 'Total',
-            data:  d.values,
-            backgroundColor:   bg,
-            borderColor:       border,
-            borderWidth:       circular ? 3 : isLine ? 3 : 0,
-            borderRadius:      circular ? 12 : isLine ? 0 : 9,
-            borderSkipped:     false,
-            spacing:           circular ? 2 : 0,
-            hoverOffset:       circular ? 12 : 0,
-            barPercentage:     0.6,
-            categoryPercentage: 0.7,
-            fill:              isLine,
-            tension:           isLine ? 0.45 : 0,
-            pointBackgroundColor: isLine ? '#fff' : undefined,
-            pointBorderColor:     isLine ? P[0]  : undefined,
-            pointBorderWidth:     isLine ? 3 : undefined,
-            pointRadius:          isLine ? 5 : undefined,
-            pointHoverRadius:     isLine ? 8.5 : undefined,
-        };
-
-        /* Plugin: total no centro do donut */
-        const centerTextPlugin = {
-            id: 'centerText',
-            afterDraw(chart) {
-                if (chart.config.type !== 'doughnut') return;
-                const arr = chart.data.datasets[0].data;
-                const total = arr.reduce((a, b) => a + (Number(b) || 0), 0);
-                const meta = chart.getDatasetMeta(0);
-                const arc = meta.data[0];
-                if (!arc) return;
-                const c = chart.ctx;
-                c.save();
-                c.textAlign = 'center'; c.textBaseline = 'middle';
-                c.fillStyle = '#0d6ea8';
-                c.font = '800 32px Sora, sans-serif';
-                c.fillText(total, arc.x, arc.y - 6);
-                c.fillStyle = '#94a3b8';
-                c.font = '700 10px Inter, sans-serif';
-                c.fillText('TOTAL', arc.x, arc.y + 17);
-                c.restore();
-            }
-        };
-        /* Plugin: valor no topo/fim de cada barra */
-        const barValuePlugin = {
-            id: 'barValues',
-            afterDatasetsDraw(chart) {
-                if (chart.config.type !== 'bar') return;
-                const horiz = chart.options.indexAxis === 'y';
-                const c = chart.ctx;
-                const meta = chart.getDatasetMeta(0);
-                const data = chart.data.datasets[0].data;
-                c.save();
-                c.fillStyle = '#475569';
-                c.font = '800 11.5px Inter, sans-serif';
-                meta.data.forEach((bar, i) => {
-                    const v = data[i];
-                    if (!v) return;
-                    if (horiz) { c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(v, bar.x + 8, bar.y); }
-                    else       { c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(v, bar.x, bar.y - 6); }
-                });
-                c.restore();
-            }
-        };
-
-        const tooltipDefs = {
-            backgroundColor: '#0f172a',
-            titleColor:      '#fff',
-            bodyColor:       'rgba(255,255,255,.72)',
-            padding:         13,
-            cornerRadius:    11,
-            titleFont: { weight: '700', size: 12.5, family: 'Inter' },
-            bodyFont:  { size: 12, family: 'Inter' },
-            usePointStyle:  true,
-            boxWidth:  9,
-            boxHeight: 9,
-        };
-
-        const scaleBase = {
-            grid:   { color: 'rgba(148,163,184,.1)', drawBorder: false },
-            border: { display: false },
-            ticks:  { font: { size: 11, family: 'Inter' }, color: '#94a3b8', padding: 6 },
-            beginAtZero: true,
-        };
-
-        instances[canvasId] = new Chart(el, {
-            type: chartType,
-            data: { labels: d.labels, datasets: [dataset] },
-            plugins: [centerTextPlugin, barValuePlugin],
-            options: {
-                indexAxis: isHBar ? 'y' : 'x',
-                responsive: true,
-                maintainAspectRatio: true,
-                cutout: chartType === 'doughnut' ? '70%' : undefined,
-                layout: { padding: { right: isHBar ? 32 : 0, top: (!circular && !isHBar) ? 18 : 0 } },
-                animation: { duration: 700, easing: 'easeOutQuart' },
-                onClick: chartLinkFns[canvasId] ? function (evt, elements) {
-                    if (!elements.length) return;
-                    const fn = chartLinkFns[canvasId];
-                    const idx = elements[0].index;
-                    const label = d.labels[idx];
-                    window.location.href = fn(idx, label);
-                } : undefined,
-                onHover: chartLinkFns[canvasId] ? function (evt, elements) {
-                    evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
-                } : undefined,
-                plugins: {
-                    legend: {
-                        display: circular,
-                        position: 'bottom',
-                        labels: {
-                            padding: 18,
-                            font: { size: 11.5, weight: '600', family: 'Inter' },
-                            usePointStyle: true,
-                            pointStyleWidth: 9,
-                            color: '#334155',
-                        }
-                    },
-                    tooltip: tooltipDefs,
-                },
-                scales: circular ? {} : {
-                    x: { ...scaleBase, grid: { ...scaleBase.grid, display: isHBar }, ticks: { ...scaleBase.ticks, ...(isHBar ? { stepSize: 1, precision: 0 } : {}) } },
-                    y: { ...scaleBase, grid: { ...scaleBase.grid, display: !isHBar }, ticks: { ...scaleBase.ticks, stepSize: 1, precision: 0 } },
-                },
-            }
-        });
-
-        /* Remove shimmer */
-        const body = document.getElementById('body-' + canvasId);
-        if (body) body.classList.remove('loading');
-    }
-
-    /* ── Animate stat counters ───────────────────────────────── */
-    function animateCounter(el) {
-        const target   = parseInt(el.dataset.count, 10) || 0;
-        const duration = 1100;
-        const fps      = 60;
-        const steps    = Math.ceil(duration / (1000 / fps));
-        let current    = 0;
-        let frame      = 0;
-        const timer = setInterval(() => {
-            frame++;
-            const progress = frame / steps;
-            /* ease-out-quart */
-            const ease = 1 - Math.pow(1 - progress, 4);
-            current = Math.round(target * ease);
-            el.textContent = current.toLocaleString('pt-PT');
-            if (frame >= steps) { el.textContent = target.toLocaleString('pt-PT'); clearInterval(timer); }
-        }, 1000 / fps);
-    }
-    document.querySelectorAll('.dash-stat-num').forEach(animateCounter);
-
-    /* ── Toggle buttons ─────────────────────────────────────── */
-    document.querySelectorAll('.dash-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const group = this.closest('.dash-toggle');
-            group.querySelectorAll('.dash-toggle-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            buildChart(this.dataset.canvas, this.dataset.type);
-        });
-    });
-
-    /* ── Intersection observer → fade panels in ─────────────── */
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                e.target.classList.add('in');
-                observer.unobserve(e.target);
-            }
-        });
-    }, { threshold: 0.06 });
-
-    const panels = document.querySelectorAll('.dash-panel');
-    panels.forEach(p => observer.observe(p));
-
-    /* ── Initial render after first intersection ─────────────── */
-    const panelChartMap = {
-        'body-cEstados':      ['cEstados',      'pie'],
-        'body-cCategorias':   ['cCategorias',   'bar-h'],
-        'body-cLocalizacoes': ['cLocalizacoes', 'doughnut'],
-        'body-cDocumentos':   ['cDocumentos',   'doughnut'],
-        'body-cFornecedores': ['cFornecedores', 'bar-h'],
-        'body-cGarantias':    ['cGarantias',    'line'],
-    };
-
-    const renderObserver = new IntersectionObserver(entries => {
-        entries.forEach(e => {
-            if (e.isIntersecting && e.target.classList.contains('loading')) {
-                const key = e.target.id;
-                if (panelChartMap[key]) buildChart(...panelChartMap[key]);
-                renderObserver.unobserve(e.target);
-            }
-        });
-    }, { threshold: 0.05 });
-
-    Object.keys(panelChartMap).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) renderObserver.observe(el);
-    });
-
-    /* Kick above-the-fold immediately */
-    requestAnimationFrame(() => {
-        document.querySelectorAll('.dash-panel').forEach(p => {
-            if (p.getBoundingClientRect().top < window.innerHeight + 100) {
-                p.classList.add('in');
-            }
-        });
-        Object.keys(panelChartMap).forEach(id => {
-            const el = document.getElementById(id);
-            if (el && el.getBoundingClientRect().top < window.innerHeight + 100) {
-                buildChart(...panelChartMap[id]);
-            }
-        });
-    });
-})();
+        cLocalizacoes: <?= json_encode(array_values(array_column($localizacoes_uso,       'id'))) ?>
+    },
+    base: '<?= BASE_URL ?>'
+};
 </script>
 
 <?php $mysqli->close(); include __DIR__ . '/includes/footer.php'; ?>
