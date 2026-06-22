@@ -153,28 +153,28 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <style>
-/* ── Dashboard moderna ───────────────────────────────────────── */
-.dash-hero{background:linear-gradient(135deg,#0b1220 0%,#1e3a8a 42%,#0ea5e9 100%);
-    box-shadow:0 22px 60px -28px rgba(14,165,233,.55)}
-.dash-hero::after{background:radial-gradient(circle,rgba(14,165,233,.30),transparent 70%);filter:blur(8px)}
+/* ── Dashboard moderna (paleta do site: azul #0d6ea8 + teal #0bb37e) ── */
+.dash-hero{background:linear-gradient(135deg,#0a5580 0%,#0d6ea8 48%,#0bb37e 100%);
+    box-shadow:0 22px 60px -30px rgba(13,110,168,.6)}
+.dash-hero::after{background:radial-gradient(circle,rgba(11,179,126,.30),transparent 70%);filter:blur(8px)}
 
-.dash-panel{background:linear-gradient(180deg,#ffffff 0%,#f7faff 100%);
-    border:1px solid rgba(148,163,184,.16);border-radius:20px;
-    box-shadow:0 14px 36px -20px rgba(15,23,42,.25)}
+.dash-panel{background:linear-gradient(180deg,#ffffff 0%,#f4faff 100%);
+    border:1px solid var(--mhs-border-strong);border-radius:20px;
+    box-shadow:0 14px 36px -22px rgba(13,110,168,.28)}
 .dash-panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    background:linear-gradient(90deg,#3b82f6,#8b5cf6,#06b6d4,#10b981);
+    background:linear-gradient(90deg,#0d6ea8,#0bb37e,#6366f1,#0d6ea8);
     background-size:300% 100%;animation:mhsHue 9s linear infinite;opacity:.9}
 @keyframes mhsHue{to{background-position:300% 0}}
 .dash-panel.in:hover{transform:translateY(-4px);
-    box-shadow:0 26px 50px -22px rgba(59,130,246,.34);transition:transform .25s ease,box-shadow .25s ease}
-.dash-panel-head{background:linear-gradient(180deg,rgba(243,248,255,.7),transparent);
+    box-shadow:0 26px 50px -24px rgba(13,110,168,.34);transition:transform .25s ease,box-shadow .25s ease}
+.dash-panel-head{background:linear-gradient(180deg,rgba(223,240,248,.55),transparent);
     border-bottom:1px solid rgba(148,163,184,.12)}
 .dash-panel-title{font-size:.95rem;letter-spacing:-.01em}
 .dash-panel-title i{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
-    color:#fff;background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 6px 14px -5px rgba(99,102,241,.7);font-size:.85rem}
-.dash-toggle{background:rgba(99,102,241,.09);border-radius:12px;padding:4px}
+    color:#fff;background:linear-gradient(135deg,#0d6ea8,#0bb37e);box-shadow:0 6px 14px -6px rgba(13,110,168,.7);font-size:.85rem}
+.dash-toggle{background:rgba(13,110,168,.08);border-radius:12px;padding:4px}
 .dash-toggle-btn{border-radius:9px}
-.dash-toggle-btn.active{background:#fff;color:#4f46e5;box-shadow:0 3px 10px -2px rgba(79,70,229,.3)}
+.dash-toggle-btn.active{background:#fff;color:var(--mhs-primary);box-shadow:0 3px 10px -2px rgba(13,110,168,.3)}
 
 /* KPI cards com brilho subtil no hover */
 a.dash-stat::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;pointer-events:none;
@@ -359,38 +359,35 @@ a.dash-stat:hover{transform:translateY(-3px)}
      ROW 5 — Suporte de vida por serviço
 ════════════════════════════════════════════════════════════ -->
 <style>
-.mhs-vitals{position:relative;border:none;border-radius:18px;overflow:hidden;margin-bottom:1.5rem;
-    background:radial-gradient(120% 120% at 0% 0%,#073b3a 0%,#04181f 55%,#020c10 100%);
-    box-shadow:0 18px 50px -18px rgba(0,0,0,.65)}
-.mhs-vitals::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;
-    background-image:linear-gradient(rgba(16,245,170,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(16,245,170,.12) 1px,transparent 1px);
+.mhs-vitals{position:relative;border:1px solid var(--mhs-border-strong);border-radius:20px;overflow:hidden;margin-bottom:1.5rem;
+    background:linear-gradient(135deg,#ffffff 0%,#f1faf6 55%,#eaf3fb 100%);
+    box-shadow:0 16px 40px -22px rgba(13,110,168,.35)}
+.mhs-vitals::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:linear-gradient(rgba(13,110,168,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(13,110,168,.05) 1px,transparent 1px);
     background-size:26px 26px}
 .mhs-vitals-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;position:relative;z-index:2}
-.mhs-vitals-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1.02rem;letter-spacing:.04em;color:#eafff7;text-transform:uppercase}
-.mhs-vitals-title i{color:#10f5aa;margin-right:9px}
-.mhs-vitals-live{display:flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;letter-spacing:.15em;color:#9affd9}
-.mhs-vitals-live .dot{width:9px;height:9px;border-radius:50%;background:#10f5aa;box-shadow:0 0 10px #10f5aa;animation:mhsBlink 1.1s infinite}
-@keyframes mhsBlink{0%,100%{opacity:1}50%{opacity:.25}}
+.mhs-vitals-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.02em;color:var(--mhs-text);text-transform:uppercase}
+.mhs-vitals-title i{color:#0bb37e;margin-right:9px}
 .mhs-vitals-body{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;padding:0 22px 22px;position:relative;z-index:2}
 .mhs-vitals-ecg{flex:1 1 340px;min-height:170px;position:relative;display:flex;align-items:center}
 .mhs-vitals-ecg svg{position:absolute;inset:0;width:100%;height:100%}
-.mhs-ecg-line{fill:none;stroke:#10f5aa;stroke-width:2.4;filter:drop-shadow(0 0 6px rgba(16,245,170,.9));
+.mhs-ecg-line{fill:none;stroke:#0bb37e;stroke-width:2.6;filter:drop-shadow(0 0 4px rgba(11,179,126,.45));
     animation:mhsEcgScroll 3.6s linear infinite}
 @keyframes mhsEcgScroll{from{transform:translateX(0)}to{transform:translateX(-600px)}}
 .mhs-vitals-count{position:relative;z-index:3;margin-left:auto;text-align:right;padding-right:4px;align-self:center}
-.mhs-vitals-count .num{display:block;font-family:'Sora',sans-serif;font-weight:800;font-size:4.6rem;line-height:.9;color:#fff;
-    text-shadow:0 0 22px rgba(16,245,170,.55);animation:mhsBeat 1.2s ease-in-out infinite}
-@keyframes mhsBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}}
-.mhs-vitals-count .lbl{display:block;margin-top:4px;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7fe9c8}
-.mhs-vitals-count .bpm{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:.7rem;color:#9affd9}
+.mhs-vitals-count .num{display:block;font-family:'Sora',sans-serif;font-weight:800;font-size:4.6rem;line-height:.9;
+    color:#0d6ea8;animation:mhsBeat 1.2s ease-in-out infinite}
+@keyframes mhsBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.06)}28%{transform:scale(1)}}
+.mhs-vitals-count .lbl{display:block;margin-top:6px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mhs-muted)}
+.mhs-vitals-count .bpm{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:.72rem;font-weight:600;color:#0bb37e}
 .mhs-vitals-channels{flex:1 1 100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:6px}
 .mhs-vch{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;text-decoration:none;
-    background:rgba(255,255,255,.04);border:1px solid rgba(16,245,170,.16);transition:background .15s,transform .15s,border-color .15s}
-.mhs-vch:hover{background:rgba(16,245,170,.1);border-color:rgba(16,245,170,.45);transform:translateY(-2px)}
-.mhs-vch-dot{width:10px;height:10px;border-radius:50%;background:#10f5aa;box-shadow:0 0 9px #10f5aa;flex:0 0 auto}
-.mhs-vch-name{flex:1;color:#dffff4;font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mhs-vch-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;color:#10f5aa}
-.mhs-vitals-empty{padding:30px 22px;color:#7fe9c8;position:relative;z-index:2}
+    background:#fff;border:1px solid var(--mhs-border-strong);transition:background .15s,transform .15s,border-color .15s,box-shadow .15s}
+.mhs-vch:hover{background:var(--mhs-primary-soft);border-color:var(--mhs-primary);transform:translateY(-2px);box-shadow:0 10px 20px -12px rgba(13,110,168,.5)}
+.mhs-vch-dot{width:10px;height:10px;border-radius:50%;background:#0bb37e;box-shadow:0 0 0 4px rgba(11,179,126,.14);flex:0 0 auto}
+.mhs-vch-name{flex:1;color:var(--mhs-text);font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mhs-vch-val{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;color:#0d6ea8}
+.mhs-vitals-empty{padding:30px 22px;color:var(--mhs-muted);position:relative;z-index:2}
 </style>
 <div class="dash-panel mhs-vitals dash-gap" style="transition-delay:.35s">
     <div class="mhs-vitals-head">
@@ -478,20 +475,28 @@ a.dash-stat:hover{transform:translateY(-3px)}
         const circular  = ['pie','doughnut','polarArea'].includes(chartType);
         const isLine    = chartType === 'line';
 
+        const ctx = el.getContext('2d');
         /* Background colors */
         let bg, border;
         if (circular) {
             bg     = P.slice(0, d.values.length);
             border = '#fff';
         } else if (isLine) {
-            const ctx = el.getContext('2d');
             const grad = ctx.createLinearGradient(0, 0, 0, 280);
-            grad.addColorStop(0, P[0] + '38');
+            grad.addColorStop(0, P[0] + '45');
             grad.addColorStop(1, P[0] + '00');
             bg     = grad;
             border = P[0];
         } else {
-            bg     = d.values.map((_, i) => P[i % P.length] + 'D0');
+            /* barras com gradiente (cor sólida → translúcida) */
+            bg = d.values.map((_, i) => {
+                const c = P[i % P.length];
+                const g = isHBar ? ctx.createLinearGradient(0, 0, 480, 0)
+                                 : ctx.createLinearGradient(0, 0, 0, 280);
+                g.addColorStop(0, c + 'FF');
+                g.addColorStop(1, c + '82');
+                return g;
+            });
             border = 'transparent';
         }
 
@@ -500,15 +505,64 @@ a.dash-stat:hover{transform:translateY(-3px)}
             data:  d.values,
             backgroundColor:   bg,
             borderColor:       border,
-            borderWidth:       circular ? 2 : isLine ? 2.5 : 0,
-            borderRadius:      circular || isLine ? 0 : 7,
+            borderWidth:       circular ? 3 : isLine ? 3 : 0,
+            borderRadius:      circular ? 12 : isLine ? 0 : 9,
+            borderSkipped:     false,
+            spacing:           circular ? 2 : 0,
+            hoverOffset:       circular ? 12 : 0,
+            barPercentage:     0.6,
+            categoryPercentage: 0.7,
             fill:              isLine,
             tension:           isLine ? 0.45 : 0,
-            pointBackgroundColor: isLine ? P[0] : undefined,
-            pointBorderColor:     isLine ? '#fff' : undefined,
-            pointBorderWidth:     isLine ? 2.5 : undefined,
-            pointRadius:          isLine ? 5   : undefined,
-            pointHoverRadius:     isLine ? 7.5 : undefined,
+            pointBackgroundColor: isLine ? '#fff' : undefined,
+            pointBorderColor:     isLine ? P[0]  : undefined,
+            pointBorderWidth:     isLine ? 3 : undefined,
+            pointRadius:          isLine ? 5 : undefined,
+            pointHoverRadius:     isLine ? 8.5 : undefined,
+        };
+
+        /* Plugin: total no centro do donut */
+        const centerTextPlugin = {
+            id: 'centerText',
+            afterDraw(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                const arr = chart.data.datasets[0].data;
+                const total = arr.reduce((a, b) => a + (Number(b) || 0), 0);
+                const meta = chart.getDatasetMeta(0);
+                const arc = meta.data[0];
+                if (!arc) return;
+                const c = chart.ctx;
+                c.save();
+                c.textAlign = 'center'; c.textBaseline = 'middle';
+                c.fillStyle = '#0d6ea8';
+                c.font = '800 32px Sora, sans-serif';
+                c.fillText(total, arc.x, arc.y - 6);
+                c.fillStyle = '#94a3b8';
+                c.font = '700 10px Inter, sans-serif';
+                c.fillText('TOTAL', arc.x, arc.y + 17);
+                c.restore();
+            }
+        };
+        /* Plugin: valor no topo/fim de cada barra */
+        const barValuePlugin = {
+            id: 'barValues',
+            afterDatasetsDraw(chart) {
+                if (chart.config.type !== 'bar') return;
+                const horiz = chart.options.indexAxis === 'y';
+                const c = chart.ctx;
+                const meta = chart.getDatasetMeta(0);
+                const data = chart.data.datasets[0].data;
+                c.save();
+                c.fillStyle = '#475569';
+                c.font = '800 11.5px Inter, sans-serif';
+                meta.data.forEach((bar, i) => {
+                    const v = data[i];
+                    if (!v) return;
+                    if (horiz) { c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(v, bar.x + 8, bar.y); }
+                    else       { c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(v, bar.x, bar.y - 6); }
+                });
+                c.restore();
+            }
         };
 
         const tooltipDefs = {
@@ -534,11 +588,14 @@ a.dash-stat:hover{transform:translateY(-3px)}
         instances[canvasId] = new Chart(el, {
             type: chartType,
             data: { labels: d.labels, datasets: [dataset] },
+            plugins: [centerTextPlugin, barValuePlugin],
             options: {
                 indexAxis: isHBar ? 'y' : 'x',
                 responsive: true,
                 maintainAspectRatio: true,
-                animation: { duration: 640, easing: 'easeOutQuart' },
+                cutout: chartType === 'doughnut' ? '70%' : undefined,
+                layout: { padding: { right: isHBar ? 32 : 0, top: (!circular && !isHBar) ? 18 : 0 } },
+                animation: { duration: 700, easing: 'easeOutQuart' },
                 onClick: chartLinkFns[canvasId] ? function (evt, elements) {
                     if (!elements.length) return;
                     const fn = chartLinkFns[canvasId];
