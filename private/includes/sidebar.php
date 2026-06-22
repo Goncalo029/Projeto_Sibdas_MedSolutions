@@ -41,7 +41,7 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
         </a>
     </div>
 
-    <nav class="mhs-sidebar-nav<?= $mhs_profile === 'admin' ? ' mhs-nav--spread' : '' ?>">
+    <nav class="mhs-sidebar-nav<?= $mhs_profile === 'admin' ? ' mhs-nav--spread' : ' mhs-nav--roomy' ?>">
         <div class="mhs-nav-section">Principal</div>
         <a href="<?= BASE_URL ?>/private/home.php" class="mhs-nav-link<?= mhs_active('dashboard'); ?>"><i class="fa-solid fa-gauge-high fa-fw"></i><span>Dashboard</span></a>
 

@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     <!-- Screenshot da dashboard real -->
     <div class="mhs-hero-visual" aria-hidden="true">
         <div class="mhs-screenshot-wrap">
-            <img src="assets/images/dashboard-preview.png" alt="MedSolutions — Painel de Controlo">
+            <img src="assets/images/dashboard-preview.png?v=<?= @filemtime(__DIR__ . '/assets/images/dashboard-preview.png') ?>" alt="MedSolutions — Painel de Controlo">
         </div>
         <div class="mhs-hero-float mhs-hero-float--tl">
             <i class="fa-solid fa-shield-halved"></i>
@@ -436,6 +436,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
         var tb = document.querySelector('.mhs-topbar');
         if (tb) tb.classList.toggle('mhs-topbar--scrolled', window.scrollY > 40);
     }, { passive: true });
+
+    /* ── Scroll-reveal: secções/cards aparecem ao entrar no ecrã ── */
+    var revealEls = document.querySelectorAll(
+        '.mhs-section-header, .mhs-info-card, .mhs-feat-card, .mhs-sector-stat, .mhs-split-text, .mhs-split-visual, .mhs-trust-bar'
+    );
+    if (revealEls.length && 'IntersectionObserver' in window) {
+        document.body.classList.add('reveal-ready');
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+                if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function(el) {
+            el.classList.add('reveal');
+            // pequeno efeito escalonado dentro do mesmo grupo
+            var sib = el.parentElement ? Array.prototype.indexOf.call(el.parentElement.children, el) : 0;
+            el.style.transitionDelay = (Math.min(sib, 6) * 60) + 'ms';
+            io.observe(el);
+        });
+    }
+
+    /* ── Tilt 3D suave no screenshot do hero (só desktop) ── */
+    var heroVisual = document.querySelector('.mhs-hero-visual');
+    var shot = document.querySelector('.mhs-screenshot-wrap');
+    if (heroVisual && shot && window.matchMedia('(min-width:900px)').matches &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        heroVisual.addEventListener('mousemove', function(ev) {
+            var r = heroVisual.getBoundingClientRect();
+            var rx = (((ev.clientY - r.top) / r.height) - 0.5) * -6;
+            var ry = (((ev.clientX - r.left) / r.width) - 0.5) * 8;
+            shot.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+        });
+        heroVisual.addEventListener('mouseleave', function() { shot.style.transform = ''; });
+    }
 })();
 </script>
 </body>

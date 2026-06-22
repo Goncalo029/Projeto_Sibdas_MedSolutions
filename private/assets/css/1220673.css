@@ -75,6 +75,11 @@ body.mhs-app{margin:0;min-height:100vh;overflow-x:hidden;font-family:'Inter',-ap
 
 .mhs-sidebar-nav{flex:1;padding:4px 10px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start}
 .mhs-nav--spread{justify-content:space-between}
+/* Técnico: itens no topo, botões maiores e mais espaçados */
+.mhs-nav--roomy{justify-content:flex-start;gap:9px}
+.mhs-nav--roomy .mhs-nav-link{padding:12px 14px;font-size:.95rem;gap:12px}
+.mhs-nav--roomy .mhs-nav-link i{font-size:1rem}
+.mhs-nav--roomy .mhs-nav-section{padding-top:12px;margin-top:2px}
 .mhs-nav-section{padding:5px 10px 2px;color:var(--mhs-muted);font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--mhs-border)}
 .mhs-nav-section:first-child{padding-top:1px}
 
