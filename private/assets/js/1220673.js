@@ -764,6 +764,16 @@ function mhsPrintSection(sectionId) {
 })();
 
 // ============================================================
+// Inicialização dos Bootstrap Tooltips
+// Ativa as tooltips em todos os elementos com data-bs-toggle="tooltip"
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el);
+    });
+});
+
+// ============================================================
 // Ligação de eventos sem handlers inline (sidebar, menus, confirmações)
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {

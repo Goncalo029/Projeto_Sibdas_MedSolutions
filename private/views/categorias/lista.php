@@ -61,10 +61,10 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= esc($categoria->descricao) ?></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
-                  <a href="detalhes.php?id=<?= (int) $categoria->id ?>" class="btn btn-sm btn-outline-secondary" title="Detalhes"><i class="fa-solid fa-eye"></i></a>
-                  <a href="editar.php?id=<?= (int) $categoria->id ?>" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fa-solid fa-pen"></i></a>
+                  <a href="detalhes.php?id=<?= (int) $categoria->id ?>" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int) $categoria->id ?>" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar"><i class="fa-solid fa-pen"></i></a>
                   <?php if (is_admin()): ?>
-                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $categoria->id ?>" data-delete-name="<?= esc($categoria->nome) ?>" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $categoria->id ?>" data-delete-name="<?= esc($categoria->nome) ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                   <?php endif; ?>
                 </div>
               </td>

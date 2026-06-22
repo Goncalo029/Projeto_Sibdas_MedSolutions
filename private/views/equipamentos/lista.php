@@ -344,10 +344,10 @@ $qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade
                     <button type="submit" class="btn btn-sm btn-success" title="Tornar ativo"><i class="fa-solid fa-power-off"></i></button>
                   </form>
                   <?php endif; ?>
-                  <a href="detalhes.php?id=<?= (int)$eq->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
-                  <a href="editar.php?id=<?= (int)$eq->id ?>"  class="btn btn-sm btn-outline-primary"   title="Editar"><i class="fa-solid fa-pen"></i></a>
+                  <a href="detalhes.php?id=<?= (int)$eq->id ?>" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int)$eq->id ?>"  class="btn btn-sm btn-outline-primary"   data-bs-toggle="tooltip" data-bs-placement="top" title="Editar"><i class="fa-solid fa-pen"></i></a>
                   <?php if (is_admin()): ?>
-                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int)$eq->id ?>" data-delete-name="<?= esc($eq->codigo_inventario) ?>" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int)$eq->id ?>" data-delete-name="<?= esc($eq->codigo_inventario) ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                   <?php endif; ?>
                 </div>
               </td>

@@ -160,14 +160,14 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= esc($garantia->entidade_responsavel) ?></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
-                  <a href="detalhes.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-secondary" title="Ver"><i class="fa-solid fa-eye"></i></a>
-                  <a href="editar.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                  <a href="?export=pdf&id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-dark" title="Exportar PDF"><i class="fa-solid fa-file-arrow-down"></i></a>
+                  <a href="detalhes.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar"><i class="fa-solid fa-pen"></i></a>
+                  <a href="?export=pdf&id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar PDF"><i class="fa-solid fa-file-arrow-down"></i></a>
                   <?php if (!empty($garantia->nome_ficheiro)): ?>
-                  <a href="?ficheiro=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-danger" title="Descarregar documento importado"><i class="fa-solid fa-file-pdf"></i></a>
+                  <a href="?ficheiro=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Descarregar documento"><i class="fa-solid fa-file-pdf"></i></a>
                   <?php endif; ?>
                   <?php if (is_admin()): ?>
-                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $garantia->id ?>" data-delete-name="<?= esc($garantia->codigo_inventario) ?>"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $garantia->id ?>" data-delete-name="<?= esc($garantia->codigo_inventario) ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                   <?php endif; ?>
                 </div>
               </td>

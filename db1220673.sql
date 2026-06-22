@@ -228,7 +228,7 @@ CREATE TABLE `manutencoes_preventivas` (
 CREATE TABLE `manutencoes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_equipamento` INT UNSIGNED NOT NULL,
-  `tipo` ENUM('Preventiva','UrgÃªncia') NOT NULL DEFAULT 'Preventiva',
+  `tipo` ENUM('Preventiva','Urgência') NOT NULL DEFAULT 'Preventiva',
   `data_manutencao` DATE DEFAULT NULL,
   `proxima_manutencao` DATE DEFAULT NULL,
   `periodicidade` VARCHAR(50) DEFAULT NULL,

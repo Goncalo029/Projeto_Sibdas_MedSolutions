@@ -67,9 +67,9 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= $utilizador->criado_em ? esc(date('d/m/Y', strtotime($utilizador->criado_em))) : '' ?></td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">
-                  <a href="detalhes.php?id=<?= (int) $utilizador->id ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
-                  <a href="editar.php?id=<?= (int) $utilizador->id ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $utilizador->id ?>" data-delete-name="<?= esc($utilizador->email) ?>"><i class="fa-solid fa-trash"></i></button>
+                  <a href="detalhes.php?id=<?= (int) $utilizador->id ?>" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
+                  <a href="editar.php?id=<?= (int) $utilizador->id ?>" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar"><i class="fa-solid fa-pen"></i></a>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $utilizador->id ?>" data-delete-name="<?= esc($utilizador->email) ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </td>
             </tr>
