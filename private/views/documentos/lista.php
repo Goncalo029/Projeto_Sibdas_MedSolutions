@@ -14,16 +14,22 @@ redirect_if_not_logged();
 $page_title = 'Documentos - Lista';
 $documentos = [];
 $erro_bd    = '';
+$f_validade = ($_GET['validade'] ?? '') === 'proxima';
 
 // ─── Carregar documentos com o equipamento associado ─────────────────────────
 try {
+    $where = "d.eliminado_em IS NULL";
+    if ($f_validade) {
+        $where .= " AND d.data_validade IS NOT NULL AND d.data_validade BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
+    }
     $documentos = mhs_pdo()->query("
         SELECT d.id, d.tipo_documento, d.nome_documento, d.data_documento, d.data_validade, d.nome_ficheiro,
+               (d.ficheiro_conteudo IS NOT NULL) AS tem_ficheiro,
                e.codigo_inventario, e.designacao
         FROM documentos d
         JOIN equipamentos e ON e.id = d.id_equipamento
-        WHERE d.eliminado_em IS NULL
-        ORDER BY d.data_documento DESC, d.nome_documento
+        WHERE $where
+        ORDER BY d.data_validade ASC, d.data_documento DESC, d.nome_documento
     ")->fetchAll();
 } catch (PDOException $e) {
     $erro_bd = 'Nao foi possivel carregar documentos.';
@@ -40,6 +46,13 @@ include __DIR__ . '/../../includes/header.php';
 </div>
 
 <?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
+
+<?php if ($f_validade) : ?>
+<div class="alert alert-warning d-flex justify-content-between align-items-center mb-3">
+  <span><i class="fa-solid fa-filter me-2"></i>A mostrar apenas documentos com <strong>validade próxima</strong> (30 dias) — <?= count($documentos) ?> resultado<?= count($documentos) !== 1 ? 's' : '' ?></span>
+  <a href="lista.php" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-xmark me-1"></i>Limpar filtro</a>
+</div>
+<?php endif; ?>
 
 <div class="card mhs-data-card">
   <div class="mhs-table-toolbar">
@@ -65,7 +78,11 @@ include __DIR__ . '/../../includes/header.php';
               <td><?= $documento->data_documento ? esc(date('d/m/Y', strtotime($documento->data_documento))) : '' ?></td>
               <td><?= $documento->data_validade ? esc(date('d/m/Y', strtotime($documento->data_validade))) : '' ?></td>
               <td>
+                <?php if ($documento->tem_ficheiro): ?>
                 <a href="download.php?id=<?= (int) $documento->id ?>" class="btn btn-sm btn-outline-danger" title="Descarregar PDF"><i class="fa-solid fa-file-pdf"></i></a>
+                <?php else: ?>
+                <span class="text-muted small">—</span>
+                <?php endif; ?>
               </td>
               <td>
                 <div class="d-flex gap-1 flex-nowrap">

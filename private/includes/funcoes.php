@@ -137,6 +137,106 @@ function mhs_ler_pdfs_upload(string $campo): array {
 }
 
 /**
+ * Garantir que existe uma coluna numa tabela (adiciona-a se faltar). Idempotente.
+ */
+function mhs_ensure_col(PDO $pdo, string $table, string $col, string $definition): void {
+    try {
+        $st = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+        $st->execute([$table, $col]);
+        if ((int)$st->fetchColumn() === 0) {
+            $pdo->exec("ALTER TABLE `$table` ADD COLUMN $definition");
+        }
+    } catch (PDOException) {}
+}
+
+/**
+ * Garantir as colunas do documento da Garantia em garantias_contratos.
+ * (ficheiro_* guarda o Contrato; garantia_* guarda a Garantia.)
+ */
+function mhs_ensure_garantia_doc_cols(PDO $pdo): void {
+    mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_nome_ficheiro',     '`garantia_nome_ficheiro` VARCHAR(255) NULL');
+    mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_ficheiro_conteudo', '`garantia_ficheiro_conteudo` LONGBLOB NULL');
+    mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_ficheiro_mime',     '`garantia_ficheiro_mime` VARCHAR(100) NULL');
+}
+
+/**
+ * Partilhar o PDF do "Contrato de manutenção" do equipamento com a pasta
+ * Garantias-Contrato: o mesmo ficheiro fica nos dois lados. Atualiza o registo
+ * de garantia mais recente do equipamento ou cria um novo se ainda não existir.
+ *
+ * @param PDO   $pdo
+ * @param int   $id_equipamento
+ * @param array $pdf  ['nome' => string, 'conteudo' => binário, 'mime' => string]
+ */
+function mhs_sincronizar_contrato_pdf(PDO $pdo, int $id_equipamento, array $pdf): void {
+    if (empty($pdf['conteudo'])) { return; }
+    try {
+        // Existe já uma garantia/contrato para este equipamento?
+        $st = $pdo->prepare("SELECT id FROM garantias_contratos WHERE id_equipamento = ? AND eliminado_em IS NULL ORDER BY id DESC LIMIT 1");
+        $st->execute([$id_equipamento]);
+        $gid = $st->fetchColumn();
+
+        if ($gid) {
+            $up = $pdo->prepare("UPDATE garantias_contratos SET nome_ficheiro = ?, ficheiro_conteudo = ?, ficheiro_mime = ?, atualizado_em = NOW() WHERE id = ?");
+            $up->bindValue(1, $pdf['nome']);
+            $up->bindValue(2, $pdf['conteudo'], PDO::PARAM_LOB);
+            $up->bindValue(3, $pdf['mime'] ?: 'application/pdf');
+            $up->bindValue(4, (int)$gid, PDO::PARAM_INT);
+            $up->execute();
+        } else {
+            // Criar um registo mínimo para que o contrato fique visível na pasta
+            $marca = $pdo->query("SELECT marca FROM equipamentos WHERE id = " . (int)$id_equipamento)->fetchColumn();
+            $in = $pdo->prepare("INSERT INTO garantias_contratos (id_equipamento,tem_contrato,tipo_contrato,entidade_responsavel,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,NOW())");
+            $in->bindValue(1, $id_equipamento, PDO::PARAM_INT);
+            $in->bindValue(2, 1, PDO::PARAM_INT);
+            $in->bindValue(3, 'Contrato de manutenção');
+            $in->bindValue(4, $marca ?: null);
+            $in->bindValue(5, $pdf['nome']);
+            $in->bindValue(6, $pdf['conteudo'], PDO::PARAM_LOB);
+            $in->bindValue(7, $pdf['mime'] ?: 'application/pdf');
+            $in->execute();
+        }
+    } catch (PDOException) {
+        // sincronização não é crítica — falha silenciosa
+    }
+}
+
+/**
+ * Partilhar o PDF da Garantia com a pasta Garantias-Contrato (colunas garantia_*).
+ * Atualiza o registo mais recente do equipamento ou cria um novo se faltar.
+ */
+function mhs_sincronizar_garantia_pdf(PDO $pdo, int $id_equipamento, array $pdf): void {
+    if (empty($pdf['conteudo'])) { return; }
+    mhs_ensure_garantia_doc_cols($pdo);
+    try {
+        $st = $pdo->prepare("SELECT id FROM garantias_contratos WHERE id_equipamento = ? AND eliminado_em IS NULL ORDER BY id DESC LIMIT 1");
+        $st->execute([$id_equipamento]);
+        $gid = $st->fetchColumn();
+
+        if ($gid) {
+            $up = $pdo->prepare("UPDATE garantias_contratos SET garantia_nome_ficheiro = ?, garantia_ficheiro_conteudo = ?, garantia_ficheiro_mime = ?, atualizado_em = NOW() WHERE id = ?");
+            $up->bindValue(1, $pdf['nome']);
+            $up->bindValue(2, $pdf['conteudo'], PDO::PARAM_LOB);
+            $up->bindValue(3, $pdf['mime'] ?: 'application/pdf');
+            $up->bindValue(4, (int)$gid, PDO::PARAM_INT);
+            $up->execute();
+        } else {
+            $marca = $pdo->query("SELECT marca FROM equipamentos WHERE id = " . (int)$id_equipamento)->fetchColumn();
+            $in = $pdo->prepare("INSERT INTO garantias_contratos (id_equipamento,tem_contrato,entidade_responsavel,garantia_nome_ficheiro,garantia_ficheiro_conteudo,garantia_ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,NOW())");
+            $in->bindValue(1, $id_equipamento, PDO::PARAM_INT);
+            $in->bindValue(2, 0, PDO::PARAM_INT);
+            $in->bindValue(3, $marca ?: null);
+            $in->bindValue(4, $pdf['nome']);
+            $in->bindValue(5, $pdf['conteudo'], PDO::PARAM_LOB);
+            $in->bindValue(6, $pdf['mime'] ?: 'application/pdf');
+            $in->execute();
+        }
+    } catch (PDOException) {
+        // sincronização não é crítica — falha silenciosa
+    }
+}
+
+/**
  * Tornar um equipamento Ativo (ex.: estava Inativo/Abatido). Regista a
  * movimentação de estado e o histórico. Usado da lista e dos detalhes.
  */
@@ -291,7 +391,7 @@ function get_criticidade_badge($criticidade) {
     
     if (strpos($criticidade, 'alta') !== false) {
         return '<span class="badge bg-danger">Crítica</span>';
-    } elseif (strpos($criticidade, 'médio') !== false || strpos($criticidade, 'media') !== false) {
+    } elseif (strpos($criticidade, 'méd') !== false || strpos($criticidade, 'med') !== false) {
         return '<span class="badge bg-warning">Média</span>';
     } elseif (strpos($criticidade, 'baixa') !== false) {
         return '<span class="badge bg-info">Baixa</span>';

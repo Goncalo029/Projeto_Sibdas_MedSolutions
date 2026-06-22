@@ -14,6 +14,7 @@
                     <p class="text-muted small mb-0">Esta acao nao pode ser revertida.</p>
                     <input type="hidden" name="id_enc" id="mhsDeleteId" value="">
                     <input type="hidden" name="_csrf_token" id="mhsDeleteCsrf" value="">
+                    <input type="hidden" name="return_qs" id="mhsDeleteReturn" value="">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

@@ -4,8 +4,13 @@ require_once __DIR__ . '/../../includes/funcoes.php';
 redirect_if_not_logged();
 require_admin(); // apenas admin pode apagar
 
+// Manter os filtros ativos: voltar à lista com a mesma query string (validada)
+$ret = $_POST['return_qs'] ?? '';
+$ret = preg_match('#^\?[\w\-=&%.+/ ]*$#', $ret) ? $ret : '';
+$voltar = BASE_URL . '/private/views/equipamentos/lista.php' . $ret;
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo '<script>window.location.href = "' . BASE_URL . '/private/views/equipamentos/lista.php";</script>';
+    echo '<script>window.location.href = "' . $voltar . '";</script>';
     exit;
 }
 
@@ -30,12 +35,12 @@ try {
     }
 
     $_SESSION['success_message'] = 'Equipamento apagado com sucesso!';
-    echo '<script>window.location.href = "' . BASE_URL . '/private/views/equipamentos/lista.php";</script>';
+    echo '<script>window.location.href = "' . $voltar . '";</script>';
     exit;
 
 } catch (PDOException $e) {
     $_SESSION['error_message'] = 'Erro ao apagar equipamento: ' . $e->getMessage();
-    echo '<script>window.location.href = "' . BASE_URL . '/private/views/equipamentos/lista.php";</script>';
+    echo '<script>window.location.href = "' . $voltar . '";</script>';
     exit;
 }
 ?>

@@ -11,17 +11,24 @@ require_once __DIR__ . '/../../includes/validacoes.php';
 // Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
-// ── Descarregar o ficheiro PDF importado (da base de dados) ──
+mhs_ensure_garantia_doc_cols(mhs_pdo());
+
+// ── Descarregar o documento PDF (Garantia ou Contrato) da base de dados ──
 if (isset($_GET['ficheiro'])) {
     $gid = (int)$_GET['ficheiro'];
-    $stmt = mhs_pdo()->prepare("SELECT nome_ficheiro, ficheiro_conteudo, ficheiro_mime FROM garantias_contratos WHERE id = ? AND eliminado_em IS NULL");
+    $doc = ($_GET['doc'] ?? 'contrato') === 'garantia' ? 'garantia' : 'contrato';
+    if ($doc === 'garantia') {
+        $stmt = mhs_pdo()->prepare("SELECT garantia_nome_ficheiro AS nome, garantia_ficheiro_conteudo AS conteudo, garantia_ficheiro_mime AS mime FROM garantias_contratos WHERE id = ? AND eliminado_em IS NULL");
+    } else {
+        $stmt = mhs_pdo()->prepare("SELECT nome_ficheiro AS nome, ficheiro_conteudo AS conteudo, ficheiro_mime AS mime FROM garantias_contratos WHERE id = ? AND eliminado_em IS NULL");
+    }
     $stmt->execute([$gid]);
     $g = $stmt->fetch();
-    if ($g && $g->ficheiro_conteudo !== null) {
-        header('Content-Type: ' . ($g->ficheiro_mime ?: 'application/pdf'));
-        header('Content-Disposition: attachment; filename="' . ($g->nome_ficheiro ?: 'contrato_' . $gid . '.pdf') . '"');
-        header('Content-Length: ' . strlen($g->ficheiro_conteudo));
-        echo $g->ficheiro_conteudo;
+    if ($g && $g->conteudo !== null) {
+        header('Content-Type: ' . ($g->mime ?: 'application/pdf'));
+        header('Content-Disposition: attachment; filename="' . ($g->nome ?: $doc . '_' . $gid . '.pdf') . '"');
+        header('Content-Length: ' . strlen($g->conteudo));
+        echo $g->conteudo;
         exit;
     }
     $_SESSION['error_message'] = 'Ficheiro não encontrado.';
@@ -92,19 +99,30 @@ $garantias = [];
 $erro_bd = '';
 
 $f_filtro = trim($_GET['filtro'] ?? '');
+$f_vence  = trim($_GET['vence'] ?? '');
 $gwhere = "g.eliminado_em IS NULL";
 if ($f_filtro === 'expiradas')   { $gwhere .= " AND g.data_fim < CURDATE()"; }
 elseif ($f_filtro === 'vigor')   { $gwhere .= " AND g.data_fim >= CURDATE()"; }
+// Filtro por mês de vencimento (vindo do gráfico da dashboard)
+if ($f_vence !== '' && preg_match('/^\d{4}-\d{2}$/', $f_vence)) {
+    $gwhere .= " AND DATE_FORMAT(g.data_fim,'%Y-%m') = '" . $f_vence . "'";
+} else {
+    $f_vence = '';
+}
 
 $filtro_label = match ($f_filtro) {
     'expiradas' => 'Garantias/contratos expirados',
     'vigor'     => 'Garantias/contratos em vigor',
     default     => '',
 };
+if ($f_vence !== '') {
+    $filtro_label = 'Vencem em ' . substr($f_vence, 5, 2) . '/' . substr($f_vence, 0, 4);
+}
 
 try {
     $garantias = mhs_pdo()->query("
         SELECT g.id, g.data_inicio, g.data_fim, g.tem_contrato, g.tipo_contrato, g.entidade_responsavel, g.nome_ficheiro,
+               (g.ficheiro_conteudo IS NOT NULL) AS tem_ficheiro,
                e.codigo_inventario, e.designacao
         FROM garantias_contratos g
         JOIN equipamentos e ON e.id = g.id_equipamento
@@ -162,10 +180,6 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="d-flex gap-1 flex-nowrap">
                   <a href="detalhes.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver detalhes"><i class="fa-solid fa-eye"></i></a>
                   <a href="editar.php?id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                  <a href="?export=pdf&id=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar PDF"><i class="fa-solid fa-file-arrow-down"></i></a>
-                  <?php if (!empty($garantia->nome_ficheiro)): ?>
-                  <a href="?ficheiro=<?= (int) $garantia->id ?>" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Descarregar documento"><i class="fa-solid fa-file-pdf"></i></a>
-                  <?php endif; ?>
                   <?php if (is_admin()): ?>
                   <button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="<?= (int) $garantia->id ?>" data-delete-name="<?= esc($garantia->codigo_inventario) ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                   <?php endif; ?>

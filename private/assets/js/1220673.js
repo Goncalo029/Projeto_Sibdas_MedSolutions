@@ -68,7 +68,7 @@ $(document).ready(function () {
                     emptyTable: 'Sem dados disponiveis',
                     paginate: { first: 'Primeiro', last: 'Ultimo', next: 'Seguinte', previous: 'Anterior' }
                 },
-                pageLength: 15
+                pageLength: 5
             });
 
             if (customSearchInputs.length) {
@@ -139,6 +139,8 @@ document.addEventListener('click', function (e) {
     document.getElementById('mhsDeleteId').value = deleteId;
     document.getElementById('mhsDeleteName').textContent = deleteName;
     document.getElementById('mhsDeleteCsrf').value = csrfToken;
+    var retEl = document.getElementById('mhsDeleteReturn');
+    if (retEl) retEl.value = window.location.search; // manter filtros ativos após apagar
     var bsModal = new bootstrap.Modal(modal);
     bsModal.show();
 });
@@ -179,19 +181,11 @@ document.addEventListener('click', function (e) {
 
         if (tabName === 'ficha') {
             var codFld = pane.querySelector('[name="codigo_inventario"]');
-            if (codFld && codFld.value.trim() && !/^EQ-\d{3,}$/.test(codFld.value.trim())) {
+            if (codFld && codFld.value.trim() && !/^\d{2}\.\d{3}(\.\d{2})?$/.test(codFld.value.trim())) {
                 var errCod = document.getElementById('err_codigo_inventario');
-                if (errCod) errCod.textContent = 'Formato inválido. Use EQ-001, EQ-002, etc.';
+                if (errCod) errCod.textContent = 'Formato inválido. Use XX.XXX (ex: 01.001) ou XX.XXX.XX para componentes.';
                 showFieldError(codFld, 'err_codigo_inventario');
                 if (!firstBad) firstBad = codFld;
-                ok = false;
-            }
-            var serFld = pane.querySelector('[name="numero_serie"]');
-            if (serFld && serFld.value.trim() && !/^[A-Z0-9]{2,}-\d{4}-\d{3,}$/.test(serFld.value.trim())) {
-                var errSer = document.getElementById('err_numero_serie');
-                if (errSer) errSer.textContent = 'Formato inválido. Use ex: SN-2024-001';
-                showFieldError(serFld, 'err_numero_serie');
-                if (!firstBad) firstBad = serFld;
                 ok = false;
             }
         }
@@ -290,7 +284,7 @@ function mhsAutoFillDemo(nextCode, eqIdx, locIds) {
     };
 
     // Ficha Técnica
-    s('codigo_inventario', nextCode || 'EQ-001');
+    s('codigo_inventario', nextCode || '01.001');
     s('designacao', d.des); s('marca', d.marc); s('modelo', d.mod);
     s('numero_serie', serie); s('fabricante', d.fab);
 
@@ -323,6 +317,28 @@ function mhsAutoFillDemo(nextCode, eqIdx, locIds) {
     // Assistência Técnica
     s('at_empresa', d.at_emp); s('at_nome_contacto', d.at_nom);
     s('at_telefone', d.at_tel); s('at_email', d.at_eml);
+
+    // Documentos — ordem igual à do formulário: base (0-2) + extras (3-6) + garantia (7)
+    var today = new Date().toISOString().slice(0, 10);
+    var docNomes = [
+        'Manual de utilizador — ' + d.des,
+        'Declaração de conformidade CE — ' + d.des,
+        'Relatório técnico inicial — ' + d.des,
+        'Manual de serviço — ' + d.des,
+        'Certificado de calibração — ' + d.des,
+        'Contrato de manutenção — ' + (d.at_emp || d.fab),
+        'Fatura de aquisição — ' + d.des,
+        'Garantia — ' + (d.fab || d.des)
+    ];
+    docNomes.forEach(function (nome, i) {
+        var nEl = document.querySelector('[name="doc_nomes[' + i + ']"]');
+        var dEl = document.querySelector('[name="doc_datas[' + i + ']"]');
+        // Não preencher linhas escondidas (modo filho)
+        var row = nEl && nEl.closest('.doc-row-extra');
+        if (row && row.style.display === 'none') return;
+        if (nEl) nEl.value = nome;
+        if (dEl) { dEl.value = today; if (dEl._flatpickr) dEl._flatpickr.setDate(today, false); }
+    });
 }
 
 // ============================================================

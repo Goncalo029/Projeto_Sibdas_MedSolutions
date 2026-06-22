@@ -15,6 +15,8 @@ redirect_if_not_logged();
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+mhs_ensure_garantia_doc_cols(mhs_pdo());
+
 $stmt = mhs_pdo()->prepare("
     SELECT g.*, e.codigo_inventario, e.designacao
     FROM garantias_contratos g
@@ -103,40 +105,69 @@ include __DIR__ . '/../../includes/header.php';
 </div>
 <div class="card mhs-data-card">
   <div class="mhs-detail-tabs">
-    <button class="mhs-detail-tab active" data-tab="contrato"><i class="fa-solid fa-shield-halved"></i> Contrato</button>
-    <button class="mhs-detail-tab" data-tab="ficheiro"><i class="fa-solid fa-file-pdf"></i> Documento</button>
+    <button class="mhs-detail-tab active" data-tab="garantia"><i class="fa-solid fa-shield-halved"></i> Garantia</button>
+    <button class="mhs-detail-tab" data-tab="contrato"><i class="fa-solid fa-file-contract"></i> Contrato</button>
   </div>
-  <div class="mhs-tab-pane active" id="tab-contrato">
-    <div class="mhs-tab-body"><div class="row g-4"><div class="col-md-6">
-      <div class="mhs-info-group">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-shield-halved"></i> Dados do contrato</div>
-        <dl class="mhs-info-dl">
-          <dt>Equipamento</dt><dd><?= esc($g->codigo_inventario . ' — ' . $g->designacao) ?></dd>
-          <dt>Data de início</dt><dd><?= $fmt($g->data_inicio) ?></dd>
-          <dt>Data de fim</dt><dd><?= $fmt($g->data_fim) ?></dd>
-          <dt>Tem contrato</dt><dd><?= $g->tem_contrato ? 'Sim' : 'Não' ?></dd>
-          <dt>Tipo</dt><dd><?= esc($g->tipo_contrato ?: '—') ?></dd>
-          <dt>Entidade responsável</dt><dd><?= esc($g->entidade_responsavel ?: '—') ?></dd>
-          <dt>Periodicidade</dt><dd><?= esc($g->periodicidade ?: '—') ?></dd>
-        </dl>
+
+  <!-- Aba Garantia -->
+  <div class="mhs-tab-pane active" id="tab-garantia">
+    <div class="mhs-tab-body"><div class="row g-4">
+      <div class="col-md-6">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-shield-halved"></i> Dados da garantia</div>
+          <dl class="mhs-info-dl">
+            <dt>Equipamento</dt><dd><?= esc($g->codigo_inventario . ' — ' . $g->designacao) ?></dd>
+            <dt>Data de início</dt><dd><?= $fmt($g->data_inicio) ?></dd>
+            <dt>Data de fim</dt><dd><?= $fmt($g->data_fim) ?></dd>
+            <dt>Entidade responsável</dt><dd><?= esc($g->entidade_responsavel ?: '—') ?></dd>
+          </dl>
+        </div>
       </div>
-      <?php if (!empty($g->observacoes)): ?>
-      <div class="mhs-info-group mt-3">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-comment"></i> Observações</div>
-        <p class="mhs-info-obs"><?= esc($g->observacoes) ?></p>
+      <div class="col-md-6">
+        <div class="mhs-info-group mhs-w-380">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documento da garantia</div>
+          <?php if (($g->garantia_ficheiro_conteudo ?? null) !== null): ?>
+            <p class="mhs-info-obs mb-2"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= esc($g->garantia_nome_ficheiro ?: 'garantia.pdf') ?></p>
+            <a href="lista.php?ficheiro=<?= $id ?>&doc=garantia" class="btn btn-danger w-100"><i class="fa-solid fa-download me-2"></i>Descarregar garantia</a>
+          <?php else: ?>
+            <p class="mhs-info-obs mb-0 text-muted">Sem documento de garantia. Pode anexar um na edição.</p>
+          <?php endif; ?>
+        </div>
       </div>
-      <?php endif; ?>
-    </div></div></div>
+    </div></div>
   </div>
-  <div class="mhs-tab-pane" id="tab-ficheiro">
-    <div class="mhs-tab-body"><div class="mhs-info-group mhs-w-380">
-      <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documento do contrato</div>
-      <?php if (!empty($g->nome_ficheiro)): ?>
-        <p class="mhs-info-obs mb-2"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= esc($g->nome_ficheiro) ?></p>
-        <a href="lista.php?ficheiro=<?= $id ?>" class="btn btn-primary w-100"><i class="fa-solid fa-download me-2"></i>Descarregar PDF</a>
-      <?php else: ?>
-        <p class="mhs-info-obs">Sem documento importado. Pode anexar um na edição.</p>
-      <?php endif; ?>
+
+  <!-- Aba Contrato -->
+  <div class="mhs-tab-pane" id="tab-contrato">
+    <div class="mhs-tab-body"><div class="row g-4">
+      <div class="col-md-6">
+        <div class="mhs-info-group">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-file-contract"></i> Dados do contrato</div>
+          <dl class="mhs-info-dl">
+            <dt>Tem contrato</dt><dd><?= $g->tem_contrato ? 'Sim' : 'Não' ?></dd>
+            <dt>Tipo</dt><dd><?= esc($g->tipo_contrato ?: '—') ?></dd>
+            <dt>Entidade responsável</dt><dd><?= esc($g->entidade_responsavel ?: '—') ?></dd>
+            <dt>Periodicidade</dt><dd><?= esc($g->periodicidade ?: '—') ?></dd>
+          </dl>
+        </div>
+        <?php if (!empty($g->observacoes)): ?>
+        <div class="mhs-info-group mt-3">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-comment"></i> Observações</div>
+          <p class="mhs-info-obs"><?= esc($g->observacoes) ?></p>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="col-md-6">
+        <div class="mhs-info-group mhs-w-380">
+          <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documento do contrato</div>
+          <?php if ($g->ficheiro_conteudo !== null): ?>
+            <p class="mhs-info-obs mb-2"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= esc($g->nome_ficheiro ?: 'contrato.pdf') ?></p>
+            <a href="lista.php?ficheiro=<?= $id ?>&doc=contrato" class="btn btn-danger w-100"><i class="fa-solid fa-download me-2"></i>Descarregar contrato</a>
+          <?php else: ?>
+            <p class="mhs-info-obs mb-0 text-muted">Sem documento de contrato. Pode anexar um na edição.</p>
+          <?php endif; ?>
+        </div>
+      </div>
     </div></div>
   </div>
 </div>

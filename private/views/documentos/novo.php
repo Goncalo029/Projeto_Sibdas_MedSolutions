@@ -22,6 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'Equipamento e Tipo de documento são obrigatórios.';
         header('Location: novo.php'); exit;
     }
+    if ($data_validade && $data_validade < date('Y-m-d')) {
+        $_SESSION['error_message'] = 'A data de validade não pode ser anterior a hoje.';
+        header('Location: novo.php'); exit;
+    }
+    // Não permitir um documento do mesmo tipo já existente para o equipamento (exceto "Outro")
+    if ($tipo_documento !== 'Outro') {
+        $dup = mhs_pdo()->prepare("SELECT COUNT(*) FROM documentos WHERE id_equipamento = ? AND tipo_documento = ? AND eliminado_em IS NULL AND ficheiro_conteudo IS NOT NULL");
+        $dup->execute([$id_equipamento, $tipo_documento]);
+        if ((int)$dup->fetchColumn() > 0) {
+            $_SESSION['error_message'] = 'Já existe um documento do tipo "' . $tipo_documento . '" para este equipamento.';
+            header('Location: novo.php'); exit;
+        }
+    }
 
     // Ficheiro PDF (guardado na base de dados, não em pasta)
     $erro_upload = null;
@@ -53,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $equipamentos = mhs_pdo()->query("SELECT id, codigo_inventario, designacao FROM equipamentos WHERE eliminado_em IS NULL ORDER BY codigo_inventario")->fetchAll();
-$tipos = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
+$tipos = ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Ficha técnica','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico','Outro'];
 $first_eq_id = !empty($equipamentos) ? $equipamentos[0]->id : 0;
 
 $page_title = 'Documentos - Novo';
@@ -108,7 +121,8 @@ include __DIR__ . '/../../includes/header.php';
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Data de Validade</label>
-            <input type="text" name="data_validade" class="form-control mhs-datepicker" placeholder="AAAA-MM-DD" />
+            <input type="text" name="data_validade" class="form-control mhs-datepicker" data-mindate="today" placeholder="AAAA-MM-DD" />
+            <div class="form-text">Para documentos com prazo (garantia, certificado de calibração…). Não pode ser anterior a hoje.</div>
           </div>
           <div class="col-12">
             <label class="form-label fw-semibold">Observações</label>

@@ -45,6 +45,10 @@ $f_filtro      = trim($_GET['filtro'] ?? '');
 $f_ver         = trim($_GET['ver'] ?? '');    // 'inativos' | ''
 $f_categoria   = (int)($_GET['id_categoria'] ?? 0);
 $f_localizacao = (int)($_GET['id_localizacao'] ?? 0);
+$f_servico     = trim($_GET['servico'] ?? '');
+$f_marca       = trim($_GET['marca'] ?? '');
+$f_fabricante  = trim($_GET['fabricante'] ?? '');
+$f_edificio    = trim($_GET['edificio'] ?? '');
 
 // Inativos/abatidos via estado GET ou ver=inativos
 $show_inativos = ($f_ver === 'inativos' || $f_estado === 'Inativo' || $f_estado === 'Abatido');
@@ -69,6 +73,17 @@ if ($f_critic !== '') {
 if ($f_filtro === 'sem_docs') {
     $where .= " AND NOT EXISTS (SELECT 1 FROM documentos d2 WHERE d2.id_equipamento = e.id AND d2.eliminado_em IS NULL)";
 }
+if ($f_filtro === 'docs_incompletos') {
+    $t7 = "'Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico'";
+    $t3 = "'Manual de utilizador','Declaração de conformidade','Relatório técnico'";
+    $where .= " AND (
+        (e.id_equipamento_pai IS NULL AND (SELECT COUNT(DISTINCT d3.tipo_documento) FROM documentos d3
+            WHERE d3.id_equipamento = e.id AND d3.eliminado_em IS NULL AND d3.ficheiro_conteudo IS NOT NULL AND d3.tipo_documento IN ($t7)) < 7)
+        OR
+        (e.id_equipamento_pai IS NOT NULL AND (SELECT COUNT(DISTINCT d3.tipo_documento) FROM documentos d3
+            WHERE d3.id_equipamento = e.id AND d3.eliminado_em IS NULL AND d3.ficheiro_conteudo IS NOT NULL AND d3.tipo_documento IN ($t3)) < 3)
+    )";
+}
 if ($f_categoria > 0) {
     $where .= " AND e.id_categoria = ?";
     $params[] = $f_categoria;
@@ -76,6 +91,22 @@ if ($f_categoria > 0) {
 if ($f_localizacao > 0) {
     $where .= " AND e.id_localizacao = ?";
     $params[] = $f_localizacao;
+}
+if ($f_servico !== '') {
+    $where .= " AND l.servico = ?";
+    $params[] = $f_servico;
+}
+if ($f_marca !== '') {
+    $where .= " AND e.marca = ?";
+    $params[] = $f_marca;
+}
+if ($f_fabricante !== '') {
+    $where .= " AND e.fabricante = ?";
+    $params[] = $f_fabricante;
+}
+if ($f_edificio !== '') {
+    $where .= " AND l.edificio = ?";
+    $params[] = $f_edificio;
 }
 if ($f_filtro === 'manutencao_atraso') {
     $where .= " AND EXISTS (SELECT 1 FROM manutencoes_preventivas mp
@@ -94,8 +125,13 @@ if ($f_filtro === 'manutencao_atraso') {
 
 $filtro_label = match(true) {
     $f_estado !== ''                   => 'Estado: ' . $f_estado,
+    $f_servico !== ''                  => 'Serviço: ' . $f_servico,
+    $f_edificio !== ''                 => 'Edifício: ' . $f_edificio,
+    $f_fabricante !== ''               => 'Fornecedor: ' . $f_fabricante,
+    $f_marca !== ''                    => 'Marca: ' . $f_marca,
     $f_critic !== ''                   => 'Criticidade: ' . $f_critic,
     $f_filtro === 'sem_docs'           => 'Sem documentação',
+    $f_filtro === 'docs_incompletos'   => 'Documentação incompleta',
     $f_filtro === 'manutencao_atraso'  => 'Manutenções em atraso',
     $f_filtro === 'manutencao_7dias'   => 'Manutenção prevista nos próximos 7 dias',
     $f_filtro === 'emprestimo_30dias'  => 'Empréstimos em curso há mais de 30 dias',
@@ -109,7 +145,6 @@ if ($filtro_label === '' && $f_localizacao > 0) {
     $loc = mhs_pdo()->query("SELECT servico, sala FROM localizacoes WHERE id = $f_localizacao")->fetch(PDO::FETCH_OBJ);
     $filtro_label = 'Localização: ' . ($loc ? $loc->servico . ($loc->sala ? ' · ' . $loc->sala : '') : 'Desconhecida');
 }
-
 try {
     $pdo_main = mhs_pdo();
     $stmt = $pdo_main->prepare("
@@ -131,6 +166,10 @@ try {
     if ($f_critic !== '')  { $wc .= " AND criticidade = ?";    $pc[] = $f_critic; }
     if ($f_categoria > 0)  { $wc .= " AND id_categoria = ?";   $pc[] = $f_categoria; }
     if ($f_localizacao > 0){ $wc .= " AND id_localizacao = ?"; $pc[] = $f_localizacao; }
+    if ($f_servico !== ''){ $wc .= " AND id_localizacao IN (SELECT id FROM localizacoes WHERE servico = ?)"; $pc[] = $f_servico; }
+    if ($f_marca !== ''){ $wc .= " AND marca = ?"; $pc[] = $f_marca; }
+    if ($f_fabricante !== ''){ $wc .= " AND fabricante = ?"; $pc[] = $f_fabricante; }
+    if ($f_edificio !== ''){ $wc .= " AND id_localizacao IN (SELECT id FROM localizacoes WHERE edificio = ?)"; $pc[] = $f_edificio; }
     if ($f_filtro === 'sem_docs') {
         $wc .= " AND NOT EXISTS (SELECT 1 FROM documentos d2 WHERE d2.id_equipamento = equipamentos.id AND d2.eliminado_em IS NULL)";
     } elseif ($f_filtro === 'manutencao_atraso') {
@@ -256,7 +295,7 @@ include __DIR__ . '/../../includes/header.php';
 <?php if ($erro_bd) : ?><div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div><?php endif; ?>
 
 <?php
-$qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro]));
+$qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro, 'servico' => $f_servico, 'marca' => $f_marca, 'fabricante' => $f_fabricante, 'edificio' => $f_edificio]));
 ?>
 <!-- Tabs Em Serviço / Inativos -->
 <div class="mhs-eq-tabs">
@@ -285,7 +324,7 @@ $qs_sem_ver = http_build_query(array_filter(['estado' => $f_estado, 'criticidade
       <span class="mhs-table-toolbar-count"><?= count($equipamentos) ?> registos</span>
     </div>
     <div class="d-flex gap-2 align-items-center">
-      <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro])); ?>
+      <?php $qs_filtros = http_build_query(array_filter(['estado' => $f_estado, 'criticidade' => $f_critic, 'filtro' => $f_filtro, 'servico' => $f_servico, 'marca' => $f_marca, 'fabricante' => $f_fabricante, 'edificio' => $f_edificio])); ?>
       <a href="?export=csv<?= $qs_filtros ? '&' . esc($qs_filtros) : '' ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-file-csv me-1"></i>Exportar CSV
       </a>

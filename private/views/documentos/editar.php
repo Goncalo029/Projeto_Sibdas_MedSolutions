@@ -25,6 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'Equipamento e Tipo de documento são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
+    // Validade não pode ser anterior a hoje — mas permite manter uma já existente (documento expirado)
+    if ($data_validade && $data_validade < date('Y-m-d')) {
+        $old = mhs_pdo()->prepare("SELECT data_validade FROM documentos WHERE id=?");
+        $old->execute([$id]);
+        $old_val = $old->fetchColumn() ?: null;
+        if ($data_validade !== $old_val) {
+            $_SESSION['error_message'] = 'A data de validade não pode ser anterior a hoje.';
+            header("Location: editar.php?id=$id"); exit;
+        }
+    }
     // Upload opcional de novo ficheiro (substitui o anterior na BD)
     $erro_upload = null;
     $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
@@ -67,7 +77,7 @@ $row = $stmt->fetch();
 if (!$row) { header('Location: lista.php'); exit; }
 
 $equipamentos = $pdo->query("SELECT id, codigo_inventario, designacao FROM equipamentos ORDER BY codigo_inventario")->fetchAll();
-$tipos = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
+$tipos = ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Ficha técnica','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico','Outro'];
 
 $page_title = 'Documentos - Editar';
 include __DIR__ . '/../../includes/header.php';
@@ -120,7 +130,7 @@ include __DIR__ . '/../../includes/header.php';
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Data de Validade</label>
-            <input type="text" name="data_validade" class="form-control mhs-datepicker" value="<?= htmlspecialchars($row->data_validade ?? '') ?>" placeholder="AAAA-MM-DD" />
+            <input type="text" name="data_validade" class="form-control mhs-datepicker" data-mindate="today" value="<?= htmlspecialchars($row->data_validade ?? '') ?>" placeholder="AAAA-MM-DD" />
           </div>
           <div class="col-12">
             <label class="form-label fw-semibold">Observações</label>

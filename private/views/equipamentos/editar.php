@@ -16,9 +16,10 @@ if (!$id) { header('Location: lista.php'); exit; }
 
 // ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $codigo_inventario = trim($_POST['codigo_inventario'] ?? '');
-    $designacao        = trim($_POST['designacao'] ?? '');
-    $id_categoria      = (int)($_POST['id_categoria'] ?? 0) ?: null;
+    $codigo_inventario  = trim($_POST['codigo_inventario'] ?? '');
+    $designacao         = trim($_POST['designacao'] ?? '');
+    $id_equipamento_pai = (int)($_POST['id_equipamento_pai'] ?? 0) ?: null;
+    $id_categoria       = (int)($_POST['id_categoria'] ?? 0) ?: null;
     $marca             = trim($_POST['marca'] ?? '') ?: null;
     $modelo            = trim($_POST['modelo'] ?? '') ?: null;
     $numero_serie      = trim($_POST['numero_serie'] ?? '') ?: null;
@@ -51,14 +52,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $pdo = mhs_pdo();
+        // Verificar unicidade do número de série por fabricante + modelo (excluindo o próprio equipamento)
+        if ($numero_serie && $fabricante && $modelo) {
+            $chk_ns = $pdo->prepare("SELECT id FROM equipamentos WHERE numero_serie=? AND fabricante=? AND modelo=? AND eliminado_em IS NULL AND id != ?");
+            $chk_ns->execute([$numero_serie, $fabricante, $modelo, $id]);
+            if ($chk_ns->fetch()) {
+                $_SESSION['error_message'] = 'Já existe outro equipamento com o nº de série "' . htmlspecialchars($numero_serie) . '" para este fabricante e modelo.';
+                header("Location: editar.php?id=$id"); exit;
+            }
+        }
 
         // Estado anterior (para registar no histórico o que mudou)
         $antes_stmt = $pdo->prepare("SELECT codigo_inventario,designacao,marca,modelo,numero_serie,fabricante,data_aquisicao,ano_fabrico,custo_aquisicao,tipo_entrada,estado,criticidade,observacoes FROM equipamentos WHERE id=?");
         $antes_stmt->execute([$id]);
         $antes = $antes_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-        $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
-            ->execute([$codigo_inventario,$designacao,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes,$id]);
+        $pdo->prepare("UPDATE equipamentos SET codigo_inventario=?,designacao=?,id_equipamento_pai=?,id_categoria=?,marca=?,modelo=?,numero_serie=?,fabricante=?,data_aquisicao=?,ano_fabrico=?,custo_aquisicao=?,tipo_entrada=?,id_localizacao=?,estado=?,criticidade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
+            ->execute([$codigo_inventario,$designacao,$id_equipamento_pai,$id_categoria,$marca,$modelo,$numero_serie,$fabricante,$data_aquisicao,$ano_fabrico,$custo_aquisicao,$tipo_entrada,$id_localizacao,$estado,$criticidade,$observacoes,$id]);
 
         // Histórico de alterações
         $depois = [
@@ -121,18 +131,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $novos = mhs_ler_pdfs_upload('documentos');
         if ($novos) {
             $doc_tipo = trim($_POST['doc_tipo'] ?? '') ?: 'Outro';
-            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,NOW())");
+            $doc_validade = trim($_POST['doc_validade'] ?? '') ?: null;
+            if ($doc_validade && $doc_validade < date('Y-m-d')) {
+                $_SESSION['error_message'] = 'A data de validade não pode ser anterior a hoje.';
+                header("Location: editar.php?id=$id"); exit;
+            }
+            // Não permitir um documento do mesmo tipo já existente para o equipamento (exceto "Outro")
+            if ($doc_tipo !== 'Outro') {
+                $dup = $pdo->prepare("SELECT COUNT(*) FROM documentos WHERE id_equipamento = ? AND tipo_documento = ? AND eliminado_em IS NULL AND ficheiro_conteudo IS NOT NULL");
+                $dup->execute([$id, $doc_tipo]);
+                if ((int)$dup->fetchColumn() > 0) {
+                    $_SESSION['error_message'] = 'Já existe um documento do tipo "' . $doc_tipo . '" para este equipamento.';
+                    header("Location: editar.php?id=$id"); exit;
+                }
+            }
+            $ins = $pdo->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,data_validade,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,?,NOW())");
             foreach ($novos as $d) {
                 $nome_doc = pathinfo($d['nome'], PATHINFO_FILENAME) ?: $doc_tipo;
                 $ins->bindValue(1, $id, PDO::PARAM_INT);
                 $ins->bindValue(2, $doc_tipo);
                 $ins->bindValue(3, $nome_doc);
                 $ins->bindValue(4, date('Y-m-d'));
-                $ins->bindValue(5, $d['nome']);
-                $ins->bindValue(6, $d['conteudo'], PDO::PARAM_LOB);
-                $ins->bindValue(7, $d['mime']);
+                $ins->bindValue(5, $doc_validade);
+                $ins->bindValue(6, $d['nome']);
+                $ins->bindValue(7, $d['conteudo'], PDO::PARAM_LOB);
+                $ins->bindValue(8, $d['mime']);
                 $ins->execute();
                 mhs_historico('documento', (int)$pdo->lastInsertId(), $nome_doc, 'criar');
+            }
+            // Se anexou um "Contrato de manutenção" ou "Garantia", partilhar o PDF com a pasta Garantias-Contrato
+            $ultimo = end($novos);
+            if ($doc_tipo === 'Contrato de manutenção') {
+                mhs_sincronizar_contrato_pdf($pdo, $id, ['nome' => $ultimo['nome'], 'conteudo' => $ultimo['conteudo'], 'mime' => $ultimo['mime'] ?: 'application/pdf']);
+            } elseif ($doc_tipo === 'Garantia') {
+                mhs_sincronizar_garantia_pdf($pdo, $id, ['nome' => $ultimo['nome'], 'conteudo' => $ultimo['conteudo'], 'mime' => $ultimo['mime'] ?: 'application/pdf']);
             }
         }
 
@@ -152,9 +184,11 @@ if (!$row) { header('Location: lista.php'); exit; }
 
 $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fetchAll();
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
+// Equipamentos disponíveis como pai (excluindo o próprio)
+$equipamentos_outros = $pdo->query("SELECT id, codigo_inventario, designacao FROM equipamentos WHERE eliminado_em IS NULL AND id != " . (int)$id . " ORDER BY codigo_inventario")->fetchAll();
 $estados      = ['Ativo','Em manutenção','Inativo','Em calibração','Em quarentena','Abatido'];
 $criticidades = ['Baixa','Média','Alta','Suporte de vida'];
-$tipos_doc    = ['Manual','Certificado','Contrato','Ficha técnica','Outro'];
+$tipos_doc    = ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Ficha técnica','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico','Garantia','Outro'];
 $documentos_eq = $pdo->query("SELECT id, tipo_documento, nome_documento, nome_ficheiro, (ficheiro_conteudo IS NOT NULL) AS tem_ficheiro FROM documentos WHERE id_equipamento = " . (int)$id . " AND eliminado_em IS NULL ORDER BY id")->fetchAll();
 $tipos_entrada = ['Compra','Doação','Aluguer','Empréstimo'];
 
@@ -297,6 +331,16 @@ include __DIR__ . '/../../includes/header.php';
               <option value="<?= $cat->id ?>" <?= $row->id_categoria == $cat->id ? 'selected' : '' ?>><?= esc($cat->nome) ?></option>
               <?php endforeach; ?>
             </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">É componente de</label>
+            <select name="id_equipamento_pai" class="form-select">
+              <option value="">-- Equipamento independente --</option>
+              <?php foreach ($equipamentos_outros as $ep): ?>
+              <option value="<?= $ep->id ?>" <?= ($row->id_equipamento_pai ?? null) == $ep->id ? 'selected' : '' ?>><?= esc($ep->codigo_inventario . ' — ' . $ep->designacao) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <div class="form-text">Preencher apenas se este item é um componente ou acessório de outro equipamento.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Marca</label>
@@ -473,10 +517,15 @@ include __DIR__ . '/../../includes/header.php';
               <?php foreach ($tipos_doc as $t): ?><option><?= $t ?></option><?php endforeach; ?>
             </select>
           </div>
-          <div class="col-md-8">
+          <div class="col-md-4">
+            <label class="form-label">Data de validade</label>
+            <input type="text" name="doc_validade" class="form-control mhs-datepicker" data-mindate="today" placeholder="AAAA-MM-DD" />
+            <div class="form-text">Para documentos com prazo (garantia, calibração…).</div>
+          </div>
+          <div class="col-md-4">
             <label class="form-label">Anexar PDF(s)</label>
             <input type="file" name="documentos[]" class="form-control" accept="application/pdf,.pdf" multiple />
-            <div class="form-text">Os ficheiros ficam guardados na base de dados.</div>
+            <div class="form-text">Ficam guardados na base de dados.</div>
           </div>
         </div>
       </div>

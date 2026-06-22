@@ -3,13 +3,12 @@
  * Histórico de alterações (log de eventos)
  * Página exclusiva para administradores.
  * Regista todas as ações feitas no sistema: criações, edições, eliminações e logins.
- * Permite filtrar por tipo de entidade e tipo de ação.
+ * Separado por secções (Equipamentos, Documentos, Garantias, etc.)
  */
 
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar autenticação e que é administrador
 redirect_if_not_logged();
 if (($_SESSION['profile'] ?? '') !== 'admin') {
     header('Location: ' . BASE_URL . '/private/home.php');
@@ -19,31 +18,34 @@ if (($_SESSION['profile'] ?? '') !== 'admin') {
 $registos = [];
 $erro_bd  = '';
 
-// ─── Filtros opcionais por entidade e ação ───────────────────────────────────
-$f_entidade = trim($_GET['entidade'] ?? '');
-$f_acao     = trim($_GET['acao'] ?? '');
-
-$where  = '1=1';
-$params = [];
-if ($f_entidade !== '') { $where .= ' AND entidade = ?'; $params[] = $f_entidade; }
-if ($f_acao !== '')     { $where .= ' AND acao = ?';     $params[] = $f_acao; }
-
-// ─── Carregar os últimos 500 registos de log ─────────────────────────────────
 try {
-    $stmt = mhs_pdo()->prepare("
+    $registos = mhs_pdo()->query("
         SELECT id, entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em
         FROM historico_alteracoes
-        WHERE $where
         ORDER BY criado_em DESC, id DESC
-        LIMIT 500
-    ");
-    $stmt->execute($params);
-    $registos = $stmt->fetchAll();
-
-    $entidades = mhs_pdo()->query("SELECT DISTINCT entidade FROM historico_alteracoes ORDER BY entidade")->fetchAll();
+        LIMIT 1000
+    ")->fetchAll();
 } catch (PDOException $e) {
-    $erro_bd   = 'Não foi possível carregar o histórico.';
-    $entidades = [];
+    $erro_bd = 'Não foi possível carregar o histórico.';
+}
+
+// Separar por secção
+$secoes = [
+    'equipamento'       => ['label' => 'Equipamentos',       'icon' => 'fa-stethoscope',          'registos' => []],
+    'documento'         => ['label' => 'Documentos',         'icon' => 'fa-file-lines',            'registos' => []],
+    'garantia-contrato' => ['label' => 'Garantias/Contratos','icon' => 'fa-shield-halved',         'registos' => []],
+    'fornecedor'        => ['label' => 'Fornecedores',       'icon' => 'fa-building',              'registos' => []],
+    'localizacao'       => ['label' => 'Localizações',       'icon' => 'fa-location-dot',          'registos' => []],
+    'categoria'         => ['label' => 'Categorias',         'icon' => 'fa-layer-group',           'registos' => []],
+    'utilizador'        => ['label' => 'Utilizadores',       'icon' => 'fa-user',                  'registos' => []],
+    '__outros'          => ['label' => 'Outros',             'icon' => 'fa-ellipsis',              'registos' => []],
+];
+foreach ($registos as $r) {
+    if (isset($secoes[$r->entidade])) {
+        $secoes[$r->entidade]['registos'][] = $r;
+    } else {
+        $secoes['__outros']['registos'][] = $r;
+    }
 }
 
 function mhs_hist_badge(string $acao): string {
@@ -52,22 +54,6 @@ function mhs_hist_badge(string $acao): string {
         'editar' => '<span class="badge bg-primary"><i class="fa-solid fa-pen me-1"></i>Edição</span>',
         'apagar' => '<span class="badge bg-danger"><i class="fa-solid fa-trash me-1"></i>Remoção</span>',
         default  => '<span class="badge bg-secondary">' . esc($acao) . '</span>',
-    };
-}
-
-function mhs_hist_entidade_label(string $e): string {
-    return match ($e) {
-        'equipamento'       => 'Equipamento',
-        'categoria'         => 'Categoria',
-        'localizacao'       => 'Localização',
-        'fornecedor'        => 'Fornecedor',
-        'documento'         => 'Documento',
-        'garantia-contrato' => 'Garantia/Contrato',
-        'emprestimo'        => 'Empréstimo',
-        'utilizador'        => 'Utilizador',
-        'website'           => 'Website Público',
-        'mensagem'          => 'Mensagem',
-        default             => ucfirst($e),
     };
 }
 
@@ -86,40 +72,27 @@ include __DIR__ . '/../../includes/header.php';
   <div class="alert alert-warning mb-3"><?= esc($erro_bd) ?></div>
 <?php endif; ?>
 
-<!-- Filtros -->
-<form method="get" class="card mhs-data-card mb-3">
-  <div class="card-body d-flex flex-wrap gap-2 align-items-end">
-    <div>
-      <label class="form-label small text-muted mb-1">Entidade</label>
-      <select name="entidade" class="form-select form-select-sm" style="min-width:180px">
-        <option value="">Todas</option>
-        <?php foreach ($entidades as $e): ?>
-          <option value="<?= esc($e->entidade) ?>" <?= $f_entidade === $e->entidade ? 'selected' : '' ?>><?= esc(mhs_hist_entidade_label($e->entidade)) ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
-    <div>
-      <label class="form-label small text-muted mb-1">Ação</label>
-      <select name="acao" class="form-select form-select-sm" style="min-width:150px">
-        <option value="">Todas</option>
-        <option value="criar"  <?= $f_acao === 'criar'  ? 'selected' : '' ?>>Criação</option>
-        <option value="editar" <?= $f_acao === 'editar' ? 'selected' : '' ?>>Edição</option>
-        <option value="apagar" <?= $f_acao === 'apagar' ? 'selected' : '' ?>>Remoção</option>
-      </select>
-    </div>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter me-1"></i>Filtrar</button>
-    <?php if ($f_entidade !== '' || $f_acao !== ''): ?>
-      <a href="lista.php" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-xmark me-1"></i>Limpar</a>
-    <?php endif; ?>
-  </div>
-</form>
+<!-- Tabs por secção -->
+<div class="mhs-detail-tabs mb-3" style="flex-wrap:wrap">
+  <button class="mhs-detail-tab active" data-hist-sec="__todos">
+    <i class="fa-solid fa-list fa-fw"></i> Todos
+    <span class="badge bg-secondary ms-1"><?= count($registos) ?></span>
+  </button>
+  <?php foreach ($secoes as $key => $sec): if (empty($sec['registos'])) continue; ?>
+  <button class="mhs-detail-tab" data-hist-sec="<?= esc($key) ?>">
+    <i class="fa-solid <?= esc($sec['icon']) ?> fa-fw"></i> <?= esc($sec['label']) ?>
+    <span class="badge bg-secondary ms-1"><?= count($sec['registos']) ?></span>
+  </button>
+  <?php endforeach; ?>
+</div>
 
+<!-- Tabela principal (todos os registos, filtrada por JS via DataTables) -->
 <div class="card mhs-data-card">
   <div class="mhs-table-toolbar">
     <div class="mhs-table-toolbar-left">
       <i class="fa-solid fa-clock-rotate-left mhs-table-toolbar-icon"></i>
       <span class="mhs-table-toolbar-label">Registo de atividade da plataforma</span>
-      <span class="mhs-table-toolbar-count"><?= count($registos) ?> registos</span>
+      <span class="mhs-table-toolbar-count" id="hist-count"><?= count($registos) ?> registos</span>
     </div>
   </div>
   <div class="card-body p-0">
@@ -136,7 +109,7 @@ include __DIR__ . '/../../includes/header.php';
             <th>Data / Hora</th>
             <th>Utilizador</th>
             <th>Ação</th>
-            <th>Entidade</th>
+            <th>Secção</th>
             <th>Registo</th>
             <th>Detalhe</th>
           </tr>
@@ -147,7 +120,10 @@ include __DIR__ . '/../../includes/header.php';
               <td class="text-nowrap"><?= $r->criado_em ? date('d/m/Y H:i', strtotime($r->criado_em)) : '—' ?></td>
               <td><?= esc($r->utilizador ?? '—') ?></td>
               <td><?= mhs_hist_badge($r->acao) ?></td>
-              <td><?= esc(mhs_hist_entidade_label($r->entidade)) ?></td>
+              <td data-entidade="<?= esc($r->entidade) ?>">
+                <?php $sec = $secoes[$r->entidade] ?? $secoes['__outros']; ?>
+                <span class="text-nowrap"><i class="fa-solid <?= esc($sec['icon']) ?> me-1 text-muted"></i><?= esc($sec['label']) ?></span>
+              </td>
               <td class="mhs-td-primary"><?= esc($r->entidade_nome ?? '—') ?></td>
               <td><small class="text-muted"><?= $r->detalhe ? esc($r->detalhe) : '—' ?></small></td>
             </tr>
@@ -158,5 +134,35 @@ include __DIR__ . '/../../includes/header.php';
     <?php endif; ?>
   </div>
 </div>
+
+<script>
+(function () {
+    // Aguarda o DataTable estar pronto
+    function waitForDT(cb) {
+        var t = setInterval(function () {
+            if ($.fn.DataTable && $('#historicoTable').length && $.fn.DataTable.isDataTable('#historicoTable')) {
+                clearInterval(t);
+                cb($('#historicoTable').DataTable());
+            }
+        }, 100);
+    }
+    waitForDT(function (dt) {
+        document.querySelectorAll('[data-hist-sec]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('[data-hist-sec]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                var sec = this.dataset.histSec;
+                if (sec === '__todos') {
+                    dt.column(3).search('').draw();
+                } else {
+                    // Pesquisa pelo texto da secção visível na coluna 3
+                    var label = this.textContent.trim().replace(/\d+$/, '').trim();
+                    dt.column(3).search(label, false, false).draw();
+                }
+            });
+        });
+    });
+})();
+</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>

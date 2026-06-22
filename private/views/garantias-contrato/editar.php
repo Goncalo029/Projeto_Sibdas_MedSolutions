@@ -28,33 +28,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'O campo Equipamento é obrigatório.';
         header("Location: editar.php?id=$id"); exit;
     }
-    // Importar/substituir ficheiro PDF na base de dados (opcional)
+    // Importar/substituir os ficheiros PDF na base de dados (opcionais)
     $erro_upload = null;
-    $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
-    if ($erro_upload) {
-        $_SESSION['error_message'] = $erro_upload;
-        header("Location: editar.php?id=$id"); exit;
-    }
+    $pdf_contrato = mhs_ler_pdf_upload('ficheiro', $erro_upload);          // documento do contrato
+    if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header("Location: editar.php?id=$id"); exit; }
+    $pdf_garantia = mhs_ler_pdf_upload('ficheiro_garantia', $erro_upload); // documento da garantia
+    if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header("Location: editar.php?id=$id"); exit; }
 
     try {
-        if ($pdf) {
-            $stmt = mhs_pdo()->prepare("UPDATE garantias_contratos SET id_equipamento=?,data_inicio=?,data_fim=?,tem_contrato=?,tipo_contrato=?,entidade_responsavel=?,periodicidade=?,observacoes=?,nome_ficheiro=?,ficheiro_conteudo=?,ficheiro_mime=?,atualizado_em=NOW() WHERE id=?");
-            $stmt->bindValue(1, $id_equipamento, PDO::PARAM_INT);
-            $stmt->bindValue(2, $data_inicio);
-            $stmt->bindValue(3, $data_fim);
-            $stmt->bindValue(4, $tem_contrato, PDO::PARAM_INT);
-            $stmt->bindValue(5, $tipo_contrato ?: null);
-            $stmt->bindValue(6, $entidade_responsavel ?: null);
-            $stmt->bindValue(7, $periodicidade ?: null);
-            $stmt->bindValue(8, $observacoes ?: null);
-            $stmt->bindValue(9, $pdf['nome']);
-            $stmt->bindValue(10, $pdf['conteudo'], PDO::PARAM_LOB);
-            $stmt->bindValue(11, $pdf['mime']);
-            $stmt->bindValue(12, $id, PDO::PARAM_INT);
-            $stmt->execute();
-        } else {
-            mhs_pdo()->prepare("UPDATE garantias_contratos SET id_equipamento=?,data_inicio=?,data_fim=?,tem_contrato=?,tipo_contrato=?,entidade_responsavel=?,periodicidade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
-                ->execute([$id_equipamento, $data_inicio, $data_fim, $tem_contrato, $tipo_contrato ?: null, $entidade_responsavel ?: null, $periodicidade ?: null, $observacoes ?: null, $id]);
+        $pdo = mhs_pdo();
+        mhs_ensure_garantia_doc_cols($pdo);
+
+        // Campos de texto (sempre)
+        $pdo->prepare("UPDATE garantias_contratos SET id_equipamento=?,data_inicio=?,data_fim=?,tem_contrato=?,tipo_contrato=?,entidade_responsavel=?,periodicidade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
+            ->execute([$id_equipamento, $data_inicio, $data_fim, $tem_contrato, $tipo_contrato ?: null, $entidade_responsavel ?: null, $periodicidade ?: null, $observacoes ?: null, $id]);
+
+        // Documento do contrato (só se enviado)
+        if ($pdf_contrato) {
+            $s = $pdo->prepare("UPDATE garantias_contratos SET nome_ficheiro=?,ficheiro_conteudo=?,ficheiro_mime=?,atualizado_em=NOW() WHERE id=?");
+            $s->bindValue(1, $pdf_contrato['nome']);
+            $s->bindValue(2, $pdf_contrato['conteudo'], PDO::PARAM_LOB);
+            $s->bindValue(3, $pdf_contrato['mime']);
+            $s->bindValue(4, $id, PDO::PARAM_INT);
+            $s->execute();
+        }
+        // Documento da garantia (só se enviado)
+        if ($pdf_garantia) {
+            $s = $pdo->prepare("UPDATE garantias_contratos SET garantia_nome_ficheiro=?,garantia_ficheiro_conteudo=?,garantia_ficheiro_mime=?,atualizado_em=NOW() WHERE id=?");
+            $s->bindValue(1, $pdf_garantia['nome']);
+            $s->bindValue(2, $pdf_garantia['conteudo'], PDO::PARAM_LOB);
+            $s->bindValue(3, $pdf_garantia['mime']);
+            $s->bindValue(4, $id, PDO::PARAM_INT);
+            $s->execute();
         }
         $eq_cod = mhs_pdo()->query("SELECT codigo_inventario FROM equipamentos WHERE id = " . $id_equipamento)->fetchColumn();
         mhs_historico('garantia-contrato', $id, 'Equipamento ' . ($eq_cod ?: $id_equipamento), 'editar');
@@ -67,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pdo = mhs_pdo();
+mhs_ensure_garantia_doc_cols($pdo);
 $stmt = $pdo->prepare("SELECT * FROM garantias_contratos WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
@@ -147,17 +153,29 @@ include __DIR__ . '/../../includes/header.php';
       </div>
 
       <div class="mhs-form-section mt-3">
-        <div class="mhs-form-section-title"><i class="fa-solid fa-file-pdf"></i> Documento</div>
+        <div class="mhs-form-section-title"><i class="fa-solid fa-file-pdf"></i> Documentos</div>
         <div class="row g-3">
-          <div class="col-12">
-            <?php if (!empty($row->nome_ficheiro)): ?>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fa-solid fa-shield-halved text-muted me-1"></i>Documento da garantia</label>
+            <?php if (($row->garantia_ficheiro_conteudo ?? null) !== null): ?>
             <div class="mb-2">
-              <span class="badge bg-light text-dark border"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= htmlspecialchars($row->nome_ficheiro) ?></span>
-              <a href="lista.php?ficheiro=<?= (int)$row->id ?>" class="small ms-2">Descarregar atual</a>
+              <span class="badge bg-light text-dark border"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= htmlspecialchars($row->garantia_nome_ficheiro ?: 'garantia.pdf') ?></span>
+              <a href="lista.php?ficheiro=<?= (int)$row->id ?>&doc=garantia" class="small ms-2">Descarregar atual</a>
+            </div>
+            <?php endif; ?>
+            <input type="file" name="ficheiro_garantia" class="form-control" accept="application/pdf,.pdf" />
+            <div class="form-text">Deixe vazio para manter (máx. 10 MB).</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fa-solid fa-file-contract text-muted me-1"></i>Documento do contrato</label>
+            <?php if ($row->ficheiro_conteudo !== null): ?>
+            <div class="mb-2">
+              <span class="badge bg-light text-dark border"><i class="fa-solid fa-file-pdf text-danger me-1"></i><?= htmlspecialchars($row->nome_ficheiro ?: 'contrato.pdf') ?></span>
+              <a href="lista.php?ficheiro=<?= (int)$row->id ?>&doc=contrato" class="small ms-2">Descarregar atual</a>
             </div>
             <?php endif; ?>
             <input type="file" name="ficheiro" class="form-control" accept="application/pdf,.pdf" />
-            <div class="form-text">Deixe vazio para manter. Carregar um novo substitui o anterior (máx. 10 MB). Fica na base de dados.</div>
+            <div class="form-text">Deixe vazio para manter (máx. 10 MB).</div>
           </div>
         </div>
       </div>

@@ -118,6 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
 $eq = null;
 $fornecedores = [];
 $documentos = [];
+$req_total_det = 7;
+$doc_num_det = 0;
+$docs_incompletos_det = false;
 $garantia = null;
 $proxima_manutencao = null;
 $manutencao_info = null;
@@ -170,13 +173,32 @@ if ($id > 0) {
                 $contacto_at = $s ? $s->fetch() : null;
             }
 
+            $is_filho_det = !empty($eq->id_equipamento_pai);
             $documentos = $pdo->prepare("
-                SELECT * FROM documentos
+                SELECT id, tipo_documento, nome_documento, data_documento, data_validade,
+                       (ficheiro_conteudo IS NOT NULL) AS tem_ficheiro
+                FROM documentos
                 WHERE id_equipamento = ? AND eliminado_em IS NULL
                 ORDER BY data_documento DESC
             ");
             $documentos->execute([$id]);
             $documentos = $documentos->fetchAll();
+
+            // Contagem de documentos obrigatórios (principal=7 tipos, componente=3). A Garantia nunca conta.
+            $req_tipos_det = $is_filho_det
+                ? ['Manual de utilizador','Declaração de conformidade','Relatório técnico']
+                : ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico'];
+            $req_total_det = count($req_tipos_det);
+            $tipos_presentes_det = [];
+            $req_presentes_det   = [];
+            foreach ($documentos as $d) {
+                if (empty($d->tipo_documento)) continue;
+                if (empty($d->tem_ficheiro)) continue; // só conta documentos com PDF anexado
+                $tipos_presentes_det[$d->tipo_documento] = true;
+                if (in_array($d->tipo_documento, $req_tipos_det, true)) $req_presentes_det[$d->tipo_documento] = true;
+            }
+            $doc_num_det          = count($tipos_presentes_det);
+            $docs_incompletos_det = count($req_presentes_det) < $req_total_det;
 
             $garantia = $pdo->prepare("
                 SELECT * FROM garantias_contratos
@@ -224,6 +246,24 @@ if ($id > 0) {
                 ");
                 $s2->execute([$id]);
                 $mans_eq = $s2->fetchAll();
+            } catch (PDOException) {}
+
+            // Equipamento pai (se este for um componente)
+            $eq_pai = null;
+            if (!empty($eq->id_equipamento_pai)) {
+                try {
+                    $sp = $pdo->prepare("SELECT id, codigo_inventario, designacao FROM equipamentos WHERE id = ? AND eliminado_em IS NULL");
+                    $sp->execute([$eq->id_equipamento_pai]);
+                    $eq_pai = $sp->fetch();
+                } catch (PDOException) {}
+            }
+
+            // Componentes deste equipamento (filhos)
+            $componentes = [];
+            try {
+                $sc = $pdo->prepare("SELECT id, codigo_inventario, designacao, estado FROM equipamentos WHERE id_equipamento_pai = ? AND eliminado_em IS NULL ORDER BY codigo_inventario");
+                $sc->execute([$id]);
+                $componentes = $sc->fetchAll();
             } catch (PDOException) {}
         }
     } catch (PDOException) {}
@@ -327,6 +367,8 @@ include __DIR__ . '/../../includes/header.php';
     </button>
     <button class="mhs-detail-tab" data-tab="documentos">
       <i class="fa-solid fa-file-lines"></i> Documentos
+      <span class="badge <?= $docs_incompletos_det ? 'bg-warning text-dark' : 'bg-success' ?> ms-1"><?= $doc_num_det ?>/<?= $req_total_det ?></span>
+      <?php if ($docs_incompletos_det): ?><i class="fa-solid fa-triangle-exclamation text-warning ms-1" title="Faltam documentos obrigatórios"></i><?php endif; ?>
     </button>
     <button class="mhs-detail-tab" data-tab="emprestimos">
       <i class="fa-solid fa-boxes-packing"></i> Empréstimos
@@ -371,6 +413,40 @@ include __DIR__ . '/../../includes/header.php';
           <?php endif; ?>
         </div>
       </div>
+
+      <?php if ($eq_pai || !empty($componentes)): ?>
+      <div class="row g-4 mt-1">
+        <div class="col-12">
+          <?php if ($eq_pai): ?>
+          <div class="mhs-info-group">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-sitemap"></i> Equipamento principal</div>
+            <p class="mb-0">
+              Este item é um componente de
+              <a href="detalhes.php?id=<?= $eq_pai->id ?>"><strong><?= esc($eq_pai->codigo_inventario) ?> — <?= esc($eq_pai->designacao) ?></strong></a>.
+            </p>
+          </div>
+          <?php endif; ?>
+          <?php if (!empty($componentes)): ?>
+          <div class="mhs-info-group <?= $eq_pai ? 'mt-3' : '' ?>">
+            <div class="mhs-info-group-title"><i class="fa-solid fa-diagram-project"></i> Componentes / Acessórios (<?= count($componentes) ?>)</div>
+            <table class="table table-sm mb-0">
+              <thead><tr><th>Código</th><th>Designação</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+              <?php foreach ($componentes as $comp): ?>
+              <tr>
+                <td><span class="mhs-code"><?= esc($comp->codigo_inventario) ?></span></td>
+                <td><?= esc($comp->designacao) ?></td>
+                <td><?= get_estado_badge($comp->estado) ?></td>
+                <td><a href="detalhes.php?id=<?= $comp->id ?>" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+              </tr>
+              <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -398,11 +474,6 @@ include __DIR__ . '/../../includes/header.php';
   <!-- Garantia / Contrato -->
   <div class="mhs-tab-pane" id="tab-garantia">
     <div class="mhs-tab-body">
-      <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-sm btn-outline-secondary" onclick="mhsPrintSection('garantia-print-area')">
-          <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
-        </button>
-      </div>
       <div id="garantia-print-area">
         <div class="row g-4">
           <div class="col-md-5">
@@ -429,6 +500,31 @@ include __DIR__ . '/../../includes/header.php';
               <?php endif; ?>
             </div>
           </div>
+          <?php if ($garantia): ?>
+          <div class="col-md-5">
+            <div class="mhs-info-group">
+              <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documentos</div>
+              <?php $tem_garantia_pdf = ($garantia->garantia_ficheiro_conteudo ?? null) !== null;
+                    $tem_contrato_pdf = ($garantia->ficheiro_conteudo ?? null) !== null; ?>
+              <div class="d-flex flex-column gap-2">
+                <?php if ($tem_garantia_pdf): ?>
+                <a href="<?= BASE_URL ?>/private/views/garantias-contrato/lista.php?ficheiro=<?= (int)$garantia->id ?>&doc=garantia" class="btn btn-sm btn-outline-danger">
+                  <i class="fa-solid fa-shield-halved me-1"></i>Descarregar garantia
+                </a>
+                <?php else: ?>
+                <span class="text-muted small"><i class="fa-solid fa-shield-halved me-1"></i>Sem documento de garantia</span>
+                <?php endif; ?>
+                <?php if ($tem_contrato_pdf): ?>
+                <a href="<?= BASE_URL ?>/private/views/garantias-contrato/lista.php?ficheiro=<?= (int)$garantia->id ?>&doc=contrato" class="btn btn-sm btn-outline-danger">
+                  <i class="fa-solid fa-file-contract me-1"></i>Descarregar contrato
+                </a>
+                <?php else: ?>
+                <span class="text-muted small"><i class="fa-solid fa-file-contract me-1"></i>Sem documento de contrato</span>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -718,12 +814,6 @@ include __DIR__ . '/../../includes/header.php';
   <!-- Documentos -->
   <div class="mhs-tab-pane" id="tab-documentos">
     <div class="mhs-tab-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="../documentos/novo.php?id_equipamento=<?= $id ?>" class="btn btn-primary btn-sm">
-          <i class="fa-solid fa-plus me-1"></i>Adicionar documento
-        </a>
-      </div>
-
       <div id="documentos-print-area">
         <?php if (count($documentos) > 0): ?>
           <table class="table mhs-datatable mb-0">
@@ -750,9 +840,11 @@ include __DIR__ . '/../../includes/header.php';
                     <?php else: ?>—<?php endif; ?>
                   </td>
                   <td class="text-nowrap">
+                    <?php if ($doc->tem_ficheiro): ?>
                     <a href="../documentos/download.php?id=<?= (int)$doc->id ?>" class="btn btn-sm btn-outline-danger" title="Descarregar PDF">
                       <i class="fa-solid fa-file-pdf"></i>
                     </a>
+                    <?php else: ?><span class="text-muted small">—</span><?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -799,7 +891,7 @@ include __DIR__ . '/../../includes/header.php';
           <input type="hidden" name="tab" value="emprestimos">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Destino <span class="text-danger">*</span></label>
-            <select name="id_localizacao_destino" class="form-select" required>
+            <select name="id_localizacao_destino" class="form-select">
               <option value="">-- Selecione o serviço/sala --</option>
               <?php foreach ($localizacoes_all as $loc): ?>
               <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>
@@ -912,7 +1004,7 @@ include __DIR__ . '/../../includes/header.php';
           <input type="hidden" name="tab" value="movimentacoes">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Local de destino <span class="text-danger">*</span></label>
-            <select name="id_localizacao" class="form-select" required>
+            <select name="id_localizacao" class="form-select">
               <option value="">-- Selecione o serviço/sala --</option>
               <?php foreach ($localizacoes_all as $loc): ?>
               <option value="<?= $loc->id ?>"><?= htmlspecialchars($loc->servico . ($loc->sala ? ' / ' . $loc->sala : '')) ?></option>

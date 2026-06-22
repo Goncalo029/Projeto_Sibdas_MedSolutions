@@ -28,16 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = 'A data de fim deve ser posterior à data de início.';
         header('Location: novo.php'); exit;
     }
-    // Importar ficheiro PDF do contrato (guardado na base de dados, opcional)
+    // Importar ficheiros PDF (guardados na base de dados, opcionais)
     $erro_upload = null;
-    $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
-    if ($erro_upload) {
-        $_SESSION['error_message'] = $erro_upload;
-        header('Location: novo.php'); exit;
-    }
+    $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);                   // documento do contrato
+    if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header('Location: novo.php'); exit; }
+    $pdf_garantia = mhs_ler_pdf_upload('ficheiro_garantia', $erro_upload); // documento da garantia
+    if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header('Location: novo.php'); exit; }
 
     try {
-        $stmt = mhs_pdo()->prepare("INSERT INTO garantias_contratos (id_equipamento,data_inicio,data_fim,tem_contrato,tipo_contrato,entidade_responsavel,periodicidade,observacoes,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,NOW())");
+        mhs_ensure_garantia_doc_cols(mhs_pdo());
+        $stmt = mhs_pdo()->prepare("INSERT INTO garantias_contratos (id_equipamento,data_inicio,data_fim,tem_contrato,tipo_contrato,entidade_responsavel,periodicidade,observacoes,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,garantia_nome_ficheiro,garantia_ficheiro_conteudo,garantia_ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())");
         $stmt->bindValue(1, $id_equipamento, PDO::PARAM_INT);
         $stmt->bindValue(2, $data_inicio);
         $stmt->bindValue(3, $data_fim);
@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(9, $pdf['nome'] ?? null);
         $stmt->bindValue(10, $pdf['conteudo'] ?? null, $pdf ? PDO::PARAM_LOB : PDO::PARAM_NULL);
         $stmt->bindValue(11, $pdf['mime'] ?? null);
+        $stmt->bindValue(12, $pdf_garantia['nome'] ?? null);
+        $stmt->bindValue(13, $pdf_garantia['conteudo'] ?? null, $pdf_garantia ? PDO::PARAM_LOB : PDO::PARAM_NULL);
+        $stmt->bindValue(14, $pdf_garantia['mime'] ?? null);
         $stmt->execute();
         $g_id = (int)mhs_pdo()->lastInsertId();
         $eq_cod = mhs_pdo()->query("SELECT codigo_inventario FROM equipamentos WHERE id = " . $id_equipamento)->fetchColumn();
@@ -139,12 +142,17 @@ include __DIR__ . '/../../includes/header.php';
       </div>
 
       <div class="mhs-info-group mt-3">
-        <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documento <small class="fw-normal text-muted">(opcional)</small></div>
+        <div class="mhs-info-group-title"><i class="fa-solid fa-file-pdf"></i> Documentos</div>
         <div class="row g-3 mt-1">
-          <div class="col-12">
-            <label class="form-label fw-semibold">Importar PDF</label>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fa-solid fa-shield-halved text-muted me-1"></i>Documento da garantia</label>
+            <input type="file" name="ficheiro_garantia" class="form-control" accept="application/pdf,.pdf" />
+            <div class="form-text">PDF da garantia (máx. 10 MB).</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fa-solid fa-file-contract text-muted me-1"></i>Documento do contrato</label>
             <input type="file" name="ficheiro" class="form-control" accept="application/pdf,.pdf" />
-            <div class="form-text">Carregue o contrato/garantia em PDF (máx. 10 MB). Fica guardado na base de dados.</div>
+            <div class="form-text">PDF do contrato (máx. 10 MB).</div>
           </div>
         </div>
       </div>

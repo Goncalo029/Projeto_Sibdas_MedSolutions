@@ -86,19 +86,28 @@ function get_notificacoes(): array {
         }
 
         // Documentos com data de validade nos próximos 30 dias
-        $row = $pdo->query(
-            "SELECT COUNT(*) AS total FROM documentos
+        $docs_val = $pdo->query(
+            "SELECT tipo_documento FROM documentos
              WHERE data_validade BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
              AND ativo = 1 AND eliminado_em IS NULL"
-        )->fetch();
-        if ((int)($row->total ?? 0) > 0) {
-            $n = (int)$row->total;
+        )->fetchAll();
+        $nv = count($docs_val);
+        if ($nv > 0) {
+            $tipos_distintos = array_values(array_unique(array_map(fn($r) => (string)$r->tipo_documento, $docs_val)));
+            if ($nv === 1) {
+                // Um só documento — nomear o tipo (Garantia, Certificado de calibração, …)
+                $label = ($tipos_distintos[0] ?: 'Documento') . ' com validade próxima';
+            } elseif (count($tipos_distintos) === 1) {
+                $label = $nv . ' documentos de ' . $tipos_distintos[0] . ' com validade próxima';
+            } else {
+                $label = $nv . ' documentos com validade próxima';
+            }
             $notifs[] = [
                 'icon'     => 'fa-file-lines',
                 'color'    => 'warning',
-                'label'    => $n . ' documento' . ($n > 1 ? 's' : '') . ' com validade próxima',
-                'link'     => BASE_URL . '/private/views/documentos/lista.php',
-                'count'    => $n,
+                'label'    => $label,
+                'link'     => BASE_URL . '/private/views/documentos/lista.php?validade=proxima',
+                'count'    => $nv,
                 'priority' => 5,
             ];
         }
@@ -134,6 +143,38 @@ function get_notificacoes(): array {
                 'link'     => BASE_URL . '/private/views/equipamentos/lista.php?estado=Avariado',
                 'count'    => $n,
                 'priority' => 7,
+            ];
+        }
+
+        // Equipamentos com documentação incompleta (principal=7, componente=3)
+        $tipos_7 = "'Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico'";
+        $tipos_3 = "'Manual de utilizador','Declaração de conformidade','Relatório técnico'";
+        $rows_inc = $pdo->query("
+            SELECT e.id FROM equipamentos e
+            WHERE e.eliminado_em IS NULL AND e.id_equipamento_pai IS NULL AND e.ativo=1
+            AND (SELECT COUNT(DISTINCT d.tipo_documento) FROM documentos d
+                 WHERE d.id_equipamento=e.id AND d.eliminado_em IS NULL AND d.ficheiro_conteudo IS NOT NULL
+                 AND d.tipo_documento IN ($tipos_7)) < 7
+            UNION ALL
+            SELECT e.id FROM equipamentos e
+            WHERE e.eliminado_em IS NULL AND e.id_equipamento_pai IS NOT NULL AND e.ativo=1
+            AND (SELECT COUNT(DISTINCT d.tipo_documento) FROM documentos d
+                 WHERE d.id_equipamento=e.id AND d.eliminado_em IS NULL AND d.ficheiro_conteudo IS NOT NULL
+                 AND d.tipo_documento IN ($tipos_3)) < 3
+        ")->fetchAll();
+        $n = count($rows_inc);
+        if ($n > 0) {
+            // 1 equipamento → vai direto à ficha na aba Documentos; vários → lista filtrada
+            $link = $n === 1
+                ? BASE_URL . '/private/views/equipamentos/detalhes.php?id=' . (int)$rows_inc[0]->id . '&tab=documentos'
+                : BASE_URL . '/private/views/equipamentos/lista.php?filtro=docs_incompletos';
+            $notifs[] = [
+                'icon'     => 'fa-file-circle-exclamation',
+                'color'    => 'warning',
+                'label'    => $n . ' equipamento' . ($n > 1 ? 's' : '') . ' com documentação incompleta',
+                'link'     => $link,
+                'count'    => $n,
+                'priority' => 5,
             ];
         }
 
