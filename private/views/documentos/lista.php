@@ -1,12 +1,21 @@
 <?php
+/**
+ * Lista de documentos
+ * Mostra todos os documentos associados a equipamentos.
+ * Permite ver, descarregar, editar e eliminar cada documento.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
 $page_title = 'Documentos - Lista';
 $documentos = [];
-$erro_bd = '';
+$erro_bd    = '';
 
+// ─── Carregar documentos com o equipamento associado ─────────────────────────
 try {
     $documentos = mhs_pdo()->query("
         SELECT d.id, d.tipo_documento, d.nome_documento, d.data_documento, d.data_validade, d.nome_ficheiro,

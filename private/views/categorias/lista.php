@@ -1,12 +1,21 @@
 <?php
+/**
+ * Lista de categorias
+ * Mostra todas as categorias disponíveis para classificar os equipamentos.
+ * Apenas administradores podem criar, editar ou eliminar categorias.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
 $page_title = 'Categorias - Lista';
 $categorias = [];
-$erro_bd = '';
+$erro_bd    = '';
 
+// ─── Carregar todas as categorias da base de dados ───────────────────────────
 try {
     $categorias = mhs_pdo()->query("
         SELECT id, nome, descricao

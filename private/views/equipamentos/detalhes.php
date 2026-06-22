@@ -1,11 +1,21 @@
 <?php
+/**
+ * Detalhes do equipamento
+ * Mostra toda a informação de um equipamento em abas: ficha técnica, aquisição,
+ * localização, assistência técnica, documentos, garantias e histórico de movimentações.
+ * Permite também fazer ações rápidas como mudar de localização ou registar manutenção.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID do equipamento — se não for válido, redirecionar para a lista
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// ── Processar ações dos formulários da própria ficha (sem ficheiros separados) ──
+// ─── Processar ações dos formulários da própria ficha ────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     $accao = $_POST['accao'] ?? '';
     $tab   = $_POST['tab'] ?? 'ficha';

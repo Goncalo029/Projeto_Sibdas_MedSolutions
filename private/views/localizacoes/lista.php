@@ -1,12 +1,21 @@
 <?php
+/**
+ * Lista de localizações
+ * Mostra todos os serviços e salas onde os equipamentos podem estar instalados.
+ * Cada localização tem edifício, piso, serviço e sala.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
-$page_title = 'Localizacoes - Lista';
+$page_title   = 'Localizacoes - Lista';
 $localizacoes = [];
-$erro_bd = '';
+$erro_bd      = '';
 
+// ─── Carregar todas as localizações ordenadas por edifício e serviço ─────────
 try {
     $localizacoes = mhs_pdo()->query("
         SELECT id, edificio, piso, servico, sala

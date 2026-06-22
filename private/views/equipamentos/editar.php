@@ -1,10 +1,20 @@
 <?php
+/**
+ * Editar equipamento
+ * Formulário para alterar os dados de um equipamento já existente.
+ * Carrega os dados atuais da base de dados e permite atualizá-los.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID do equipamento a editar — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $codigo_inventario = trim($_POST['codigo_inventario'] ?? '');
     $designacao        = trim($_POST['designacao'] ?? '');

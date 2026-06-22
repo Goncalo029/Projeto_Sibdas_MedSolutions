@@ -1,6 +1,14 @@
 <?php
+/**
+ * Lista de garantias e contratos
+ * Mostra todas as garantias e contratos de manutenção associados a equipamentos.
+ * Permite descarregar os ficheiros PDF e exportar cada registo em PDF.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
 // ── Descarregar o ficheiro PDF importado (da base de dados) ──

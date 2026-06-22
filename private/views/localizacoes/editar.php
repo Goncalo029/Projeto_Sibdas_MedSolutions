@@ -1,10 +1,19 @@
 <?php
+/**
+ * Editar localização
+ * Permite alterar os dados de uma localização existente (edifício, piso, serviço, sala).
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID da localização — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $edificio    = trim($_POST['edificio'] ?? '');
     $piso        = trim($_POST['piso'] ?? '');

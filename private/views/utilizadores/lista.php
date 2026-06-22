@@ -1,13 +1,23 @@
 <?php
+/**
+ * Lista de utilizadores
+ * Página exclusiva para administradores.
+ * Mostra todos os utilizadores do sistema com o seu perfil e último acesso.
+ * Os emails estão encriptados na base de dados com AES e são desencriptados aqui.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar autenticação e que é administrador
 redirect_if_not_logged();
-require_admin(); // gestão de utilizadores apenas para administradores
+require_admin();
 
-$page_title = 'Gestao de Utilizadores';
+$page_title   = 'Gestao de Utilizadores';
 $utilizadores = [];
-$erro_bd = '';
+$erro_bd      = '';
 
+// ─── Carregar utilizadores (emails desencriptados com AES) ───────────────────
 try {
     $stmt = mhs_pdo()->prepare("
         SELECT id, AES_DECRYPT(nome, :chave) AS email, perfil AS profile, ultimo_acesso, criado_em

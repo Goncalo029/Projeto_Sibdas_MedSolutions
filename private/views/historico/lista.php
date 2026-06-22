@@ -1,9 +1,16 @@
 <?php
+/**
+ * Histórico de alterações (log de eventos)
+ * Página exclusiva para administradores.
+ * Regista todas as ações feitas no sistema: criações, edições, eliminações e logins.
+ * Permite filtrar por tipo de entidade e tipo de ação.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
-redirect_if_not_logged();
 
-// Apenas administradores
+// Verificar autenticação e que é administrador
+redirect_if_not_logged();
 if (($_SESSION['profile'] ?? '') !== 'admin') {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
@@ -12,6 +19,7 @@ if (($_SESSION['profile'] ?? '') !== 'admin') {
 $registos = [];
 $erro_bd  = '';
 
+// ─── Filtros opcionais por entidade e ação ───────────────────────────────────
 $f_entidade = trim($_GET['entidade'] ?? '');
 $f_acao     = trim($_GET['acao'] ?? '');
 
@@ -20,6 +28,7 @@ $params = [];
 if ($f_entidade !== '') { $where .= ' AND entidade = ?'; $params[] = $f_entidade; }
 if ($f_acao !== '')     { $where .= ' AND acao = ?';     $params[] = $f_acao; }
 
+// ─── Carregar os últimos 500 registos de log ─────────────────────────────────
 try {
     $stmt = mhs_pdo()->prepare("
         SELECT id, entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em

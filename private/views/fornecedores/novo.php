@@ -1,7 +1,16 @@
 <?php
+/**
+ * Novo fornecedor
+ * Formulário para registar um fornecedor novo.
+ * Inclui dados gerais (nome, NIF, contacto) e pessoa de contacto de assistência técnica.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome'] ?? '');
     $nif             = trim($_POST['nif'] ?? '');

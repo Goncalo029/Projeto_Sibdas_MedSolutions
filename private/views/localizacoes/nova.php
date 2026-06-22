@@ -1,7 +1,16 @@
 <?php
+/**
+ * Nova localização
+ * Formulário para registar um novo serviço/sala onde os equipamentos podem estar instalados.
+ * Os serviços disponíveis são predefinidos numa lista (serviços hospitalares comuns).
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Lista de serviços hospitalares disponíveis para selecionar
 $SERVICOS = ['Urgência','UCI','UCIP','Bloco Operatório','Cardiologia','Pediatria','Ortopedia',
              'Oncologia','Radiologia','Neurologia','Psiquiatria','Ginecologia','Obstetrícia',
              'Neonatologia','Oftalmologia','Otorrinolaringologia','Gastrenterologia','Pneumologia',

@@ -1,7 +1,15 @@
 <?php
+/**
+ * Nova categoria
+ * Formulário simples para criar uma nova categoria de equipamentos.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome      = trim($_POST['nome'] ?? '');
     $descricao = trim($_POST['descricao'] ?? '');

@@ -1,10 +1,19 @@
 <?php
+/**
+ * Editar documento
+ * Permite alterar os metadados de um documento existente e substituir o ficheiro PDF.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID do documento — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_equipamento = (int)($_POST['id_equipamento'] ?? 0);
     $tipo_documento = trim($_POST['tipo_documento'] ?? '');

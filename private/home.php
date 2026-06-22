@@ -1,8 +1,19 @@
 <?php
+/**
+ * Dashboard (painel principal)
+ * Página inicial após o login. Mostra um resumo do estado do sistema:
+ * - Contadores rápidos (equipamentos, garantias expiradas, sem documentação, etc.)
+ * - Gráficos com distribuição por estado, categoria, localização, documentos e fornecedores
+ * - Os gráficos são clicáveis e redirecionam para as listas filtradas
+ */
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Ligação à base de dados (usando MySQLi para as queries do dashboard) ────
 try {
     $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT);
     if ($mysqli->connect_error) throw new \RuntimeException('Erro na conexão: ' . $mysqli->connect_error);
@@ -11,41 +22,60 @@ try {
     throw new \RuntimeException($e->getMessage(), 0, $e);
 }
 
-$equipamentos_estado   = [];
+// Arrays para guardar os dados de cada gráfico
+$equipamentos_estado    = [];
 $equipamentos_categoria = [];
-$documentos_tipo       = [];
-$fornecedores_uso      = [];
-$localizacoes_uso      = [];
-$garantias_vencimento  = [];
+$documentos_tipo        = [];
+$fornecedores_uso       = [];
+$localizacoes_uso       = [];
+$garantias_vencimento   = [];
 
+// ─── Dados para os gráficos ───────────────────────────────────────────────────
+
+// Equipamentos por estado (Ativo, Em manutenção, Inativo, etc.)
 $r = $mysqli->query("SELECT estado, COUNT(*) as total FROM equipamentos GROUP BY estado ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $equipamentos_estado[] = $row;
 
+// Equipamentos por categoria
 $r = $mysqli->query("SELECT c.id, c.nome, COUNT(e.id) as total FROM categorias c LEFT JOIN equipamentos e ON c.id = e.id_categoria GROUP BY c.id, c.nome ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $equipamentos_categoria[] = $row;
 
+// Documentos por tipo (técnicos só veem documentos que não sejam contratos/garantias)
 $_dash_profile = $_SESSION['profile'] ?? '';
 $_doc_where = $_dash_profile === 'admin' ? '' : "WHERE tipo_documento NOT IN ('Contrato','Garantia')";
 $r = $mysqli->query("SELECT tipo_documento as tipo, COUNT(*) as total FROM documentos $_doc_where GROUP BY tipo_documento ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $documentos_tipo[] = $row;
 
+// Top fornecedores com mais equipamentos associados
 $r = $mysqli->query("SELECT f.nome, COUNT(ef.id_equipamento) as total FROM fornecedores f LEFT JOIN equipamentos_fornecedores ef ON f.id = ef.id_fornecedor GROUP BY f.id, f.nome ORDER BY total DESC LIMIT 8");
 while ($row = $r->fetch_assoc()) $fornecedores_uso[] = $row;
 
+// Localizações com mais equipamentos instalados
 $r = $mysqli->query("SELECT l.id, CONCAT(l.servico, IF(l.sala IS NOT NULL AND l.sala != '', CONCAT(' · ', l.sala), '')) as nome, COUNT(e.id) as total FROM localizacoes l LEFT JOIN equipamentos e ON l.id = e.id_localizacao GROUP BY l.id ORDER BY total DESC LIMIT 6");
 while ($row = $r->fetch_assoc()) $localizacoes_uso[] = $row;
 
+// Garantias a vencer por mês (só para administradores)
 if ($_dash_profile === 'admin') {
     $r = $mysqli->query("SELECT DATE_FORMAT(data_fim,'%Y-%m') as mes, COUNT(*) as total FROM garantias_contratos WHERE data_fim IS NOT NULL GROUP BY DATE_FORMAT(data_fim,'%Y-%m') ORDER BY mes ASC LIMIT 12");
     while ($row = $r->fetch_assoc()) $garantias_vencimento[] = $row;
 }
 
-$stats_equipamentos        = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_ativos              = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Ativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_manutencao          = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Em manutenção' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_inativos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Inativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
-$stats_sem_doc             = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos e WHERE e.ativo=1 AND e.eliminado_em IS NULL AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento=e.id AND d.ativo=1 AND d.eliminado_em IS NULL)")->fetch_assoc()['t'];
-$stats_criticos            = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade='Alta' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+// ─── Contadores para os cartões de resumo (KPIs) ─────────────────────────────
+
+// Total de equipamentos ativos no sistema
+$stats_equipamentos = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+// Equipamentos com estado "Ativo"
+$stats_ativos       = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Ativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+// Equipamentos em manutenção
+$stats_manutencao   = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Em manutenção' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+// Equipamentos inativos
+$stats_inativos     = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE estado='Inativo' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+// Equipamentos sem nenhum documento associado
+$stats_sem_doc      = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos e WHERE e.ativo=1 AND e.eliminado_em IS NULL AND NOT EXISTS (SELECT 1 FROM documentos d WHERE d.id_equipamento=e.id AND d.ativo=1 AND d.eliminado_em IS NULL)")->fetch_assoc()['t'];
+// Equipamentos com criticidade alta
+$stats_criticos     = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE criticidade='Alta' AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
+
+// Garantias expiradas e ativas (só visíveis para administradores)
 if ($_dash_profile === 'admin') {
     $stats_garantias_expiradas = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim < CURDATE() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
     $stats_garantias           = (int)$mysqli->query("SELECT COUNT(*) as t FROM garantias_contratos WHERE data_fim > NOW() AND ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];

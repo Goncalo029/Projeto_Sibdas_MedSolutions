@@ -1,7 +1,16 @@
 <?php
+/**
+ * Nova garantia / contrato
+ * Permite associar uma garantia ou contrato de manutenção a um equipamento.
+ * É possível também anexar o documento PDF do contrato.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_equipamento       = (int)($_POST['id_equipamento'] ?? 0);
     $data_inicio          = trim($_POST['data_inicio'] ?? '') ?: null;

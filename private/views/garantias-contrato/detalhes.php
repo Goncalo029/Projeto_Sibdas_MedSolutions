@@ -1,8 +1,17 @@
 <?php
+/**
+ * Detalhes da garantia / contrato
+ * Mostra toda a informação de uma garantia ou contrato de manutenção.
+ * Permite exportar os dados em PDF e descarregar o documento anexado.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID da garantia — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 

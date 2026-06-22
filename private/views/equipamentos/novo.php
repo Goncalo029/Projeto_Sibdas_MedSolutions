@@ -1,7 +1,17 @@
 <?php
+/**
+ * Novo equipamento
+ * Formulário para registar um equipamento novo no sistema.
+ * Inclui dados gerais, aquisição, localização, assistência técnica e documentos.
+ * Os campos de marca, modelo e fabricante têm sugestões automáticas da base de dados.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $codigo_inventario = trim($_POST['codigo_inventario'] ?? '');
     $designacao        = trim($_POST['designacao'] ?? '');

@@ -1,9 +1,18 @@
 <?php
+/**
+ * Lista de equipamentos
+ * Página principal de gestão de equipamentos.
+ * Permite filtrar por estado, criticidade, categoria, localização e outros critérios.
+ * Inclui ações rápidas (ativar, concluir manutenção) e exportação em CSV e PDF.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
-// Ações rápidas a partir da lista (sem ficheiro separado)
+// ─── Ações rápidas a partir da lista (sem ficheiro separado) ─────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['accao'] ?? ''), ['concluir_manutencao', 'ativar'], true)) {
     $eq_id  = (int)($_POST['id_equipamento'] ?? 0);
     $accao  = $_POST['accao'];

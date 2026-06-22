@@ -1,8 +1,17 @@
 <?php
+/**
+ * Detalhes do documento
+ * Mostra a informação completa de um documento associado a um equipamento.
+ * Permite descarregar o ficheiro PDF e aceder à edição do documento.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID do documento — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 

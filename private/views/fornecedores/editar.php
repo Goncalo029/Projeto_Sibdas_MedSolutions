@@ -1,10 +1,20 @@
 <?php
+/**
+ * Editar fornecedor
+ * Permite alterar os dados de um fornecedor existente.
+ * Carrega os dados atuais da base de dados e atualiza após submissão do formulário.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// Obter o ID do fornecedor — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome'] ?? '');
     $nif             = trim($_POST['nif'] ?? '');

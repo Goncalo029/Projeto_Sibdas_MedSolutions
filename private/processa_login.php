@@ -1,25 +1,28 @@
 <?php
+/**
+ * Processamento do login
+ * Recebe os dados do formulário de login, valida as credenciais
+ * e cria a sessão do utilizador caso estejam corretas.
+ */
+
 require_once __DIR__ . '/includes/funcoes.php';
 
+// Garantir que a sessão está iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Só aceita POST
+// Só aceitar pedidos POST (não permitir acesso direto via URL)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 
-// --------------------------------------------------------------------
-// RECOLHA
-// --------------------------------------------------------------------
-$email = trim($_POST['text_username'] ?? '');
+// ─── Recolher dados do formulário ────────────────────────────────────────────
+$email    = trim($_POST['text_username'] ?? '');
 $password = trim($_POST['text_password'] ?? '');
 
-// --------------------------------------------------------------------
-// VALIDAÇÃO
-// --------------------------------------------------------------------
+// ─── Validação básica dos campos ─────────────────────────────────────────────
 $validation_errors = [];
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -32,16 +35,16 @@ if (strlen($password) < 6 || strlen($password) > 50) {
     $validation_errors[] = 'A password deve ter entre 6 e 50 caracteres.';
 }
 
+// Se existirem erros de validação, redirecionar para o login com os erros
 if (!empty($validation_errors)) {
     $_SESSION['validation_errors'] = $validation_errors;
     echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 
-// --------------------------------------------------------------------
-// AUTENTICAÇÃO
-// --------------------------------------------------------------------
+// ─── Autenticação na base de dados ───────────────────────────────────────────
 try {
+    // Criar ligação à base de dados
     $pdo = new PDO(
         "mysql:host=" . MYSQL_HOST . ";port=" . MYSQL_PORT . ";dbname=" . MYSQL_DATABASE . ";charset=utf8mb4",
         MYSQL_USERNAME,
@@ -49,10 +52,10 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    // Verificar se a tabela utilizadores existe
+    // Verificar se a tabela de utilizadores existe
     $tableExistsStmt = $pdo->query("
         SELECT COUNT(*) FROM information_schema.TABLES
-        WHERE TABLE_SCHEMA = '" . MYSQL_DATABASE . "' 
+        WHERE TABLE_SCHEMA = '" . MYSQL_DATABASE . "'
         AND TABLE_NAME = 'utilizadores'
     ");
     $tableExists = $tableExistsStmt->fetchColumn() > 0;
@@ -63,7 +66,7 @@ try {
         exit;
     }
 
-    // Procurar utilizador (utilizadores) - usando AES_DECRYPT na BD
+    // Procurar o utilizador pelo email (o email está encriptado na BD com AES)
     $stmt = $pdo->prepare("
         SELECT id, nome, senha, perfil AS profile
         FROM utilizadores
@@ -76,35 +79,61 @@ try {
     ]);
     $agent = $stmt->fetch(PDO::FETCH_OBJ);
 
-    // Validar password (usar password_verify se estiver com hash, ou comparação direta se plaintext)
+    // Verificar se a password está correta usando password_verify (hash bcrypt)
     $password_valid = false;
     if ($agent) {
-        // Se a password está armazenada com hash (recomendado)
         if (password_verify($password, $agent->senha)) {
             $password_valid = true;
         }
-        // Fallback: comparação direta (usar apenas em desenvolvimento)
+        // Compatibilidade com passwords em texto simples (apenas em desenvolvimento)
         elseif ($password === $agent->senha) {
             $password_valid = true;
         }
     }
 
+    // ─── Registo de tentativa de autenticação ────────────────────────────────
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+
     if (!$agent || !$password_valid) {
+        // Guardar na base de dados a tentativa falhada
+        $pdo->prepare(
+            "INSERT INTO historico_alteracoes (entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em)
+             VALUES ('autenticacao', NULL, ?, 'login_falha', ?, ?, NOW())"
+        )->execute([
+            $email,
+            'Tentativa de login falhada — IP: ' . $ip,
+            $email
+        ]);
+
         $_SESSION['server_error'] = 'Credenciais inválidas. Tente novamente.';
         echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
         exit;
     }
 
-    // Atualizar último login
+    //  Login bem-sucedido
+
+    // Atualizar data/hora do último acesso do utilizador
     $pdo->prepare("UPDATE utilizadores SET ultimo_acesso = NOW() WHERE id = ?")
         ->execute([$agent->id]);
 
-    // Guardar sessão
-    $_SESSION['user_id'] = $agent->id;
-    $_SESSION['user_email'] = $email;
-    $_SESSION['profile'] = $agent->profile;
-    $_SESSION['logged_in'] = true;
+    // Guardar na base de dados que o utilizador fez login com sucesso
+    $pdo->prepare(
+        "INSERT INTO historico_alteracoes (entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em)
+         VALUES ('autenticacao', ?, ?, 'login', ?, ?, NOW())"
+    )->execute([
+        $agent->id,
+        $email,
+        'Login bem-sucedido — IP: ' . $ip,
+        $email
+    ]);
 
+    // Guardar os dados do utilizador na sessão
+    $_SESSION['user_id']    = $agent->id;
+    $_SESSION['user_email'] = $email;
+    $_SESSION['profile']    = $agent->profile;
+    $_SESSION['logged_in']  = true;
+
+    // Redirecionar para o painel principal
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
 

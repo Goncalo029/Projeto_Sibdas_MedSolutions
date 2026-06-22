@@ -1,9 +1,19 @@
 <?php
+/**
+ * Editar utilizador
+ * Página exclusiva para administradores.
+ * Permite alterar o perfil e a password de um utilizador existente.
+ * A nova password, se fornecida, é guardada com hash bcrypt.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar autenticação e que é administrador
 redirect_if_not_logged();
 require_admin();
 
+// Obter o ID do utilizador — se não existir, voltar à lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 

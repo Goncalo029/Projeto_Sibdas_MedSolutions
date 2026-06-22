@@ -1,12 +1,21 @@
 <?php
+/**
+ * Lista de fornecedores
+ * Mostra todos os fornecedores registados no sistema numa tabela com pesquisa.
+ * Permite aceder ao detalhe, editar ou eliminar cada fornecedor.
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
-$page_title = 'Fornecedores - Lista';
+$page_title   = 'Fornecedores - Lista';
 $fornecedores = [];
-$erro_bd = '';
+$erro_bd      = '';
 
+// ─── Carregar todos os fornecedores da base de dados ─────────────────────────
 try {
     $fornecedores = mhs_pdo()->query("
         SELECT id, nome, nif, tipo_fornecedor, telefone, email

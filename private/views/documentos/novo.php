@@ -1,7 +1,16 @@
 <?php
+/**
+ * Novo documento
+ * Permite associar um documento (PDF) a um equipamento.
+ * O ficheiro é guardado diretamente na base de dados (coluna BLOB).
+ */
+
 require_once __DIR__ . '/../../includes/funcoes.php';
+
+// Verificar se o utilizador está autenticado
 redirect_if_not_logged();
 
+// ─── Processar o formulário quando é submetido ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_equipamento = (int)($_POST['id_equipamento'] ?? 0);
     $tipo_documento = trim($_POST['tipo_documento'] ?? '');
