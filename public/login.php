@@ -37,7 +37,7 @@ $css_ver = @filemtime(__DIR__ . '/assets/css/medsolutions.css') ?: time();
 
     <main class="mhs-auth-main">
         <div class="mhs-auth-back-top">
-            <a class="mhs-auth-back" href="index.php">
+            <a class="mhs-auth-back-link" href="index.php">
                 <i class="fa-solid fa-arrow-left"></i> Voltar ao website
             </a>
         </div>
@@ -48,6 +48,7 @@ $css_ver = @filemtime(__DIR__ . '/assets/css/medsolutions.css') ?: time();
                 </span>
                 <div>
                     <strong>MedSolutions</strong>
+                    <span>Gestão de equipamentos médicos</span>
                 </div>
             </div>
 
@@ -98,8 +99,12 @@ $css_ver = @filemtime(__DIR__ . '/assets/css/medsolutions.css') ?: time();
                     <span class="mhs-auth-demo-line"></span>
                 </div>
                 <div class="mhs-auth-demo-btns">
-                    <button type="button" onclick="fillDemo('admin@hospital.pt','admin123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--admin">Admin</button>
-                    <button type="button" onclick="fillDemo('tecnico@hospital.pt','tecnico123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--tecnico">Técnico</button>
+                    <button type="button" onclick="fillDemo('admin@hospital.pt','admin123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--admin">
+                        <i class="fa-solid fa-user-shield"></i> Admin
+                    </button>
+                    <button type="button" onclick="fillDemo('tecnico@hospital.pt','tecnico123')" class="mhs-auth-demo-btn mhs-auth-demo-btn--tecnico">
+                        <i class="fa-solid fa-user-gear"></i> Técnico
+                    </button>
                 </div>
             </div>
 

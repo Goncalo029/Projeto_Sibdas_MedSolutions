@@ -36,6 +36,8 @@ function mhs_pdo() {
             [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                // reaproveita a ligacao entre paginas (a BD e remota, abrir ligacao nova e lento)
+                PDO::ATTR_PERSISTENT => true,
             ]
         );
     }

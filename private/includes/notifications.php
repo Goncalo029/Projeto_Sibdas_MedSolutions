@@ -8,6 +8,12 @@ function get_notificacoes(): array {
         return [];
     }
 
+    // guarda o resultado na sessao por 60s para nao correr ~10 queries em cada pagina (a BD e remota)
+    if (isset($_SESSION['_notif_cache'], $_SESSION['_notif_cache_ts'])
+        && (time() - $_SESSION['_notif_cache_ts']) < 60) {
+        return $_SESSION['_notif_cache'];
+    }
+
     $notifs = [];
 
     try {
@@ -205,6 +211,10 @@ function get_notificacoes(): array {
 
     // Ordenar por prioridade
     usort($notifs, fn($a, $b) => $a['priority'] <=> $b['priority']);
+
+    // guarda em cache para os proximos cliques nao repetirem as queries
+    $_SESSION['_notif_cache']    = $notifs;
+    $_SESSION['_notif_cache_ts'] = time();
 
     return $notifs;
 }
