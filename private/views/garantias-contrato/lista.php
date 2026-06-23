@@ -133,6 +133,25 @@ try {
     $erro_bd = 'Nao foi possivel carregar garantias e contratos.';
 }
 
+// ─── Exportação CSV ──────────────────────────────────────────────────────────
+if (($_GET['export'] ?? '') === 'csv' && empty($erro_bd)) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="garantias_contratos_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputcsv($out, ['Equipamento', 'Início', 'Fim', 'Tem contrato', 'Tipo', 'Entidade']);
+    foreach ($garantias as $g) {
+        fputcsv($out, [
+            $g->codigo_inventario . ' - ' . $g->designacao,
+            $g->data_inicio, $g->data_fim,
+            $g->tem_contrato ? 'Sim' : 'Não',
+            $g->tipo_contrato, $g->entidade_responsavel,
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -159,7 +178,11 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-label">Lista de Garantias e Contratos</span>
       <span class="mhs-table-toolbar-count"><?= count($garantias) ?> registos</span>
     </div>
-    <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Nova Garantia</a>
+    <div class="d-flex gap-2">
+      <?php $qs_exp = http_build_query(array_filter(['export' => 'csv', 'filtro' => $f_filtro, 'vence' => $f_vence])); ?>
+      <a href="?<?= esc($qs_exp) ?>" class="btn btn-outline-secondary mhs-table-toolbar-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</a>
+      <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Nova Garantia</a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">

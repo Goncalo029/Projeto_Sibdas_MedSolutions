@@ -47,6 +47,9 @@ $profile_label = match($profile) {
     default   => ucfirst($profile)
 };
 $iniciais = strtoupper(mb_substr($user_email, 0, 2, 'UTF-8'));
+$nome_display = ucfirst(strstr($user_email, '@', true) ?: $user_email);
+$ultimo_acesso_fmt = $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—';
+$membro_desde_fmt  = $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—';
 
 $page_title = 'Meu Perfil';
 include __DIR__ . '/../../includes/header.php';
@@ -72,32 +75,18 @@ include __DIR__ . '/../../includes/header.php';
   </div>
 </div>
 
-<!-- Resumo do perfil -->
-<div class="mhs-detail-summary card mhs-data-card mb-4">
-  <div class="mhs-detail-summary-inner" style="align-items:center">
-    <div class="mhs-detail-summary-item" style="flex-direction:row;align-items:center;gap:14px">
-      <span style="width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#1d4ed8,#0284c7);color:#fff;font-weight:800;font-size:1.1rem;letter-spacing:.02em;flex-shrink:0"><?= esc($iniciais) ?></span>
-      <span>
-        <span class="mhs-detail-summary-label">Sessão iniciada como</span>
-        <span class="mhs-detail-summary-val" style="font-size:1rem"><?= esc($user_email) ?></span>
-      </span>
+<!-- Hero do perfil -->
+<div class="mhs-profile-hero">
+  <div class="mhs-profile-hero-inner">
+    <span class="mhs-profile-avatar"><?= esc($iniciais) ?></span>
+    <div class="mhs-profile-id">
+      <h2><?= esc($nome_display) ?></h2>
+      <span class="email"><i class="fa-solid fa-envelope me-1"></i><?= esc($user_email) ?></span>
+      <span class="role"><i class="fa-solid <?= $profile === 'admin' ? 'fa-user-shield' : 'fa-user-gear' ?>"></i> <?= esc($profile_label) ?></span>
     </div>
-    <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item">
-      <span class="mhs-detail-summary-label">Perfil</span>
-      <span class="mhs-detail-summary-val">
-        <span class="badge <?= $profile === 'admin' ? 'bg-danger' : 'bg-primary' ?>"><?= esc($profile_label) ?></span>
-      </span>
-    </div>
-    <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item">
-      <span class="mhs-detail-summary-label">Último acesso</span>
-      <span class="mhs-detail-summary-val"><?= $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—' ?></span>
-    </div>
-    <div class="mhs-detail-summary-sep"></div>
-    <div class="mhs-detail-summary-item">
-      <span class="mhs-detail-summary-label">Membro desde</span>
-      <span class="mhs-detail-summary-val"><?= $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—' ?></span>
+    <div class="mhs-profile-stats">
+      <div class="mhs-profile-stat"><span class="k">Último acesso</span><span class="v"><?= esc($ultimo_acesso_fmt) ?></span></div>
+      <div class="mhs-profile-stat"><span class="k">Membro desde</span><span class="v"><?= esc($membro_desde_fmt) ?></span></div>
     </div>
   </div>
 </div>
@@ -105,16 +94,24 @@ include __DIR__ . '/../../includes/header.php';
 <div class="row g-4">
   <!-- Informações da conta -->
   <div class="col-lg-6">
-    <div class="card mhs-data-card h-100">
-      <div class="mhs-tab-body">
-        <div class="mhs-info-group">
-          <div class="mhs-info-group-title"><i class="fa-solid fa-id-card"></i> Informações da Conta</div>
-          <dl class="mhs-info-dl">
-            <dt>Email</dt><dd><?= esc($user_email) ?></dd>
-            <dt>Perfil</dt><dd><span class="badge <?= $profile === 'admin' ? 'bg-danger' : 'bg-primary' ?>"><?= esc($profile_label) ?></span></dd>
-            <dt>Último acesso</dt><dd><?= $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—' ?></dd>
-            <dt>Membro desde</dt><dd><?= $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—' ?></dd>
-          </dl>
+    <div class="mhs-profile-card">
+      <div class="mhs-profile-card-head"><span class="chip"><i class="fa-solid fa-id-card"></i></span> Informações da Conta</div>
+      <div class="mhs-profile-card-body">
+        <div class="mhs-profile-info-row">
+          <span class="ico"><i class="fa-solid fa-envelope"></i></span>
+          <span><span class="k">Email</span><span class="v"><?= esc($user_email) ?></span></span>
+        </div>
+        <div class="mhs-profile-info-row">
+          <span class="ico"><i class="fa-solid <?= $profile === 'admin' ? 'fa-user-shield' : 'fa-user-gear' ?>"></i></span>
+          <span><span class="k">Perfil</span><span class="v"><span class="badge <?= $profile === 'admin' ? 'bg-danger' : 'bg-primary' ?>"><?= esc($profile_label) ?></span></span></span>
+        </div>
+        <div class="mhs-profile-info-row">
+          <span class="ico"><i class="fa-solid fa-clock"></i></span>
+          <span><span class="k">Último acesso</span><span class="v"><?= esc($ultimo_acesso_fmt) ?></span></span>
+        </div>
+        <div class="mhs-profile-info-row">
+          <span class="ico"><i class="fa-solid fa-calendar-check"></i></span>
+          <span><span class="k">Membro desde</span><span class="v"><?= esc($membro_desde_fmt) ?></span></span>
         </div>
       </div>
     </div>
@@ -122,28 +119,38 @@ include __DIR__ . '/../../includes/header.php';
 
   <!-- Alterar password -->
   <div class="col-lg-6">
-    <div class="card mhs-data-card h-100">
-      <div class="mhs-tab-body">
-        <div class="mhs-info-group">
-          <div class="mhs-info-group-title"><i class="fa-solid fa-lock"></i> Alterar Password</div>
-          <form method="post" action="perfil.php" class="mt-2">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Password Atual <span class="text-danger">*</span></label>
+    <div class="mhs-profile-card">
+      <div class="mhs-profile-card-head"><span class="chip"><i class="fa-solid fa-lock"></i></span> Alterar Password</div>
+      <div class="mhs-profile-card-body">
+        <form method="post" action="perfil.php" id="formPassword">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Password Atual <span class="text-danger">*</span></label>
+            <div class="mhs-pw-wrap">
               <input type="password" name="pw_atual" class="form-control" required>
+              <button type="button" class="mhs-pw-toggle" tabindex="-1" aria-label="Mostrar/ocultar"><i class="fa-regular fa-eye"></i></button>
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Nova Password <span class="text-danger">*</span></label>
-              <input type="password" name="pw_nova" class="form-control" required minlength="6">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nova Password <span class="text-danger">*</span></label>
+            <div class="mhs-pw-wrap">
+              <input type="password" name="pw_nova" id="pwNova" class="form-control" required minlength="6">
+              <button type="button" class="mhs-pw-toggle" tabindex="-1" aria-label="Mostrar/ocultar"><i class="fa-regular fa-eye"></i></button>
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Confirmar Nova Password <span class="text-danger">*</span></label>
-              <input type="password" name="pw_confirma" class="form-control" required minlength="6">
+            <div class="mhs-pw-meter"><span id="pwMeter"></span></div>
+            <div class="mhs-pw-hint" id="pwHint">Mínimo 6 caracteres. Use letras, números e símbolos.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Confirmar Nova Password <span class="text-danger">*</span></label>
+            <div class="mhs-pw-wrap">
+              <input type="password" name="pw_confirma" id="pwConfirma" class="form-control" required minlength="6">
+              <button type="button" class="mhs-pw-toggle" tabindex="-1" aria-label="Mostrar/ocultar"><i class="fa-regular fa-eye"></i></button>
             </div>
-            <button type="submit" class="btn btn-primary">
-              <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Password
-            </button>
-          </form>
-        </div>
+            <div class="mhs-pw-hint" id="pwMatch"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Password
+          </button>
+        </form>
       </div>
     </div>
   </div>

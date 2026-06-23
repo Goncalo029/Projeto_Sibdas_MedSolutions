@@ -27,6 +27,20 @@ try {
     $erro_bd = 'Nao foi possivel carregar fornecedores.';
 }
 
+// ─── Exportação CSV ──────────────────────────────────────────────────────────
+if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="fornecedores_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputcsv($out, ['Nome', 'NIF', 'Tipo', 'Telefone', 'Email']);
+    foreach ($fornecedores as $f) {
+        fputcsv($out, [$f->nome, $f->nif, $f->tipo_fornecedor, $f->telefone, $f->email]);
+    }
+    fclose($out);
+    exit;
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -46,7 +60,10 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-label">Lista de Fornecedores</span>
       <span class="mhs-table-toolbar-count"><?= count($fornecedores) ?> registos</span>
     </div>
-    <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Novo Fornecedor</a>
+    <div class="d-flex gap-2">
+      <a href="?export=csv" class="btn btn-outline-secondary mhs-table-toolbar-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</a>
+      <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Novo Fornecedor</a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">

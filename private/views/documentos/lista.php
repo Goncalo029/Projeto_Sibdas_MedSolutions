@@ -35,6 +35,25 @@ try {
     $erro_bd = 'Nao foi possivel carregar documentos.';
 }
 
+// ─── Exportação CSV ──────────────────────────────────────────────────────────
+if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="documentos_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputcsv($out, ['Equipamento', 'Tipo', 'Nome do documento', 'Data', 'Validade', 'Tem PDF']);
+    foreach ($documentos as $d) {
+        fputcsv($out, [
+            $d->codigo_inventario . ' - ' . $d->designacao,
+            $d->tipo_documento, $d->nome_documento,
+            $d->data_documento, $d->data_validade,
+            $d->tem_ficheiro ? 'Sim' : 'Não',
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -61,7 +80,10 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-label">Lista de Documentos</span>
       <span class="mhs-table-toolbar-count"><?= count($documentos) ?> registos</span>
     </div>
-    <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Novo Documento</a>
+    <div class="d-flex gap-2">
+      <a href="?export=csv<?= $f_validade ? '&validade=proxima' : '' ?>" class="btn btn-outline-secondary mhs-table-toolbar-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</a>
+      <a href="novo.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Novo Documento</a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">

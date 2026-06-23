@@ -68,7 +68,7 @@ $_sidebar_msgs_nao_lidas = mhs_mensagens_nao_lidas();
             <i class="fa-solid fa-envelope fa-fw"></i>
             <span>Mensagens</span>
             <?php if ($_sidebar_msgs_nao_lidas > 0): ?>
-            <span class="badge bg-danger ms-auto" style="font-size:.65rem;padding:2px 6px;border-radius:10px"><?= $_sidebar_msgs_nao_lidas ?></span>
+            <span class="mhs-nav-badge"><?= $_sidebar_msgs_nao_lidas ?></span>
             <?php endif; ?>
         </a>
         <div class="mhs-nav-section">Administração</div>

@@ -27,6 +27,20 @@ try {
     $erro_bd = 'Nao foi possivel carregar localizacoes.';
 }
 
+// ─── Exportação CSV ──────────────────────────────────────────────────────────
+if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="localizacoes_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputcsv($out, ['Edifício', 'Piso', 'Serviço', 'Sala']);
+    foreach ($localizacoes as $l) {
+        fputcsv($out, [$l->edificio, $l->piso, $l->servico, $l->sala]);
+    }
+    fclose($out);
+    exit;
+}
+
 include __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -46,7 +60,10 @@ include __DIR__ . '/../../includes/header.php';
       <span class="mhs-table-toolbar-label">Lista de Localizações</span>
       <span class="mhs-table-toolbar-count"><?= count($localizacoes) ?> registos</span>
     </div>
-    <a href="nova.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Nova Localização</a>
+    <div class="d-flex gap-2">
+      <a href="?export=csv" class="btn btn-outline-secondary mhs-table-toolbar-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</a>
+      <a href="nova.php" class="btn btn-primary mhs-table-toolbar-btn"><i class="fa-solid fa-plus"></i> Nova Localização</a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">

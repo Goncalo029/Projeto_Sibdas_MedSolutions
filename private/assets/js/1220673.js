@@ -1260,3 +1260,76 @@ document.addEventListener('submit', function (e) {
         });
     });
 })();
+
+// ============================================================
+// WEBSITE PÚBLICO (editar) — pré-visualização instantânea da imagem do hero
+// (movido de website/editar.php — só corre se o input existir)
+// ============================================================
+(function () {
+    var inp = document.getElementById('heroImg');
+    var prev = document.getElementById('heroImgPreview');
+    var tag = document.getElementById('heroImgTag');
+    if (!inp || !prev) return;
+    inp.addEventListener('change', function () {
+        var f = this.files && this.files[0];
+        if (!f) return;
+        prev.src = URL.createObjectURL(f);
+        if (tag) { tag.textContent = 'Nova imagem (por guardar)'; tag.style.background = 'rgba(11,179,126,.85)'; }
+    });
+})();
+
+// ============================================================
+// MEU PERFIL — mostrar/ocultar password, medidor de força e confirmação
+// (só corre na página de perfil)
+// ============================================================
+(function () {
+    var form = document.getElementById('formPassword');
+    if (!form) return;
+
+    form.querySelectorAll('.mhs-pw-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var inp = btn.parentElement.querySelector('input');
+            if (!inp) return;
+            var show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            var ic = btn.querySelector('i');
+            if (ic) ic.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        });
+    });
+
+    var pw = document.getElementById('pwNova');
+    var meter = document.getElementById('pwMeter');
+    var hint = document.getElementById('pwHint');
+    var cols = ['#ef4444', '#f59e0b', '#eab308', '#0bb37e'];
+    var labels = ['Fraca', 'Razoável', 'Boa', 'Forte'];
+    function strength(v) {
+        var s = 0;
+        if (v.length >= 6) s++;
+        if (v.length >= 10) s++;
+        if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
+        if (/\d/.test(v)) s++;
+        if (/[^A-Za-z0-9]/.test(v)) s++;
+        return Math.min(s, 4);
+    }
+    if (pw && meter) {
+        pw.addEventListener('input', function () {
+            var v = this.value;
+            if (!v) { meter.style.width = '0'; if (hint) hint.textContent = 'Mínimo 6 caracteres. Use letras, números e símbolos.'; return; }
+            var s = strength(v), idx = Math.max(0, s - 1);
+            meter.style.width = (s / 4 * 100) + '%';
+            meter.style.background = cols[idx];
+            if (hint) hint.textContent = 'Força: ' + labels[idx];
+        });
+    }
+
+    var conf = document.getElementById('pwConfirma');
+    var match = document.getElementById('pwMatch');
+    function checkMatch() {
+        if (!conf || !pw || !match) return;
+        if (!conf.value) { match.textContent = ''; return; }
+        if (conf.value === pw.value) { match.textContent = '✓ As passwords coincidem'; match.style.color = '#0bb37e'; }
+        else { match.textContent = '✗ As passwords não coincidem'; match.style.color = '#dc2626'; }
+    }
+    if (conf) conf.addEventListener('input', checkMatch);
+    if (pw) pw.addEventListener('input', checkMatch);
+})();
