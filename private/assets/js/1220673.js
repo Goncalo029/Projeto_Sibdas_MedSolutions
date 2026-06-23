@@ -512,8 +512,11 @@ function mhsPrintSection(sectionId) {
     if (!content) return;
     var title = document.querySelector('.mhs-page-title') ? document.querySelector('.mhs-page-title').textContent : 'Equipamento';
     var w = window.open('', '_blank', 'width=900,height=700');
+    // vai buscar o caminho do bootstrap que esta pagina ja usa (assim nao depende do nome da pasta)
+    var bsLink = document.querySelector('link[href*="bootstrap.min.css"]');
+    var bsHref = bsLink ? bsLink.getAttribute('href') : '';
     w.document.write('<html><head><title>' + title + '</title>');
-    w.document.write('<link rel="stylesheet" href="/MedSolutions/private/assets/bootstrap/bootstrap.min.css">');
+    if (bsHref) { w.document.write('<link rel="stylesheet" href="' + bsHref + '">'); }
     w.document.write('<style>body{font-family:Inter,sans-serif;padding:2rem;font-size:13px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #e2e8f0;padding:8px 10px;text-align:left}th{background:#f8fafc;font-weight:600}dl{display:grid;grid-template-columns:160px 1fr;gap:4px 8px;margin:0}dt{font-weight:600;color:#64748b}dd{margin:0;color:#1e293b}.mhs-info-group{margin-bottom:1.5rem}.mhs-info-group-title{font-weight:700;margin-bottom:.5rem;padding-bottom:.25rem;border-bottom:2px solid #e2e8f0}h2{font-size:1.1rem;margin-bottom:1rem;color:#1e293b}</style>');
     w.document.write('</head><body>');
     w.document.write('<h2>' + title + ' — ' + new Date().toLocaleDateString('pt-PT') + '</h2>');

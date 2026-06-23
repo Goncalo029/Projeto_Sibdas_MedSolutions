@@ -5,7 +5,7 @@ define('APP_VERSION',   '1.0.0');
 define('APP_COPYRIGHT', '© 2026 MedSolutions');
 
 // URL base do projeto
-define('BASE_URL', '/sibdas/1220673/MedSolutions');
+define('BASE_URL', '/sibdas/1220673/medsolutions');
 
 // Configurações da base de dados
 define('MYSQL_HOST',     'vsgate-s1.dei.isep.ipp.pt');

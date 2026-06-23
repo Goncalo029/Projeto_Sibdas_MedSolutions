@@ -62,6 +62,8 @@ function mhs_historico(string $entidade, ?int $entidade_id, string $entidade_nom
     } catch (Exception) {
         // histórico não é crítico — falha silenciosa
     }
+    // houve uma alteracao de dados: limpa o cache das notificacoes para o sino atualizar logo
+    unset($_SESSION['_notif_cache'], $_SESSION['_notif_cache_ts']);
 }
 
 // compara o antes e o depois e diz que campos mudaram (para o historico)
