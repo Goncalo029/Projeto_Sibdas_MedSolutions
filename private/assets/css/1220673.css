@@ -475,6 +475,8 @@ body.mhs-app{position:relative}
 .mhs-sidebar .mhs-nav-link.active i{color:#7df0d2!important}
 body.mhs-sb-closed .mhs-sidebar .mhs-nav-link{margin:1px 0}
 body.mhs-sb-closed .mhs-sidebar .mhs-nav-link.active::before{display:none}
+/* sidebar fechada: badge das mensagens vira um pequeno aviso dourado por cima do icone */
+body.mhs-sb-closed .mhs-sidebar .mhs-nav-badge{position:absolute;top:3px;right:13px;margin:0;min-width:16px;height:16px;padding:0 3px;font-size:.58rem;box-shadow:0 0 0 2px #0a4268}
 
 /* Badges: só texto, sem cor de fundo */
 .badge{background:none!important;color:#334155!important;border-radius:0!important;font-size:.88rem!important;font-weight:600!important;padding:0!important;letter-spacing:0;display:inline}
