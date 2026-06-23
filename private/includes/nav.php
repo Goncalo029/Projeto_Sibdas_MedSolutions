@@ -1,12 +1,19 @@
 <?php
+// barra de navegacao do topo (sino de avisos e menu do utilizador)
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/notifications.php';
+// dados do utilizador com sessao, para mostrar o nome e as iniciais
 $_nav_email    = $_SESSION['user_email'] ?? 'Utilizador';
 $_nav_nome     = ucfirst(strstr($_nav_email, '@', true) ?: $_nav_email);
 $_nav_iniciais = strtoupper(substr($_nav_email, 0, 2));
 $_nav_hoje     = date('d/m/Y');
+$_nav_uid         = (int)($_SESSION['user_id'] ?? 0);
+$_nav_avatar_file = __DIR__ . '/../uploads/' . $_nav_uid . '.png';
+$_nav_avatar      = ($_nav_uid && file_exists($_nav_avatar_file))
+    ? BASE_URL . '/private/uploads/' . $_nav_uid . '.png?v=' . filemtime($_nav_avatar_file)
+    : '';
 $notificacoes  = get_notificacoes();
 $total_notifs  = array_sum(array_column($notificacoes, 'count'));
 ?>
@@ -59,7 +66,7 @@ $total_notifs  = array_sum(array_column($notificacoes, 'count'));
 
     <div class="mhs-avatar-dropdown" id="avatarDropdown">
         <button class="mhs-avatar-btn" onclick="toggleAvatarMenu(event)" type="button">
-            <span class="mhs-avatar"><?= $_nav_iniciais ?></span>
+            <span class="mhs-avatar"><?php if ($_nav_avatar): ?><img src="<?= htmlspecialchars($_nav_avatar) ?>" alt=""><?php else: ?><?= $_nav_iniciais ?><?php endif; ?></span>
             <div class="mhs-avatar-info d-none d-md-flex">
                 <span class="mhs-avatar-name"><?= htmlspecialchars($_nav_nome) ?></span>
                 <span class="mhs-avatar-role"><?= htmlspecialchars(ucfirst($_SESSION['profile'] ?? '')) ?></span>

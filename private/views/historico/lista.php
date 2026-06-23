@@ -1,15 +1,11 @@
 <?php
-/**
- * Histórico de alterações (log de eventos)
- * Página exclusiva para administradores.
- * Regista todas as ações feitas no sistema: criações, edições, eliminações e logins.
- * Separado por secções (Equipamentos, Documentos, Garantias, etc.)
- */
-
+// pagina do historico: regista tudo o que se faz no sistema (criar, editar, apagar)
+// so o admin pode ver
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
 redirect_if_not_logged();
+// so o admin entra
 if (($_SESSION['profile'] ?? '') !== 'admin') {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
@@ -19,6 +15,7 @@ $registos = [];
 $erro_bd  = '';
 
 try {
+    // vai buscar os ultimos 1000 registos do historico, dos mais recentes para os mais antigos
     $registos = mhs_pdo()->query("
         SELECT id, entidade, entidade_id, entidade_nome, acao, detalhe, utilizador, criado_em
         FROM historico_alteracoes
@@ -26,10 +23,11 @@ try {
         LIMIT 1000
     ")->fetchAll();
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Não foi possível carregar o histórico.';
 }
 
-// Separar por secção
+// separa os registos por secao (equipamentos, documentos, etc.)
 $secoes = [
     'equipamento'       => ['label' => 'Equipamentos',       'icon' => 'fa-stethoscope',          'registos' => []],
     'documento'         => ['label' => 'Documentos',         'icon' => 'fa-file-lines',            'registos' => []],
@@ -40,6 +38,7 @@ $secoes = [
     'utilizador'        => ['label' => 'Utilizadores',       'icon' => 'fa-user',                  'registos' => []],
     '__outros'          => ['label' => 'Outros',             'icon' => 'fa-ellipsis',              'registos' => []],
 ];
+// poe cada registo na sua secao (os que nao encaixam vao para "Outros")
 foreach ($registos as $r) {
     if (isset($secoes[$r->entidade])) {
         $secoes[$r->entidade]['registos'][] = $r;
@@ -48,6 +47,7 @@ foreach ($registos as $r) {
     }
 }
 
+// devolve um badge colorido conforme a acao (criar/editar/apagar)
 function mhs_hist_badge(string $acao): string {
     return match ($acao) {
         'criar'  => '<span class="badge bg-success"><i class="fa-solid fa-plus me-1"></i>Criação</span>',

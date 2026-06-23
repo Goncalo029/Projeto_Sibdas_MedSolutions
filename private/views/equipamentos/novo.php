@@ -1,18 +1,14 @@
 <?php
-/**
- * Novo equipamento
- * Formulário para registar um equipamento novo no sistema.
- * Inclui dados gerais, aquisição, localização, assistência técnica e documentos.
- * Os campos de marca, modelo e fabricante têm sugestões automáticas da base de dados.
- */
-
+// pagina para registar um equipamento novo
+// tem os dados gerais, aquisicao, localizacao, assistencia tecnica e documentos
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida tudo e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le todos os campos do formulario
     $codigo_inventario = trim($_POST['codigo_inventario'] ?? '');
     $designacao         = trim($_POST['designacao'] ?? '');
     $id_equipamento_pai = (int)($_POST['id_equipamento_pai'] ?? 0) ?: null;
@@ -30,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $criticidade       = trim($_POST['criticidade'] ?? '') ?: null;
     $observacoes       = trim($_POST['observacoes'] ?? '') ?: null;
 
+    // codigo de inventario e designacao sao obrigatorios
     if (!$codigo_inventario || !$designacao) {
         $_SESSION['error_message'] = 'Código de Inventário e Designação são obrigatórios.';
         header('Location: novo.php'); exit;
@@ -164,10 +161,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// vai buscar as listas para preencher os menus do formulario
 $pdo = mhs_pdo();
 $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fetchAll();
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
-// Sugerir próximo código: depois do último XX.XXX existente
+// sugere o proximo codigo a seguir ao ultimo XX.XXX que ja existe
 $_last = $pdo->query("SELECT codigo_inventario FROM equipamentos WHERE eliminado_em IS NULL AND codigo_inventario REGEXP '^[0-9]{2}\\\\.[0-9]{3}$' ORDER BY codigo_inventario DESC LIMIT 1")->fetchColumn();
 if ($_last) {
     [$_f, $_n] = explode('.', $_last);

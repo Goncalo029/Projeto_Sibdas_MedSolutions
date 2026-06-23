@@ -1,33 +1,30 @@
 <?php
-/**
- * Editar utilizador
- * Página exclusiva para administradores.
- * Permite alterar o perfil e a password de um utilizador existente.
- * A nova password, se fornecida, é guardada com hash bcrypt.
- */
-
+// pagina (so admin) para editar um utilizador: muda o perfil e, se quiser, a password
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar autenticação e que é administrador
+// so o admin entra
 redirect_if_not_logged();
 require_admin();
 
-// Obter o ID do utilizador — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email   = trim($_POST['email']   ?? '');
     $perfil  = trim($_POST['profile'] ?? '');
     $senha   = trim($_POST['password'] ?? '');
 
+    // email e perfil sao obrigatorios
     if (!$email || !$perfil) {
         $_SESSION['error_message'] = 'Email e perfil são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
     try {
         $pdo = mhs_pdo();
+        // se escreveram password nova, tambem a atualiza (com hash); senao so muda os outros campos
         if ($senha !== '') {
             $hash = password_hash($senha, PASSWORD_DEFAULT);
             $pdo->prepare("UPDATE utilizadores SET nome=AES_ENCRYPT(?,?), perfil=?, senha=?, atualizado_em=NOW() WHERE id=?")
@@ -45,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// vai buscar o utilizador atual (desencripta o email) para preencher o formulario
 $stmt = mhs_pdo()->prepare("SELECT id, AES_DECRYPT(nome, :chave) AS email, perfil AS profile, criado_em FROM utilizadores WHERE id=? AND eliminado_em IS NULL");
 $stmt->execute([':chave' => MYSQL_AES_KEY, $id]);
 $row = $stmt->fetch();

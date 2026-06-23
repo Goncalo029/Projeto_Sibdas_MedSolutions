@@ -1,32 +1,31 @@
 <?php
-/**
- * Novo documento
- * Permite associar um documento (PDF) a um equipamento.
- * O ficheiro é guardado diretamente na base de dados (coluna BLOB).
- */
-
+// pagina para criar um documento novo e associa-lo a um equipamento
+// o PDF fica guardado dentro da base de dados
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, trata dos dados
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos que vieram do formulario
     $id_equipamento = (int)($_POST['id_equipamento'] ?? 0);
     $tipo_documento = trim($_POST['tipo_documento'] ?? '');
     $nome_documento = trim($_POST['nome_documento'] ?? '');
     $data_documento = trim($_POST['data_documento'] ?? '') ?: null;
     $data_validade  = trim($_POST['data_validade'] ?? '') ?: null;
     $observacoes    = trim($_POST['observacoes'] ?? '');
+    // equipamento e tipo de documento sao obrigatorios
     if (!$id_equipamento || !$tipo_documento) {
         $_SESSION['error_message'] = 'Equipamento e Tipo de documento são obrigatórios.';
         header('Location: novo.php'); exit;
     }
+    // a data de validade nao pode ser no passado
     if ($data_validade && $data_validade < date('Y-m-d')) {
         $_SESSION['error_message'] = 'A data de validade não pode ser anterior a hoje.';
         header('Location: novo.php'); exit;
     }
-    // Não permitir um documento do mesmo tipo já existente para o equipamento (exceto "Outro")
+    // nao deixa repetir um documento do mesmo tipo no mesmo equipamento (menos "Outro")
     if ($tipo_documento !== 'Outro') {
         $dup = mhs_pdo()->prepare("SELECT COUNT(*) FROM documentos WHERE id_equipamento = ? AND tipo_documento = ? AND eliminado_em IS NULL AND ficheiro_conteudo IS NOT NULL");
         $dup->execute([$id_equipamento, $tipo_documento]);
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Ficheiro PDF (guardado na base de dados, não em pasta)
+    // le o ficheiro PDF que foi carregado (fica guardado na base de dados)
     $erro_upload = null;
     $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
     if ($erro_upload) {
@@ -45,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        // grava o documento novo na base de dados
         $stmt = mhs_pdo()->prepare("INSERT INTO documentos (id_equipamento,tipo_documento,nome_documento,data_documento,data_validade,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,observacoes,criado_em) VALUES (?,?,?,?,?,?,?,?,?,NOW())");
         $stmt->bindValue(1, $id_equipamento, PDO::PARAM_INT);
         $stmt->bindValue(2, $tipo_documento);
@@ -56,17 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(8, $pdf['mime'] ?? null);
         $stmt->bindValue(9, $observacoes ?: null);
         $stmt->execute();
+        // guarda no historico que foi criado um documento
         mhs_historico('documento', (int)mhs_pdo()->lastInsertId(), ($nome_documento ?: $tipo_documento), 'criar');
         $_SESSION['success_message'] = 'Documento criado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header('Location: novo.php'); exit;
     }
 }
 
+// vai buscar os equipamentos para a lista do formulario
 $equipamentos = mhs_pdo()->query("SELECT id, codigo_inventario, designacao FROM equipamentos WHERE eliminado_em IS NULL ORDER BY codigo_inventario")->fetchAll();
+// tipos de documento que se podem escolher
 $tipos = ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Ficha técnica','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico','Outro'];
+// primeiro equipamento (serve para o botao de auto-preencher)
 $first_eq_id = !empty($equipamentos) ? $equipamentos[0]->id : 0;
 
 $page_title = 'Documentos - Novo';

@@ -1,21 +1,17 @@
 <?php
-/**
- * Editar fornecedor
- * Permite alterar os dados de um fornecedor existente.
- * Carrega os dados atuais da base de dados e atualiza após submissão do formulário.
- */
-
+// pagina para editar um fornecedor que ja existe
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID do fornecedor — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le todos os campos do formulario
     $nome            = trim($_POST['nome'] ?? '');
     $nif             = trim($_POST['nif'] ?? '');
     $tipo_fornecedor = trim($_POST['tipo_fornecedor'] ?? '');
@@ -26,25 +22,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pessoa_contacto = trim($_POST['pessoa_contacto'] ?? '');
     $tel_contacto    = trim($_POST['tel_contacto'] ?? '');
     $observacoes     = trim($_POST['observacoes'] ?? '');
+    // o nome e obrigatorio
     if (!$nome) {
         $_SESSION['error_message'] = 'O campo Nome é obrigatório.';
         header("Location: editar.php?id=$id"); exit;
     }
     try {
+        // atualiza o fornecedor na base de dados
         mhs_pdo()->prepare("UPDATE fornecedores SET nome=?,nif=?,tipo_fornecedor=?,telefone=?,email=?,morada=?,website=?,pessoa_contacto=?,tel_contacto=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null, $id]);
+        // guarda no historico
         mhs_historico('fornecedor', $id, $nome, 'editar');
         $_SESSION['success_message'] = 'Fornecedor atualizado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header("Location: editar.php?id=$id"); exit;
     }
 }
 
+// vai buscar o fornecedor atual para preencher o formulario
 $stmt = mhs_pdo()->prepare("SELECT * FROM fornecedores WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$row) { header('Location: lista.php'); exit; }
 
 $page_title = 'Fornecedores - Editar';

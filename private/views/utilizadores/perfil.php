@@ -1,29 +1,74 @@
 <?php
+// pagina do perfil do proprio utilizador: trocar a foto e a password
 require_once __DIR__ . '/../../includes/funcoes.php';
 redirect_if_not_logged();
 
+// dados do utilizador que esta com sessao aberta
 $pdo        = mhs_pdo();
 $user_id    = $_SESSION['user_id'] ?? 0;
 $user_email = $_SESSION['user_email'] ?? '';
 $profile    = $_SESSION['profile'] ?? '';
 
+// vai buscar mais alguns dados a base de dados
 $stmt = $pdo->prepare("SELECT id, perfil AS profile, ultimo_acesso, criado_em FROM utilizadores WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$user_id]);
 $agent = $stmt->fetch();
 
-// Processamento de alteração de password
 $success = '';
 $error   = '';
 
+// caminho onde fica guardada a foto de perfil (private/uploads)
+$avatar_dir  = __DIR__ . '/../../uploads';
+$avatar_file = $avatar_dir . '/' . (int)$user_id . '.png';
+
+// se enviaram uma foto nova, trata do upload
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['foto']['name'])) {
+    if (($_FILES['foto']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+        $info = @getimagesize($_FILES['foto']['tmp_name']);
+        $tipo = $info[2] ?? null;
+        if ($tipo && in_array($tipo, [IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_WEBP], true)
+            && $_FILES['foto']['size'] <= 5 * 1024 * 1024) {
+            if (!is_dir($avatar_dir)) { @mkdir($avatar_dir, 0775, true); }
+            $src = match ($tipo) {
+                IMAGETYPE_JPEG => @imagecreatefromjpeg($_FILES['foto']['tmp_name']),
+                IMAGETYPE_PNG  => @imagecreatefrompng($_FILES['foto']['tmp_name']),
+                IMAGETYPE_WEBP => @imagecreatefromwebp($_FILES['foto']['tmp_name']),
+                default        => null,
+            };
+            if ($src) {
+                $w = imagesx($src); $h = imagesy($src);
+                $lado = min($w, $h);
+                $ox = (int)(($w - $lado) / 2); $oy = (int)(($h - $lado) / 2);
+                $size = 256;
+                $dst = imagecreatetruecolor($size, $size);
+                imagecopyresampled($dst, $src, 0, 0, $ox, $oy, $size, $size, $lado, $lado);
+                @imagepng($dst, $avatar_file);
+                $_SESSION['success_message'] = 'Foto de perfil atualizada.';
+            } else {
+                $_SESSION['error_message'] = 'Não foi possível processar a imagem.';
+            }
+        } else {
+            $_SESSION['error_message'] = 'Imagem inválida (use PNG ou JPG até 5 MB).';
+        }
+    } else {
+        $_SESSION['error_message'] = 'Falha ao carregar a imagem.';
+    }
+    header('Location: perfil.php');
+    exit;
+}
+
+// se enviaram o formulario de mudar password, trata disso
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pw_atual    = $_POST['pw_atual']    ?? '';
     $pw_nova     = trim($_POST['pw_nova']    ?? '');
     $pw_confirma = trim($_POST['pw_confirma'] ?? '');
 
+    // vai buscar a password atual guardada para confirmar
     $stmt_pw = $pdo->prepare("SELECT senha FROM utilizadores WHERE id = ?");
     $stmt_pw->execute([$user_id]);
     $row = $stmt_pw->fetch();
 
+    // confirma se a password atual esta certa (com hash ou em texto simples)
     $valid = $row && (password_verify($pw_atual, $row->senha) || $pw_atual === $row->senha);
 
     if (!$valid) {
@@ -50,6 +95,7 @@ $iniciais = strtoupper(mb_substr($user_email, 0, 2, 'UTF-8'));
 $nome_display = ucfirst(strstr($user_email, '@', true) ?: $user_email);
 $ultimo_acesso_fmt = $agent && $agent->ultimo_acesso ? date('d/m/Y H:i', strtotime($agent->ultimo_acesso)) : '—';
 $membro_desde_fmt  = $agent && $agent->criado_em ? date('d/m/Y', strtotime($agent->criado_em)) : '—';
+$avatar_url = file_exists($avatar_file) ? (BASE_URL . '/private/uploads/' . (int)$user_id . '.png?v=' . filemtime($avatar_file)) : '';
 
 $page_title = 'Meu Perfil';
 include __DIR__ . '/../../includes/header.php';
@@ -78,7 +124,15 @@ include __DIR__ . '/../../includes/header.php';
 <!-- Hero do perfil -->
 <div class="mhs-profile-hero">
   <div class="mhs-profile-hero-inner">
-    <span class="mhs-profile-avatar"><?= esc($iniciais) ?></span>
+    <form method="post" enctype="multipart/form-data" id="formFoto" class="mhs-profile-avatar-wrap" title="Mudar foto de perfil">
+      <span class="mhs-profile-avatar">
+        <?php if ($avatar_url): ?><img src="<?= esc($avatar_url) ?>" alt="Foto de perfil"><?php else: ?><?= esc($iniciais) ?><?php endif; ?>
+      </span>
+      <label class="mhs-avatar-edit" aria-label="Mudar foto">
+        <i class="fa-solid fa-camera"></i>
+        <input type="file" name="foto" id="fotoInput" accept="image/png,image/jpeg,image/webp" hidden>
+      </label>
+    </form>
     <div class="mhs-profile-id">
       <h2><?= esc($nome_display) ?></h2>
       <span class="email"><i class="fa-solid fa-envelope me-1"></i><?= esc($user_email) ?></span>

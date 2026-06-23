@@ -1,9 +1,7 @@
-// MedInventar - funcoes.js
-// Validacoes client-side e helpers visuais
+// ficheiro de JavaScript do MedInventar
+// trata das validacoes no browser e de pequenas coisas visuais (menus, tabelas, graficos)
 
-// ============================================================
-// Avatar dropdown
-// ============================================================
+// abre/fecha o menu que aparece ao clicar no avatar
 function toggleAvatarMenu(e) {
     e.stopPropagation();
     var dropdown = document.getElementById('avatarDropdown');
@@ -14,9 +12,7 @@ function toggleAvatarMenu(e) {
     menu.classList.toggle('visible', !isOpen);
 }
 
-// ============================================================
-// Notifications dropdown
-// ============================================================
+// abre/fecha o menu dos avisos (o sino)
 function toggleNotifMenu(e) {
     e.stopPropagation();
     var dropdown = document.getElementById('notifDropdown');
@@ -47,9 +43,7 @@ document.addEventListener('click', function () {
     closeNotifMenu();
 });
 
-// ============================================================
 // DataTables - inicializacao padrao PT
-// ============================================================
 $(document).ready(function () {
     if ($('.mhs-datatable').length) {
         $('.mhs-datatable').each(function () {
@@ -94,9 +88,7 @@ $(document).ready(function () {
     }
 });
 
-// ============================================================
 // Flatpickr - inicializacao padrao para campos de data
-// ============================================================
 document.querySelectorAll('.mhs-datepicker').forEach(function (el) {
     var opts = {
         dateFormat: 'Y-m-d',
@@ -111,9 +103,7 @@ document.querySelectorAll('.mhs-datepicker').forEach(function (el) {
     flatpickr(el, opts);
 });
 
-// ============================================================
 // Toast automatico - fecha apos 4s
-// ============================================================
 document.querySelectorAll('.toast.show').forEach(function (toastEl) {
     setTimeout(function () {
         var toast = bootstrap.Toast.getOrCreateInstance(toastEl);
@@ -121,9 +111,7 @@ document.querySelectorAll('.toast.show').forEach(function (toastEl) {
     }, 4000);
 });
 
-// ============================================================
 // Modal de confirmacao de apagar (botoes data-delete-*)
-// ============================================================
 document.addEventListener('click', function (e) {
     var btn = e.target.closest('[data-delete-id]');
     if (!btn) return;
@@ -145,9 +133,7 @@ document.addEventListener('click', function (e) {
     bsModal.show();
 });
 
-// ============================================================
 // Tab switcher com validação — global para todas as páginas
-// ============================================================
 (function () {
     var TODAY_STR = new Date().toISOString().slice(0, 10);
     var CURRENT_YEAR = new Date().getFullYear();
@@ -236,9 +222,7 @@ document.addEventListener('click', function (e) {
     if (tab) mhsActivateTab(tab, true);
 })();
 
-// ============================================================
 // Sidebar toggle (desktop) — botão abre/fecha sem hover
-// ============================================================
 function mhsToggleSidebar() {
     var closed = document.body.classList.toggle('mhs-sb-closed');
     try { localStorage.setItem('mhsSbClosed', closed ? '1' : '0'); } catch (e) {}
@@ -248,10 +232,8 @@ function mhsToggleSidebar() {
     try { if (localStorage.getItem('mhsSbClosed') !== '0') { document.body.classList.add('mhs-sb-closed'); } } catch (e) { document.body.classList.add('mhs-sb-closed'); }
 })();
 
-// ============================================================
 // Auto-preencher Equipamento
 // nextCode e eqIdx calculados em PHP; locIds = array de IDs de localizações existentes
-// ============================================================
 function mhsAutoFillDemo(nextCode, eqIdx, locIds) {
     var YEAR = new Date().getFullYear();
     var dados = [
@@ -341,9 +323,7 @@ function mhsAutoFillDemo(nextCode, eqIdx, locIds) {
     });
 }
 
-// ============================================================
 // Auto-preencher Localização (existentes = array de "servico|sala" já na BD)
-// ============================================================
 function mhsAutoFillLocalizacao(existentes) {
     var dados = [
         { ed:'Bloco A',       piso:'Piso 1', srv:'Urgência',            sala:'Sala Técnica' },
@@ -368,9 +348,7 @@ function mhsAutoFillLocalizacao(existentes) {
     s('edificio', d.ed); s('piso', d.piso); s('servico', d.srv); s('sala', d.sala);
 }
 
-// ============================================================
 // Auto-preencher Fornecedor (existentes = array de nomes já na BD)
-// ============================================================
 function mhsAutoFillFornecedor(existentes) {
     var dados = [
         { nome:'MedTech Solutions SA',          nif:'501234567', tipo:'Distribuidor',        tel:'222 333 444', email:'geral@medtech.pt',           morada:'Rua das Flores 12, 4000-001 Porto',                        web:'https://www.medtech.pt',              cont:'Ana Silva',       tcon:'912 345 678' },
@@ -392,9 +370,7 @@ function mhsAutoFillFornecedor(existentes) {
     s('website', d.web); s('pessoa_contacto', d.cont); s('tel_contacto', d.tcon);
 }
 
-// ============================================================
 // Auto-preencher Garantia/Contrato (firstEqId vem de PHP)
-// ============================================================
 function mhsAutoFillGarantia(firstEqId) {
     var hoje = new Date();
     var fim  = new Date(); fim.setFullYear(fim.getFullYear() + 2);
@@ -415,9 +391,7 @@ function mhsAutoFillGarantia(firstEqId) {
     });
 }
 
-// ============================================================
 // Auto-preencher Utilizador
-// ============================================================
 function mhsAutoFillUtilizador(n) {
     var dados = [
         { email:'tecnico01@medsolutions.pt', pw:'Tecnico2024!', perfil:'tecnico' },
@@ -432,9 +406,7 @@ function mhsAutoFillUtilizador(n) {
     s('email',d.email); s('password',d.pw); s('profile',d.perfil);
 }
 
-// ============================================================
 // Auto-preencher Documento
-// ============================================================
 function mhsAutoFillDocumento(firstEqId) {
     var dados = [
         { tipo:'Manual',        nome:'Manual do utilizador',        obs:'Manual técnico de operação do equipamento fornecido pelo fabricante.', val:null },
@@ -463,9 +435,7 @@ function mhsAutoFillDocumento(firstEqId) {
     });
 }
 
-// ============================================================
 // Validador genérico para formulários planos (class="mhs-validate-form")
-// ============================================================
 function mhsValidateForm(form) {
     var ok = true;
     var firstBad = null;
@@ -536,9 +506,7 @@ function mhsValidateForm(form) {
     });
 })();
 
-// ============================================================
 // Imprimir secção — detalhes de equipamento
-// ============================================================
 function mhsPrintSection(sectionId) {
     var content = document.getElementById(sectionId);
     if (!content) return;
@@ -555,9 +523,7 @@ function mhsPrintSection(sectionId) {
     w.document.close();
 }
 
-// ============================================================
 // Calendário de manutenções preventivas
-// ============================================================
 (function () {
     var grid = document.getElementById('mhsCalGrid');
     if (!grid) return;
@@ -628,10 +594,8 @@ function mhsPrintSection(sectionId) {
     renderCal();
 })();
 
-// ============================================================
 // Dashboard — gráficos (Chart.js), contadores e painéis
 // Dados lidos de #mhsDashData[data-charts]; só corre na home.
-// ============================================================
 (function () {
     var dataEl = document.getElementById('mhsDashData');
     if (!dataEl || typeof Chart === 'undefined') return;
@@ -779,19 +743,15 @@ function mhsPrintSection(sectionId) {
     });
 })();
 
-// ============================================================
 // Inicialização dos Bootstrap Tooltips
 // Ativa as tooltips em todos os elementos com data-bs-toggle="tooltip"
-// ============================================================
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
         new bootstrap.Tooltip(el);
     });
 });
 
-// ============================================================
 // Ligação de eventos sem handlers inline (sidebar, menus, confirmações)
-// ============================================================
 document.addEventListener('DOMContentLoaded', function () {
     var sbToggle = document.querySelector('[data-toggle-sidebar]');
     if (sbToggle) sbToggle.addEventListener('click', function () { document.body.classList.toggle('mhs-sidebar-open'); });
@@ -813,9 +773,7 @@ document.addEventListener('submit', function (e) {
     }
 }, true);
 
-// ============================================================
 // Ligação perdida — interceta navegação e mostra modal
-// ============================================================
 (function () {
     'use strict';
     var _dest = null;
@@ -868,23 +826,21 @@ document.addEventListener('submit', function (e) {
     }, true);
 })();
 
-// ============================================================
 // DASHBOARD — gráficos (movido de home.php; dados via window.MHS_DASH)
-// ============================================================
 (function () {
     if (!window.MHS_DASH || typeof Chart === 'undefined') return;
 
-    /* ── Palette ─────────────────────────────────────────────── */
+    /* cores usadas nos graficos */
     const P = ['#3b82f6','#8b5cf6','#10b981','#f59e0b',
                '#ef4444','#06b6d4','#ec4899','#84cc16',
                '#f97316','#6366f1','#14b8a6','#a855f7'];
 
-    /* ── Dados do PHP (via bootstrap inline) ─────────────────── */
+    /* Dados do PHP (via bootstrap inline) */
     const chartData = window.MHS_DASH.chartData;
     const chartIds  = window.MHS_DASH.chartIds;
     const _BASE     = window.MHS_DASH.base;
 
-    /* ── URLs de destino ao clicar num segmento ─────────────── */
+    /* URLs de destino ao clicar num segmento */
     const _EQ  = _BASE + '/private/views/equipamentos/lista.php';
     const _DOC = _BASE + '/private/views/documentos/lista.php';
     const _FOR = _BASE + '/private/views/fornecedores/lista.php';
@@ -898,10 +854,10 @@ document.addEventListener('submit', function (e) {
         cGarantias:    (idx, label) => _GAR + '?vence=' + encodeURIComponent(label),
     };
 
-    /* ── Chart instance registry ─────────────────────────────── */
+    /* guarda os graficos que ja foram criados */
     const instances = {};
 
-    /* ── Build / rebuild a chart ─────────────────────────────── */
+    /* cria (ou recria) um grafico */
     function buildChart(canvasId, type) {
         const el = document.getElementById(canvasId);
         if (!el) return;
@@ -916,7 +872,7 @@ document.addEventListener('submit', function (e) {
         const isLine    = chartType === 'line';
 
         const ctx = el.getContext('2d');
-        /* Background colors */
+        /* cores de fundo */
         let bg, border;
         if (circular) {
             bg     = P.slice(0, d.values.length);
@@ -1067,12 +1023,12 @@ document.addEventListener('submit', function (e) {
             }
         });
 
-        /* Remove shimmer */
+        /* tira o efeito de "a carregar" */
         const body = document.getElementById('body-' + canvasId);
         if (body) body.classList.remove('loading');
     }
 
-    /* ── Animate stat counters ───────────────────────────────── */
+    /* faz os numeros subirem a contar */
     function animateCounter(el) {
         const target   = parseInt(el.dataset.count, 10) || 0;
         const duration = 1100;
@@ -1092,7 +1048,7 @@ document.addEventListener('submit', function (e) {
     }
     document.querySelectorAll('.dash-stat-num').forEach(animateCounter);
 
-    /* ── Toggle buttons ─────────────────────────────────────── */
+    /* botoes que trocam o tipo de grafico */
     document.querySelectorAll('.dash-toggle-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const group = this.closest('.dash-toggle');
@@ -1102,7 +1058,7 @@ document.addEventListener('submit', function (e) {
         });
     });
 
-    /* ── Intersection observer → fade panels in ─────────────── */
+    /* faz os paineis aparecerem quando chegam a vista */
     const observer = new IntersectionObserver(entries => {
         entries.forEach(e => {
             if (e.isIntersecting) {
@@ -1115,7 +1071,7 @@ document.addEventListener('submit', function (e) {
     const panels = document.querySelectorAll('.dash-panel');
     panels.forEach(p => observer.observe(p));
 
-    /* ── Initial render after first intersection ─────────────── */
+    /* desenha pela primeira vez quando o painel aparece */
     const panelChartMap = {
         'body-cEstados':      ['cEstados',      'pie'],
         'body-cCategorias':   ['cCategorias',   'bar-h'],
@@ -1140,7 +1096,7 @@ document.addEventListener('submit', function (e) {
         if (el) renderObserver.observe(el);
     });
 
-    /* Kick above-the-fold immediately */
+    /* desenha logo o que se ve sem fazer scroll */
     requestAnimationFrame(() => {
         document.querySelectorAll('.dash-panel').forEach(p => {
             if (p.getBoundingClientRect().top < window.innerHeight + 100) {
@@ -1156,10 +1112,8 @@ document.addEventListener('submit', function (e) {
     });
 })();
 
-// ============================================================
 // EQUIPAMENTOS — Novo: modo pai/filho dos documentos + limpar ficheiro
 // (movido de equipamentos/novo.php — só corre na página de novo equipamento)
-// ============================================================
 (function () {
     if (!document.getElementById('btn-add-doc-extra-wrap')) return;
     var codInput  = document.getElementById('codigo_inventario');
@@ -1229,10 +1183,8 @@ document.addEventListener('submit', function (e) {
     });
 })();
 
-// ============================================================
 // HISTÓRICO — filtro por secção na DataTable
 // (movido de historico/lista.php — só corre na página do histórico)
-// ============================================================
 (function () {
     if (!document.getElementById('historicoTable')) return;
     function waitForDT(cb) {
@@ -1261,10 +1213,8 @@ document.addEventListener('submit', function (e) {
     });
 })();
 
-// ============================================================
 // WEBSITE PÚBLICO (editar) — pré-visualização instantânea da imagem do hero
 // (movido de website/editar.php — só corre se o input existir)
-// ============================================================
 (function () {
     var inp = document.getElementById('heroImg');
     var prev = document.getElementById('heroImgPreview');
@@ -1278,10 +1228,8 @@ document.addEventListener('submit', function (e) {
     });
 })();
 
-// ============================================================
 // MEU PERFIL — mostrar/ocultar password, medidor de força e confirmação
 // (só corre na página de perfil)
-// ============================================================
 (function () {
     var form = document.getElementById('formPassword');
     if (!form) return;
@@ -1332,4 +1280,14 @@ document.addEventListener('submit', function (e) {
     }
     if (conf) conf.addEventListener('input', checkMatch);
     if (pw) pw.addEventListener('input', checkMatch);
+})();
+
+// MEU PERFIL — submeter foto automaticamente ao escolher ficheiro
+(function () {
+    var fi = document.getElementById('fotoInput');
+    var ff = document.getElementById('formFoto');
+    if (!fi || !ff) return;
+    fi.addEventListener('change', function () {
+        if (this.files && this.files[0]) ff.submit();
+    });
 })();

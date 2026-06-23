@@ -1,18 +1,13 @@
 <?php
-/**
- * Novo utilizador
- * Formulário para criar uma nova conta de utilizador no sistema.
- * O email é encriptado com AES antes de ser guardado na base de dados.
- * A password é guardada com hash bcrypt (password_hash).
- */
-
+// pagina para criar uma conta de utilizador nova
+// o email e guardado encriptado (AES) e a password com hash (bcrypt)
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Contar utilizadores existentes (usado para sugestões no auto-preencher)
+// conta quantos utilizadores existem (serve para o botao de auto-preencher)
 $_n_users = (int)mhs_pdo()->query("SELECT COUNT(*) FROM utilizadores WHERE eliminado_em IS NULL")->fetchColumn();
 $page_title = 'Utilizadores - Novo';
 include __DIR__ . '/../../includes/header.php';

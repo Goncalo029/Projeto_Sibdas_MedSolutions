@@ -1,10 +1,12 @@
 <?php
+// carrega funcoes e validacoes e verifica a sessao
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 require_admin(); // apenas admin pode apagar
 
 try {
+    // liga a base de dados
     $pdo = new PDO(
         "mysql:host=" . MYSQL_HOST . ";port=" . MYSQL_PORT . ";dbname=" . MYSQL_DATABASE . ";charset=utf8mb4",
         MYSQL_USERNAME,
@@ -12,11 +14,13 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
+    // vai buscar a localizacao que se quer apagar
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("SELECT * FROM localizacoes WHERE id = ? LIMIT 1");
     $stmt->execute([$id]);
     $localizacao = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // se nao existir avisa e volta para a lista
     if (!$localizacao) {
         $_SESSION['error_message'] = 'Localização não encontrada!';
         echo '<script>window.location.href = "lista.php";</script>';

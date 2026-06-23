@@ -1,17 +1,22 @@
 <?php
+// pagina com os detalhes de uma categoria e os equipamentos que tem
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// procura a categoria na base de dados
 $pdo = mhs_pdo();
 $stmt = $pdo->prepare("SELECT * FROM categorias WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$id]);
 $c = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$c) { header('Location: lista.php'); exit; }
 
+// vai buscar os equipamentos que estao nesta categoria
 $eqs = $pdo->prepare("
     SELECT id, codigo_inventario, designacao, estado
     FROM equipamentos

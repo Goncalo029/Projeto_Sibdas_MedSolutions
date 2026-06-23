@@ -1,21 +1,16 @@
 <?php
-/**
- * Lista de categorias
- * Mostra todas as categorias disponíveis para classificar os equipamentos.
- * Apenas administradores podem criar, editar ou eliminar categorias.
- */
-
+// pagina que mostra a lista das categorias usadas para classificar equipamentos
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
 $page_title = 'Categorias - Lista';
 $categorias = [];
 $erro_bd    = '';
 
-// ─── Carregar todas as categorias da base de dados ───────────────────────────
+// vai buscar todas as categorias a base de dados
 try {
     $categorias = mhs_pdo()->query("
         SELECT id, nome, descricao
@@ -24,6 +19,7 @@ try {
         ORDER BY nome
     ")->fetchAll();
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Nao foi possivel carregar categorias.';
 }
 
@@ -55,6 +51,7 @@ include __DIR__ . '/../../includes/header.php';
           <tr><th>Nome</th><th>Descricao</th><th>Acoes</th></tr>
         </thead>
         <tbody>
+          <?php // mostra uma linha na tabela por cada categoria ?>
           <?php foreach ($categorias as $categoria) : ?>
             <tr>
               <td><?= esc($categoria->nome) ?></td>

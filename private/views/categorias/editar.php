@@ -1,41 +1,44 @@
 <?php
-/**
- * Editar categoria
- * Permite alterar o nome e a descrição de uma categoria existente.
- */
-
+// pagina para editar uma categoria que ja existe
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID da categoria — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $nome      = trim($_POST['nome'] ?? '');
     $descricao = trim($_POST['descricao'] ?? '');
+    // o nome e obrigatorio
     if (!$nome) {
         $_SESSION['error_message'] = 'O campo Nome é obrigatório.';
         header("Location: editar.php?id=$id"); exit;
     }
     try {
+        // atualiza a categoria na base de dados
         mhs_pdo()->prepare("UPDATE categorias SET nome=?, descricao=?, atualizado_em=NOW() WHERE id=?")
             ->execute([$nome, $descricao ?: null, $id]);
+        // guarda no historico
         mhs_historico('categoria', $id, $nome, 'editar');
         $_SESSION['success_message'] = 'Categoria atualizada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header("Location: editar.php?id=$id"); exit;
     }
 }
 
+// vai buscar a categoria atual para preencher o formulario
 $stmt = mhs_pdo()->prepare("SELECT * FROM categorias WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$row) { header('Location: lista.php'); exit; }
 
 $page_title = 'Categorias - Editar';

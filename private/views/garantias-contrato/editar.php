@@ -1,20 +1,15 @@
 <?php
-/**
- * Editar garantia / contrato
- * Permite alterar os dados de uma garantia ou contrato existente.
- * Também é possível substituir o ficheiro PDF anexado.
- */
-
+// pagina para editar uma garantia/contrato que ja existe (e trocar os PDF se quiser)
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID da garantia — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_equipamento       = (int)($_POST['id_equipamento'] ?? 0);
     $data_inicio          = trim($_POST['data_inicio'] ?? '') ?: null;

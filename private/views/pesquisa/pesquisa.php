@@ -1,16 +1,17 @@
 <?php
+// pagina de pesquisa avancada de equipamentos (vários filtros ao mesmo tempo)
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
 $pdo = mhs_pdo();
 
-// Listas para os selects
+// listas para os menus de seleccao (categorias, fornecedores, servicos)
 $categorias   = $pdo->query("SELECT id, nome FROM categorias WHERE ativo=1 AND eliminado_em IS NULL ORDER BY nome")->fetchAll();
 $fornecedores = $pdo->query("SELECT id, nome FROM fornecedores WHERE ativo=1 AND eliminado_em IS NULL ORDER BY nome")->fetchAll();
 $servicos     = $pdo->query("SELECT DISTINCT servico FROM localizacoes WHERE eliminado_em IS NULL ORDER BY servico")->fetchAll();
 
-// Recolha dos filtros (GET)
+// le os filtros que vieram no link (GET)
 $f_codigo    = trim($_GET['codigo']    ?? '');
 $f_designa   = trim($_GET['designa']  ?? '');
 $f_marca     = trim($_GET['marca']    ?? '');
@@ -22,11 +23,14 @@ $f_fornec    = (int)($_GET['fornec']  ?? 0);
 $f_cat       = (int)($_GET['cat']     ?? 0);
 $f_critic    = trim($_GET['critic']   ?? '');
 
+// fica true se pelo menos um filtro foi preenchido
 $pesquisou = !empty(array_filter([$f_codigo, $f_designa, $f_marca, $f_modelo, $f_serie, $f_servico, $f_estado, $f_fornec, $f_cat, $f_critic]));
 
 $resultados = [];
 
+// so faz a pesquisa se algum filtro tiver sido preenchido
 if ($pesquisou) {
+    // query base com os equipamentos ativos
     $sql = "SELECT e.id, e.codigo_inventario, e.designacao, e.marca, e.modelo,
                    e.numero_serie, e.estado, e.criticidade,
                    c.nome AS categoria,
@@ -38,6 +42,7 @@ if ($pesquisou) {
 
     $params = [];
 
+    // vai acrescentando condicoes a query conforme os filtros preenchidos
     if ($f_codigo)  { $sql .= " AND e.codigo_inventario LIKE ?"; $params[] = "%$f_codigo%"; }
     if ($f_designa) { $sql .= " AND e.designacao LIKE ?";        $params[] = "%$f_designa%"; }
     if ($f_marca)   { $sql .= " AND e.marca LIKE ?";             $params[] = "%$f_marca%"; }
@@ -52,6 +57,7 @@ if ($pesquisou) {
         $params[] = $f_fornec;
     }
 
+    // corre a pesquisa e guarda os resultados
     $sql .= " ORDER BY e.codigo_inventario ASC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

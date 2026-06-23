@@ -1,18 +1,13 @@
 <?php
-/**
- * Lista de equipamentos
- * Página principal de gestão de equipamentos.
- * Permite filtrar por estado, criticidade, categoria, localização e outros critérios.
- * Inclui ações rápidas (ativar, concluir manutenção) e exportação em CSV e PDF.
- */
-
+// pagina principal dos equipamentos
+// da para filtrar por varios criterios, fazer acoes rapidas e exportar (CSV/PDF)
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Ações rápidas a partir da lista (sem ficheiro separado) ─────────────────
+// acoes rapidas feitas direto na lista (ativar equipamento ou concluir manutencao)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['accao'] ?? ''), ['concluir_manutencao', 'ativar'], true)) {
     $eq_id  = (int)($_POST['id_equipamento'] ?? 0);
     $accao  = $_POST['accao'];
@@ -38,7 +33,7 @@ $page_title = 'Equipamentos - Lista';
 $equipamentos = [];
 $erro_bd = '';
 
-// Filtros
+// le todos os filtros que possam vir no link (GET)
 $f_estado      = trim($_GET['estado'] ?? '');
 $f_critic      = trim($_GET['criticidade'] ?? '');
 $f_filtro      = trim($_GET['filtro'] ?? '');
@@ -54,6 +49,7 @@ $f_edificio    = trim($_GET['edificio'] ?? '');
 $show_inativos = ($f_ver === 'inativos' || $f_estado === 'Inativo' || $f_estado === 'Abatido');
 if ($show_inativos) { $f_ver = 'inativos'; }
 
+// vai construindo a condicao da query conforme os filtros escolhidos
 $where  = "e.eliminado_em IS NULL";
 $params = [];
 
@@ -145,6 +141,7 @@ if ($filtro_label === '' && $f_localizacao > 0) {
     $loc = mhs_pdo()->query("SELECT servico, sala FROM localizacoes WHERE id = $f_localizacao")->fetch(PDO::FETCH_OBJ);
     $filtro_label = 'Localização: ' . ($loc ? $loc->servico . ($loc->sala ? ' · ' . $loc->sala : '') : 'Desconhecida');
 }
+// corre a query principal com os filtros e vai buscar os equipamentos
 try {
     $pdo_main = mhs_pdo();
     $stmt = $pdo_main->prepare("
@@ -160,7 +157,7 @@ try {
     $stmt->execute($params);
     $equipamentos = $stmt->fetchAll();
 
-    // Contagens para as tabs — aplicam os mesmos filtros exceto estado
+    // conta quantos equipamentos ha em servico e quantos inativos (para os separadores)
     $wc = "eliminado_em IS NULL";
     $pc = [];
     if ($f_critic !== '')  { $wc .= " AND criticidade = ?";    $pc[] = $f_critic; }
@@ -190,13 +187,13 @@ try {
     $n_servico = 0; $n_inativos = 0;
 }
 
-// ── Exportação inline ──────────────────────────────────────────────────
+// se pediram para exportar, gera o ficheiro (CSV ou PDF) e termina aqui
 $export = $_GET['export'] ?? '';
 if ($export === 'csv' && !$erro_bd) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="equipamentos_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputs($out, "\xEF\xBB\xBF"); // o BOM faz o Excel abrir os acentos certos
     fputcsv($out, ['Código', 'Designação', 'Marca', 'Modelo', 'Nº Série', 'Categoria', 'Serviço', 'Estado', 'Criticidade']);
     foreach ($equipamentos as $eq) {
         fputcsv($out, [
@@ -209,7 +206,7 @@ if ($export === 'csv' && !$erro_bd) {
     exit;
 }
 if ($export === 'pdf' && !$erro_bd) {
-    // Geração de PDF descarregável (inline, sem dependências externas)
+    // gera um PDF para descarregar, feito a mao (sem bibliotecas externas)
     $W = 595.28; $H = 841.89; $M = 36;
     $encf = function (string $s): string {
         $s = iconv('UTF-8', 'Windows-1252//TRANSLIT', $s);

@@ -1,18 +1,22 @@
 <?php
+// pagina com os detalhes de um fornecedor e os equipamentos que fornece
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// procura o fornecedor na base de dados
 $pdo = mhs_pdo();
 $stmt = $pdo->prepare("SELECT * FROM fornecedores WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$id]);
 $f = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$f) { header('Location: lista.php'); exit; }
 
-// Equipamentos associados a este fornecedor (apenas os não eliminados)
+// vai buscar os equipamentos ligados a este fornecedor
 $eqs = $pdo->prepare("
     SELECT e.id, e.codigo_inventario, e.designacao, e.marca, ef.tipo_relacao
     FROM equipamentos_fornecedores ef

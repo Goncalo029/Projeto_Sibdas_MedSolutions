@@ -1,19 +1,16 @@
 <?php
-/**
- * Lista de garantias e contratos
- * Mostra todas as garantias e contratos de manutenção associados a equipamentos.
- * Permite descarregar os ficheiros PDF e exportar cada registo em PDF.
- */
-
+// pagina que lista as garantias e contratos de manutencao dos equipamentos
+// da para descarregar os PDF e exportar cada registo em PDF
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
+// garante que as colunas dos ficheiros existem na tabela
 mhs_ensure_garantia_doc_cols(mhs_pdo());
 
-// ── Descarregar o documento PDF (Garantia ou Contrato) da base de dados ──
+// se pediram para descarregar o PDF (garantia ou contrato), envia o ficheiro e termina
 if (isset($_GET['ficheiro'])) {
     $gid = (int)$_GET['ficheiro'];
     $doc = ($_GET['doc'] ?? 'contrato') === 'garantia' ? 'garantia' : 'contrato';
@@ -35,7 +32,7 @@ if (isset($_GET['ficheiro'])) {
     header('Location: lista.php'); exit;
 }
 
-// ── Exportar PDF (relatório gerado da garantia/contrato) ──
+// se pediram para exportar, gera um PDF feito a mao com os dados da garantia/contrato
 if (isset($_GET['export']) && $_GET['export'] === 'pdf' && isset($_GET['id'])) {
     $stmt = mhs_pdo()->prepare("
         SELECT g.*, e.codigo_inventario, e.designacao, e.marca, e.modelo

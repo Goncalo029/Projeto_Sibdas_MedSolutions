@@ -1,44 +1,47 @@
 <?php
-/**
- * Editar localização
- * Permite alterar os dados de uma localização existente (edifício, piso, serviço, sala).
- */
-
+// pagina para editar uma localizacao que ja existe
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID da localização — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $edificio    = trim($_POST['edificio'] ?? '');
     $piso        = trim($_POST['piso'] ?? '');
     $servico     = trim($_POST['servico'] ?? '');
     $sala        = trim($_POST['sala'] ?? '');
     $observacoes = trim($_POST['observacoes'] ?? '');
+    // o servico e obrigatorio
     if (!$servico) {
         $_SESSION['error_message'] = 'O campo Serviço é obrigatório.';
         header("Location: editar.php?id=$id"); exit;
     }
     try {
+        // atualiza a localizacao na base de dados
         mhs_pdo()->prepare("UPDATE localizacoes SET edificio=?, piso=?, servico=?, sala=?, observacoes=?, atualizado_em=NOW() WHERE id=?")
             ->execute([$edificio ?: null, $piso ?: null, $servico, $sala ?: null, $observacoes ?: null, $id]);
+        // guarda no historico
         mhs_historico('localizacao', $id, $servico . ($sala ? ' · ' . $sala : ''), 'editar');
         $_SESSION['success_message'] = 'Localização atualizada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header("Location: editar.php?id=$id"); exit;
     }
 }
 
+// vai buscar a localizacao atual para preencher o formulario
 $stmt = mhs_pdo()->prepare("SELECT * FROM localizacoes WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$row) { header('Location: lista.php'); exit; }
 
 $page_title = 'Localizações - Editar';

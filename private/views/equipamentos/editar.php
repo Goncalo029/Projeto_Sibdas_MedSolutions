@@ -1,21 +1,17 @@
 <?php
-/**
- * Editar equipamento
- * Formulário para alterar os dados de um equipamento já existente.
- * Carrega os dados atuais da base de dados e permite atualizá-los.
- */
-
+// pagina para editar um equipamento que ja existe
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID do equipamento a editar — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le todos os campos do formulario
     $codigo_inventario  = trim($_POST['codigo_inventario'] ?? '');
     $designacao         = trim($_POST['designacao'] ?? '');
     $id_equipamento_pai = (int)($_POST['id_equipamento_pai'] ?? 0) ?: null;
@@ -176,12 +172,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// vai buscar o equipamento atual para preencher o formulario
 $pdo = mhs_pdo();
 $stmt = $pdo->prepare("SELECT * FROM equipamentos WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$row) { header('Location: lista.php'); exit; }
 
+// listas para preencher os menus do formulario
 $categorias   = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome")->fetchAll();
 $localizacoes = $pdo->query("SELECT id, servico, sala FROM localizacoes ORDER BY servico")->fetchAll();
 // Equipamentos disponíveis como pai (excluindo o próprio)

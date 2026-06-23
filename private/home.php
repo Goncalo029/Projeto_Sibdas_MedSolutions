@@ -1,19 +1,13 @@
 <?php
-/**
- * Dashboard (painel principal)
- * Página inicial após o login. Mostra um resumo do estado do sistema:
- * - Contadores rápidos (equipamentos, garantias expiradas, sem documentação, etc.)
- * - Gráficos com distribuição por estado, categoria, localização, documentos e fornecedores
- * - Os gráficos são clicáveis e redirecionam para as listas filtradas
- */
-
+// dashboard: pagina inicial depois do login
+// mostra contadores rapidos e graficos do estado do sistema (os graficos sao clicaveis)
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Ligação à base de dados (usando MySQLi para as queries do dashboard) ────
+// liga a base de dados (aqui usa-se MySQLi para as queries do dashboard)
 try {
     $mysqli = new mysqli(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT);
     if ($mysqli->connect_error) throw new \RuntimeException('Erro na conexão: ' . $mysqli->connect_error);
@@ -22,7 +16,7 @@ try {
     throw new \RuntimeException($e->getMessage(), 0, $e);
 }
 
-// Arrays para guardar os dados de cada gráfico
+// arrays para guardar os dados de cada grafico
 $equipamentos_estado    = [];
 $equipamentos_categoria = [];
 $equipamentos_servico   = [];
@@ -30,9 +24,9 @@ $fornecedores_uso       = [];
 $localizacoes_uso       = [];
 $garantias_vencimento   = [];
 
-// ─── Dados para os gráficos ───────────────────────────────────────────────────
+// daqui para baixo vai buscar os dados de cada grafico
 
-// Equipamentos por estado (Ativo, Em manutenção, Inativo, etc.)
+// equipamentos por estado (Ativo, Em manutencao, Inativo, etc.)
 $r = $mysqli->query("SELECT estado, COUNT(*) as total FROM equipamentos WHERE eliminado_em IS NULL GROUP BY estado ORDER BY total DESC");
 while ($row = $r->fetch_assoc()) $equipamentos_estado[] = $row;
 
@@ -95,7 +89,7 @@ if ($_dash_profile === 'admin') {
     }
 }
 
-// ─── Contadores para os cartões de resumo (KPIs) ─────────────────────────────
+// numeros para os cartoes de resumo no topo do dashboard
 
 // Total de equipamentos ativos no sistema
 $stats_equipamentos = (int)$mysqli->query("SELECT COUNT(*) as t FROM equipamentos WHERE ativo=1 AND eliminado_em IS NULL")->fetch_assoc()['t'];
@@ -154,9 +148,7 @@ include __DIR__ . '/includes/header.php';
 
 <!-- estilos da dashboard movidos para private/assets/css/1220673.css -->
 
-<!-- ════════════════════════════════════════════════════════════
-     HERO
-════════════════════════════════════════════════════════════ -->
+<!-- topo do dashboard (hero) -->
 <div class="dash-hero">
     <div class="dash-hero-top">
         <div>
@@ -212,9 +204,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════
-     ROW 1 — Estados + Categorias
-════════════════════════════════════════════════════════════ -->
+<!-- linha 1: graficos de estados e categorias -->
 <div class="dash-grid-2">
 
     <div class="dash-panel" style="transition-delay:.05s">
@@ -249,9 +239,7 @@ include __DIR__ . '/includes/header.php';
 
 </div>
 
-<!-- ════════════════════════════════════════════════════════════
-     ROW 2 — Localizações + Documentos
-════════════════════════════════════════════════════════════ -->
+<!-- linha 2: graficos de localizacoes e documentos -->
 <div class="dash-grid-32 dash-gap">
 
     <div class="dash-panel" style="transition-delay:.15s">
@@ -287,9 +275,7 @@ include __DIR__ . '/includes/header.php';
 
 </div>
 
-<!-- ════════════════════════════════════════════════════════════
-     ROW 3 — Fornecedores (full width)
-════════════════════════════════════════════════════════════ -->
+<!-- linha 3: grafico dos fornecedores -->
 <div class="dash-panel dash-gap" style="transition-delay:.25s">
     <div class="dash-panel-head">
         <h3 class="dash-panel-title">
@@ -306,9 +292,7 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <?php if ($_dash_profile === 'admin'): ?>
-<!-- ════════════════════════════════════════════════════════════
-     ROW 4 — Garantias timeline (full width)
-════════════════════════════════════════════════════════════ -->
+<!-- linha 4: linha do tempo das garantias -->
 <div class="dash-panel dash-gap" style="transition-delay:.3s;margin-bottom:1.5rem">
     <div class="dash-panel-head">
         <h3 class="dash-panel-title">
@@ -325,9 +309,7 @@ include __DIR__ . '/includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- ════════════════════════════════════════════════════════════
-     ROW 5 — Suporte de vida por serviço
-════════════════════════════════════════════════════════════ -->
+<!-- linha 5: equipamentos de suporte de vida por servico -->
 <!-- estilos do monitor de suporte de vida movidos para private/assets/css/1220673.css -->
 <div class="dash-panel mhs-vitals dash-gap" style="transition-delay:.35s">
     <div class="mhs-vitals-head">

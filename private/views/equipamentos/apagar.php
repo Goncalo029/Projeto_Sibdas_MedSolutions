@@ -1,10 +1,12 @@
 <?php
+// pagina de confirmacao antes de apagar um equipamento (so admin)
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 require_admin(); // apenas admin pode apagar
 
 try {
+    // liga a base de dados
     $pdo = new PDO(
         "mysql:host=" . MYSQL_HOST . ";port=" . MYSQL_PORT . ";dbname=" . MYSQL_DATABASE . ";charset=utf8mb4",
         MYSQL_USERNAME,
@@ -12,11 +14,13 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
+    // vai buscar o equipamento que se quer apagar
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("SELECT * FROM equipamentos WHERE id = ? LIMIT 1");
     $stmt->execute([$id]);
     $equipamento = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // se nao existir avisa e volta para a lista
     if (!$equipamento) {
         $_SESSION['error_message'] = 'Equipamento não encontrado!';
         echo '<script>window.location.href = "lista.php";</script>';

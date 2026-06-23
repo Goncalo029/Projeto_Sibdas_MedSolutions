@@ -1,21 +1,17 @@
 <?php
-/**
- * Lista de localizações
- * Mostra todos os serviços e salas onde os equipamentos podem estar instalados.
- * Cada localização tem edifício, piso, serviço e sala.
- */
-
+// pagina que mostra a lista das localizacoes (onde os equipamentos estao)
+// cada localizacao tem edificio, piso, servico e sala
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
 $page_title   = 'Localizacoes - Lista';
 $localizacoes = [];
 $erro_bd      = '';
 
-// ─── Carregar todas as localizações ordenadas por edifício e serviço ─────────
+// vai buscar todas as localizacoes, ordenadas por edificio e servico
 try {
     $localizacoes = mhs_pdo()->query("
         SELECT id, edificio, piso, servico, sala
@@ -24,16 +20,18 @@ try {
         ORDER BY edificio, piso, servico, sala
     ")->fetchAll();
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Nao foi possivel carregar localizacoes.';
 }
 
-// ─── Exportação CSV ──────────────────────────────────────────────────────────
+// se clicaram em "Exportar CSV", gera o ficheiro e termina aqui
 if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="localizacoes_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
-    fputcsv($out, ['Edifício', 'Piso', 'Serviço', 'Sala']);
+    fputs($out, "\xEF\xBB\xBF"); // o BOM faz o Excel abrir os acentos certos
+    fputcsv($out, ['Edifício', 'Piso', 'Serviço', 'Sala']); // titulos das colunas
+    // uma linha do CSV por cada localizacao
     foreach ($localizacoes as $l) {
         fputcsv($out, [$l->edificio, $l->piso, $l->servico, $l->sala]);
     }
@@ -72,6 +70,7 @@ include __DIR__ . '/../../includes/header.php';
           <tr><th>Edificio</th><th>Piso</th><th>Servico</th><th>Sala</th><th>Acoes</th></tr>
         </thead>
         <tbody>
+          <?php // mostra uma linha na tabela por cada localizacao ?>
           <?php foreach ($localizacoes as $localizacao) : ?>
             <tr>
               <td><?= esc($localizacao->edificio) ?></td>

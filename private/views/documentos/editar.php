@@ -1,31 +1,29 @@
 <?php
-/**
- * Editar documento
- * Permite alterar os metadados de um documento existente e substituir o ficheiro PDF.
- */
-
+// pagina para editar um documento que ja existe (e trocar o PDF se quiser)
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID do documento — se não existir, voltar à lista
+// vai buscar o id do documento ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, trata dos dados
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $id_equipamento = (int)($_POST['id_equipamento'] ?? 0);
     $tipo_documento = trim($_POST['tipo_documento'] ?? '');
     $nome_documento = trim($_POST['nome_documento'] ?? '');
     $data_documento = trim($_POST['data_documento'] ?? '') ?: null;
     $data_validade  = trim($_POST['data_validade'] ?? '') ?: null;
     $observacoes    = trim($_POST['observacoes'] ?? '');
+    // equipamento e tipo sao obrigatorios
     if (!$id_equipamento || !$tipo_documento) {
         $_SESSION['error_message'] = 'Equipamento e Tipo de documento são obrigatórios.';
         header("Location: editar.php?id=$id"); exit;
     }
-    // Validade não pode ser anterior a hoje — mas permite manter uma já existente (documento expirado)
+    // validade nao pode ser no passado, mas deixa manter a que ja estava (documento expirado)
     if ($data_validade && $data_validade < date('Y-m-d')) {
         $old = mhs_pdo()->prepare("SELECT data_validade FROM documentos WHERE id=?");
         $old->execute([$id]);
@@ -35,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: editar.php?id=$id"); exit;
         }
     }
-    // Upload opcional de novo ficheiro (substitui o anterior na BD)
+    // ficheiro novo e opcional: se vier, substitui o antigo na base de dados
     $erro_upload = null;
     $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);
     if ($erro_upload) {
@@ -44,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        // se ha PDF novo, atualiza tambem o ficheiro
         if ($pdf) {
             $stmt = mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,nome_ficheiro=?,ficheiro_conteudo=?,ficheiro_mime=?,observacoes=?,atualizado_em=NOW() WHERE id=?");
             $stmt->bindValue(1, $id_equipamento, PDO::PARAM_INT);
@@ -58,24 +57,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bindValue(10, $id, PDO::PARAM_INT);
             $stmt->execute();
         } else {
+            // sem ficheiro novo: so atualiza os dados e mantem o PDF antigo
             mhs_pdo()->prepare("UPDATE documentos SET id_equipamento=?,tipo_documento=?,nome_documento=?,data_documento=?,data_validade=?,observacoes=?,atualizado_em=NOW() WHERE id=?")
                 ->execute([$id_equipamento, $tipo_documento, $nome_documento ?: null, $data_documento, $data_validade, $observacoes ?: null, $id]);
         }
+        // guarda no historico que o documento foi editado
         mhs_historico('documento', $id, ($nome_documento ?: $tipo_documento), 'editar');
         $_SESSION['success_message'] = 'Documento atualizado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header("Location: editar.php?id=$id"); exit;
     }
 }
 
+// vai buscar o documento atual para preencher o formulario
 $pdo = mhs_pdo();
 $stmt = $pdo->prepare("SELECT * FROM documentos WHERE id=?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$row) { header('Location: lista.php'); exit; }
 
+// equipamentos e tipos para os menus do formulario
 $equipamentos = $pdo->query("SELECT id, codigo_inventario, designacao FROM equipamentos ORDER BY codigo_inventario")->fetchAll();
 $tipos = ['Manual de utilizador','Manual de serviço','Certificado de calibração','Contrato de manutenção','Ficha técnica','Fatura / Guia de aquisição','Declaração de conformidade','Relatório técnico','Outro'];
 

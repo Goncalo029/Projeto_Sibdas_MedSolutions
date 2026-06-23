@@ -1,11 +1,8 @@
 <?php
-/**
- * Funções de validação — MedSolutions / MedInventar
- */
+// funcoes para validar os campos dos formularios (MedSolutions)
+// cada uma devolve um array com os erros encontrados (vazio = esta tudo bem)
 
-/**
- * Validar nome (genérico)
- */
+// valida um nome generico (obrigatorio, entre 3 e 150 letras)
 function validar_nome(string $nome): array
 {
     $erros = [];
@@ -19,9 +16,7 @@ function validar_nome(string $nome): array
     return $erros;
 }
 
-/**
- * Validar email
- */
+// valida um email (obrigatorio e tem de ter formato valido)
 function validar_email(string $email): array
 {
     $erros = [];
@@ -33,9 +28,7 @@ function validar_email(string $email): array
     return $erros;
 }
 
-/**
- * Validar telefone (9 dígitos)
- */
+// valida um telefone (se vier preenchido, tem de ter 9 digitos)
 function validar_telefone(string $telefone): array
 {
     $erros = [];
@@ -45,9 +38,7 @@ function validar_telefone(string $telefone): array
     return $erros;
 }
 
-/**
- * Validar morada
- */
+// valida uma morada (se vier preenchida, entre 5 e 200 letras)
 function validar_morada(string $morada): array
 {
     $erros = [];
@@ -57,9 +48,7 @@ function validar_morada(string $morada): array
     return $erros;
 }
 
-/**
- * Validar código de inventário
- */
+// valida o codigo de inventario (obrigatorio, so certos caracteres, max 50)
 function validar_codigo_inventario(string $codigo): array
 {
     $erros = [];
@@ -73,9 +62,7 @@ function validar_codigo_inventario(string $codigo): array
     return $erros;
 }
 
-/**
- * Validar NIF (9 dígitos)
- */
+// valida o NIF (se vier preenchido, tem de ter 9 digitos)
 function validar_nif(string $nif): array
 {
     $erros = [];
@@ -85,9 +72,7 @@ function validar_nif(string $nif): array
     return $erros;
 }
 
-/**
- * Validar estado do equipamento
- */
+// valida o estado do equipamento (tem de ser um dos da lista)
 function validar_estado_equipamento(string $estado): array
 {
     $validos = ['Ativo', 'Em manutenção', 'Em calibração', 'Em quarentena', 'Inativo', 'Abatido'];
@@ -100,9 +85,7 @@ function validar_estado_equipamento(string $estado): array
     return $erros;
 }
 
-/**
- * Validar criticidade
- */
+// valida a criticidade (tem de ser uma das da lista)
 function validar_criticidade(string $criticidade): array
 {
     $validos = ['Baixa', 'Média', 'Alta', 'Suporte de vida'];
@@ -115,9 +98,7 @@ function validar_criticidade(string $criticidade): array
     return $erros;
 }
 
-/**
- * Validar data (formato dd/mm/yyyy)
- */
+// valida uma data no formato dd/mm/aaaa e ve se existe mesmo no calendario
 function validar_data(string $data): array
 {
     $erros = [];
@@ -134,9 +115,7 @@ function validar_data(string $data): array
     return $erros;
 }
 
-/**
- * Validar URL
- */
+// valida uma URL (se vier preenchida, tem de ter formato valido)
 function validar_url(string $url): array
 {
     $erros = [];

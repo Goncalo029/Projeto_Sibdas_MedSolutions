@@ -1,17 +1,12 @@
 <?php
-/**
- * Logout
- * Termina a sessão do utilizador e redireciona para o login.
- * Regista o evento de logout na base de dados.
- */
-
+// termina a sessao do utilizador e volta para o login
 session_start();
 
-// Guardar os dados da sessão antes de a destruir (para o registo de log)
+// guarda os dados da sessao antes de a apagar (para registar no historico)
 $user_id    = $_SESSION['user_id']    ?? null;
 $user_email = $_SESSION['user_email'] ?? null;
 
-// ─── Registar o logout na base de dados ──────────────────────────────────────
+// regista o logout na base de dados
 if ($user_id && $user_email) {
     try {
         require_once __DIR__ . '/../config/config.php';
@@ -31,14 +26,14 @@ if ($user_id && $user_email) {
             $user_email
         ]);
     } catch (Exception $e) {
-        // Se falhar o log, continuar na mesma com o logout
+        // se o registo falhar, faz na mesma o logout
     }
 }
 
-// ─── Destruir a sessão ───────────────────────────────────────────────────────
+// apaga a sessao
 session_destroy();
 
-// Redirecionar para a página de login
+// volta para a pagina de login
 header('Location: login.php');
 exit;
 ?>

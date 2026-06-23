@@ -1,7 +1,9 @@
 <?php
+// pagina (so admin) para editar os textos e a imagem do site publico
 require_once __DIR__ . '/../../includes/funcoes.php';
 redirect_if_not_logged();
 
+// so o admin entra
 if (($_SESSION['profile'] ?? '') !== 'admin') {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
@@ -9,7 +11,7 @@ if (($_SESSION['profile'] ?? '') !== 'admin') {
 
 $pdo = mhs_pdo();
 
-// Cria a tabela se não existir e semeia os valores por omissão
+// cria a tabela de configuracao se ainda nao existir e mete os valores por defeito
 $pdo->exec("CREATE TABLE IF NOT EXISTS `website_config` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `chave` varchar(100) NOT NULL,
@@ -41,9 +43,10 @@ foreach ($defaults as $d) {
     $ins->execute($d);
 }
 
+// caminho da imagem do site (a que aparece no hero)
 $img_dest = __DIR__ . '/../../../public/assets/images/dashboard-preview.png';
 
-// Guardar
+// quando carregam em guardar, grava os textos e (se houver) a imagem nova
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $campos = [
         'hero_overline', 'hero_titulo', 'hero_titulo_strong', 'hero_subtitulo',
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $upd->execute([trim($_POST[$chave] ?? ''), $chave]);
     }
 
-    // Upload opcional da imagem do hero (substitui dashboard-preview.png)
+    // upload da imagem (opcional) que substitui a dashboard-preview.png
     $img_erro = '';
     if (!empty($_FILES['hero_imagem']['name'])) {
         if (($_FILES['hero_imagem']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
@@ -91,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Carregar valores atuais
+// vai buscar os valores atuais para preencher o formulario
 $rows = $pdo->query("SELECT chave, valor FROM website_config")->fetchAll();
 $cfg = [];
 foreach ($rows as $r) {

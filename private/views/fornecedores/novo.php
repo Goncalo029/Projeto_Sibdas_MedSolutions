@@ -1,17 +1,14 @@
 <?php
-/**
- * Novo fornecedor
- * Formulário para registar um fornecedor novo.
- * Inclui dados gerais (nome, NIF, contacto) e pessoa de contacto de assistência técnica.
- */
-
+// pagina para criar um fornecedor novo
+// tem os dados gerais e o contacto de assistencia tecnica
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le todos os campos do formulario
     $nome            = trim($_POST['nome'] ?? '');
     $nif             = trim($_POST['nif'] ?? '');
     $tipo_fornecedor = trim($_POST['tipo_fornecedor'] ?? '');
@@ -23,47 +20,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tel_contacto    = trim($_POST['tel_contacto'] ?? '');
     $observacoes     = trim($_POST['observacoes'] ?? '');
 
+    // o nome e obrigatorio
     if (!$nome) {
         $_SESSION['error_message'] = 'O campo Nome é obrigatório.';
         header('Location: novo.php'); exit;
     }
+    // o nome tem de ter pelo menos 2 letras
     if (mb_strlen($nome) < 2 || !preg_match('/[a-zA-ZÀ-úÀ-ÖØ-öø-ÿ]/u', $nome)) {
         $_SESSION['error_message'] = 'O nome do fornecedor deve ter pelo menos 2 letras.';
         header('Location: novo.php'); exit;
     }
+    // se meteu NIF tem de ter 9 digitos
     if ($nif && !preg_match('/^\d{9}$/', $nif)) {
         $_SESSION['error_message'] = 'O NIF deve ter exatamente 9 dígitos.';
         header('Location: novo.php'); exit;
     }
+    // se meteu email tem de ser valido
     if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error_message'] = 'Endereço de email inválido.';
         header('Location: novo.php'); exit;
     }
+    // se meteu telefone tem de ter pelo menos 9 digitos
     if ($telefone && strlen(preg_replace('/\D/', '', $telefone)) < 9) {
         $_SESSION['error_message'] = 'Número de telefone inválido (mínimo 9 dígitos).';
         header('Location: novo.php'); exit;
     }
+    // o contacto de assistencia tecnica (nome e telefone) e obrigatorio
     if (!$pessoa_contacto || !$tel_contacto) {
         $_SESSION['error_message'] = 'O contacto de assistência técnica (nome e telefone) é obrigatório.';
         header('Location: novo.php'); exit;
     }
+    // o telefone da assistencia tecnica tambem tem de ter 9 digitos
     if (strlen(preg_replace('/\D/', '', $tel_contacto)) < 9) {
         $_SESSION['error_message'] = 'Telefone de assistência técnica inválido (mínimo 9 dígitos).';
         header('Location: novo.php'); exit;
     }
 
     try {
+        // grava o fornecedor novo na base de dados
         mhs_pdo()->prepare("INSERT INTO fornecedores (nome,nif,tipo_fornecedor,telefone,email,morada,website,pessoa_contacto,tel_contacto,observacoes,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,NOW())")
             ->execute([$nome, $nif ?: null, $tipo_fornecedor ?: null, $telefone ?: null, $email ?: null, $morada ?: null, $website ?: null, $pessoa_contacto ?: null, $tel_contacto ?: null, $observacoes ?: null]);
+        // guarda no historico
         mhs_historico('fornecedor', (int)mhs_pdo()->lastInsertId(), $nome, 'criar');
         $_SESSION['success_message'] = 'Fornecedor criado com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header('Location: novo.php'); exit;
     }
 }
 
+// nomes que ja existem (para o auto-preencher nao repetir)
 $_forn_existentes = mhs_pdo()->query("SELECT nome FROM fornecedores WHERE eliminado_em IS NULL")->fetchAll(PDO::FETCH_COLUMN);
 $page_title = 'Fornecedores - Novo';
 include __DIR__ . '/../../includes/header.php';

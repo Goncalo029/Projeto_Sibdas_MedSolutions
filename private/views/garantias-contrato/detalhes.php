@@ -1,22 +1,20 @@
 <?php
-/**
- * Detalhes da garantia / contrato
- * Mostra toda a informação de uma garantia ou contrato de manutenção.
- * Permite exportar os dados em PDF e descarregar o documento anexado.
- */
-
+// pagina com os detalhes de uma garantia/contrato
+// da para exportar em PDF e descarregar os documentos anexados
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID da garantia — se não existir, voltar à lista
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// garante que as colunas dos ficheiros existem
 mhs_ensure_garantia_doc_cols(mhs_pdo());
 
+// procura a garantia/contrato (com os dados do equipamento)
 $stmt = mhs_pdo()->prepare("
     SELECT g.*, e.codigo_inventario, e.designacao
     FROM garantias_contratos g
@@ -25,6 +23,7 @@ $stmt = mhs_pdo()->prepare("
 ");
 $stmt->execute([$id]);
 $g = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$g) { header('Location: lista.php'); exit; }
 
 $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';

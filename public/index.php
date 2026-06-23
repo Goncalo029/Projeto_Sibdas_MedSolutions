@@ -1,11 +1,15 @@
 <?php
+// pagina publica do site (a que aparece antes de fazer login)
+// mostra a apresentacao do produto e tem o formulario de contacto
 session_start();
 require_once __DIR__ . '/../config/config.php';
 
+// atalho para ir buscar um texto configuravel do site (ou usar um valor por defeito)
 function website_cfg(array &$cfg, string $chave, string $default): string {
     return htmlspecialchars($cfg[$chave] ?? $default, ENT_QUOTES, 'UTF-8');
 }
 
+// vai buscar os textos configuraveis do site a base de dados
 $wcfg = [];
 $wpdo = null;
 try {
@@ -21,6 +25,7 @@ try {
 $contacto_msg  = '';
 $contacto_tipo = '';
 
+// quando enviam o formulario de contacto, valida e grava a mensagem
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email'], $_POST['mensagem'])) {
     $nome     = trim($_POST['nome']);
     $email    = trim($_POST['email']);
@@ -63,13 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/fontawesome/all.min.css">
-    <link rel="stylesheet" href="assets/css/estilos.css">
+    <link rel="stylesheet" href="assets/css/medsolutions.css?v=<?= @filemtime(__DIR__ . '/assets/css/medsolutions.css') ?>">
 </head>
 <body>
 
 <div class="mhs-mobile-nav-backdrop" id="mobileNavBackdrop"></div>
 
-<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<!-- barra do topo (header) -->
 <header class="mhs-topbar">
     <div class="mhs-topbar-inner">
         <a href="#" class="mhs-logo-link">
@@ -94,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </header>
 
-<!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+<!-- secao principal de apresentacao (hero) -->
 <div class="mhs-hero-wrap" id="quem-somos">
 <section class="mhs-hero">
     <div class="mhs-hero-content">
@@ -159,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </div>
 
-<!-- ═══════════════════════════════ PRODUTO ═══════════════════════════════ -->
+<!-- secao do produto -->
 <section class="mhs-section" id="produto">
     <div class="mhs-section-header">
         <p class="mhs-overline"><i class="fa-solid fa-box-open"></i> <span>O produto</span></p>
@@ -186,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </section>
 
-<!-- ═══════════════════════════════ FUNCIONALIDADES ═══════════════════════════════ -->
+<!-- secao das funcionalidades -->
 <section class="mhs-section--alt" id="funcionalidades">
     <div class="mhs-section-header">
         <p class="mhs-overline"><i class="fa-solid fa-list-check"></i> <span data-i18n="feat-overline">Funcionalidades</span></p>
@@ -238,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </section>
 
-<!-- ═══════════════════════════════ SETOR SAÚDE ═══════════════════════════════ -->
+<!-- secao do setor da saude -->
 <section class="mhs-section" id="setor-saude">
     <div class="mhs-split">
         <div class="mhs-split-text">
@@ -287,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </section>
 
-<!-- ═══════════════════════════════ CONTACTO ═══════════════════════════════ -->
+<!-- secao do formulario de contacto -->
 <section class="mhs-section--alt" id="contacto">
     <div class="mhs-section-header">
         <p class="mhs-overline"><i class="fa-solid fa-envelope"></i> <span>Contacto</span></p>
@@ -343,7 +348,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     <?php endif; ?>
 </section>
 
-<!-- ═══════════════════════════════ FOOTER ═══════════════════════════════ -->
+<!-- rodape (footer) -->
 <footer class="mhs-footer">
     <div class="mhs-footer-inner">
         <div class="mhs-footer-brand">
@@ -375,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     </div>
 </footer>
 
-<!-- ═══════════════════════════════ MOBILE NAV ═══════════════════════════════ -->
+<!-- menu para telemovel -->
 <div class="mhs-mobile-sheet" id="mobileSheet" aria-hidden="true">
     <a href="#quem-somos" class="mhs-mobile-sheet-link"><i class="fa-solid fa-house"></i><span data-i18n="nav-about-short">Home</span></a>
     <a href="#produto" class="mhs-mobile-sheet-link"><i class="fa-solid fa-box-open"></i><span data-i18n="nav-product">O Produto</span></a>
@@ -395,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'], $_POST['email
     <a href="#contacto" class="mhs-mobile-tab"><i class="fa-solid fa-envelope"></i><span data-i18n="nav-contact-short">Contacto</span></a>
 </nav>
 
-<!-- ═══════════════════════════════ SCRIPTS ═══════════════════════════════ -->
+<!-- scripts -->
 <script>
 (function() {
     var mainNav   = document.getElementById('mainNav');

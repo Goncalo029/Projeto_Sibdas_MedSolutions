@@ -1,18 +1,22 @@
 <?php
+// pagina com os detalhes de uma localizacao e os equipamentos que la estao
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// procura a localizacao na base de dados
 $pdo = mhs_pdo();
 $stmt = $pdo->prepare("SELECT * FROM localizacoes WHERE id = ? AND eliminado_em IS NULL");
 $stmt->execute([$id]);
 $l = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$l) { header('Location: lista.php'); exit; }
 
-// Equipamentos nesta localização (apenas os não eliminados)
+// vai buscar os equipamentos que estao nesta localizacao
 $eqs = $pdo->prepare("
     SELECT id, codigo_inventario, designacao, estado, criticidade
     FROM equipamentos
@@ -22,6 +26,7 @@ $eqs = $pdo->prepare("
 $eqs->execute([$id]);
 $equipamentos = $eqs->fetchAll();
 
+// titulo da pagina = servico / sala
 $titulo = $l->servico . ($l->sala ? ' / ' . $l->sala : '');
 
 $page_title = 'Localizações - Detalhes';

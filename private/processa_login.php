@@ -1,28 +1,23 @@
 <?php
-/**
- * Processamento do login
- * Recebe os dados do formulário de login, valida as credenciais
- * e cria a sessão do utilizador caso estejam corretas.
- */
-
+// trata do login: recebe os dados do formulario, confirma as credenciais e cria a sessao
 require_once __DIR__ . '/includes/funcoes.php';
 
-// Garantir que a sessão está iniciada
+// garante que a sessao esta iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Só aceitar pedidos POST (não permitir acesso direto via URL)
+// so aceita pedidos por POST (nao deixa entrar direto pelo link)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo '<script>window.location.href = "' . BASE_URL . '/public/login.php";</script>';
     exit;
 }
 
-// ─── Recolher dados do formulário ────────────────────────────────────────────
+// le o email e a password do formulario
 $email    = trim($_POST['text_username'] ?? '');
 $password = trim($_POST['text_password'] ?? '');
 
-// ─── Validação básica dos campos ─────────────────────────────────────────────
+// validacao basica dos campos antes de ir a base de dados
 $validation_errors = [];
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -42,9 +37,9 @@ if (!empty($validation_errors)) {
     exit;
 }
 
-// ─── Autenticação na base de dados ───────────────────────────────────────────
+// confirma as credenciais na base de dados
 try {
-    // Criar ligação à base de dados
+    // liga a base de dados
     $pdo = new PDO(
         "mysql:host=" . MYSQL_HOST . ";port=" . MYSQL_PORT . ";dbname=" . MYSQL_DATABASE . ";charset=utf8mb4",
         MYSQL_USERNAME,
@@ -91,7 +86,7 @@ try {
         }
     }
 
-    // ─── Registo de tentativa de autenticação ────────────────────────────────
+    // guarda no historico cada tentativa de login (o IP de quem tentou)
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
 
     if (!$agent || !$password_valid) {

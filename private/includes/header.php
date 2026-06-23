@@ -1,9 +1,11 @@
 <?php
+// topo comum a todas as paginas da area privada (abre o <html>, mete o CSS e a barra de cima)
 require_once __DIR__ . '/../../config/config.php';
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 header('Content-Type: text/html; charset=utf-8');
+// versao do CSS pela data do ficheiro, para o browser recarregar quando muda
 $mhs_css_version = filemtime(__DIR__ . '/../assets/css/1220673.css');
 $mhs_page_file = basename($_SERVER['SCRIPT_NAME'] ?? '');
 $mhs_body_page_class = '';

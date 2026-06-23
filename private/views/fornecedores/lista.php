@@ -1,21 +1,17 @@
 <?php
-/**
- * Lista de fornecedores
- * Mostra todos os fornecedores registados no sistema numa tabela com pesquisa.
- * Permite aceder ao detalhe, editar ou eliminar cada fornecedor.
- */
-
+// pagina que mostra a lista de todos os fornecedores
+// da para ver detalhes, editar, apagar e exportar para CSV
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
 $page_title   = 'Fornecedores - Lista';
 $fornecedores = [];
 $erro_bd      = '';
 
-// ─── Carregar todos os fornecedores da base de dados ─────────────────────────
+// vai buscar todos os fornecedores a base de dados
 try {
     $fornecedores = mhs_pdo()->query("
         SELECT id, nome, nif, tipo_fornecedor, telefone, email
@@ -24,16 +20,18 @@ try {
         ORDER BY nome
     ")->fetchAll();
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Nao foi possivel carregar fornecedores.';
 }
 
-// ─── Exportação CSV ──────────────────────────────────────────────────────────
+// se clicaram em "Exportar CSV", gera o ficheiro e termina aqui
 if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="fornecedores_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
-    fputcsv($out, ['Nome', 'NIF', 'Tipo', 'Telefone', 'Email']);
+    fputs($out, "\xEF\xBB\xBF"); // o BOM faz o Excel abrir os acentos certos
+    fputcsv($out, ['Nome', 'NIF', 'Tipo', 'Telefone', 'Email']); // titulos das colunas
+    // uma linha do CSV por cada fornecedor
     foreach ($fornecedores as $f) {
         fputcsv($out, [$f->nome, $f->nif, $f->tipo_fornecedor, $f->telefone, $f->email]);
     }
@@ -72,6 +70,7 @@ include __DIR__ . '/../../includes/header.php';
           <tr><th>Nome</th><th>NIF</th><th>Tipo</th><th>Telefone</th><th>Email</th><th>Acoes</th></tr>
         </thead>
         <tbody>
+          <?php // mostra uma linha na tabela por cada fornecedor ?>
           <?php foreach ($fornecedores as $fornecedor) : ?>
             <tr>
               <td><?= esc($fornecedor->nome) ?></td>

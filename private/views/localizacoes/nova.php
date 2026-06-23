@@ -1,16 +1,11 @@
 <?php
-/**
- * Nova localização
- * Formulário para registar um novo serviço/sala onde os equipamentos podem estar instalados.
- * Os serviços disponíveis são predefinidos numa lista (serviços hospitalares comuns).
- */
-
+// pagina para criar uma localizacao nova (servico/sala onde ficam os equipamentos)
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Lista de serviços hospitalares disponíveis para selecionar
+// lista de servicos do hospital para sugerir no formulario
 $SERVICOS = ['Urgência','UCI','UCIP','Bloco Operatório','Cardiologia','Pediatria','Ortopedia',
              'Oncologia','Radiologia','Neurologia','Psiquiatria','Ginecologia','Obstetrícia',
              'Neonatologia','Oftalmologia','Otorrinolaringologia','Gastrenterologia','Pneumologia',
@@ -20,38 +15,47 @@ $SERVICOS = ['Urgência','UCI','UCIP','Bloco Operatório','Cardiologia','Pediatr
              'Hospital de Dia','Anestesiologia','Cuidados Paliativos','Esterilização',
              'Bloco de Partos','Serviços Administrativos'];
 
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $edificio    = trim($_POST['edificio'] ?? '');
     $piso        = trim($_POST['piso'] ?? '');
     $servico     = trim($_POST['servico'] ?? '');
     $sala        = trim($_POST['sala'] ?? '');
     $observacoes = trim($_POST['observacoes'] ?? '');
 
+    // o servico e obrigatorio
     if (!$servico) {
         $_SESSION['error_message'] = 'O campo Serviço é obrigatório.';
         header('Location: nova.php'); exit;
     }
+    // o servico tem de ter pelo menos 3 letras
     if (mb_strlen($servico) < 3 || !preg_match('/[a-zA-ZÀ-úÀ-ÖØ-öø-ÿ]/u', $servico)) {
         $_SESSION['error_message'] = 'O serviço deve ter pelo menos 3 letras (ex: Urgência, Cardiologia).';
         header('Location: nova.php'); exit;
     }
+    // se meteu sala, tem de ter pelo menos 2 caracteres
     if ($sala && mb_strlen($sala) < 2) {
         $_SESSION['error_message'] = 'O nome da sala deve ter pelo menos 2 caracteres.';
         header('Location: nova.php'); exit;
     }
 
     try {
+        // grava a localizacao nova na base de dados
         mhs_pdo()->prepare("INSERT INTO localizacoes (edificio, piso, servico, sala, observacoes, criado_em) VALUES (?,?,?,?,?,NOW())")
             ->execute([$edificio ?: null, $piso ?: null, $servico, $sala ?: null, $observacoes ?: null]);
+        // guarda no historico
         mhs_historico('localizacao', (int)mhs_pdo()->lastInsertId(), $servico . ($sala ? ' · ' . $sala : ''), 'criar');
         $_SESSION['success_message'] = 'Localização criada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header('Location: nova.php'); exit;
     }
 }
 
+// localizacoes que ja existem (para o auto-preencher nao repetir)
 $_loc_existentes = mhs_pdo()->query("SELECT CONCAT(servico,'|',COALESCE(sala,'')) FROM localizacoes")->fetchAll(PDO::FETCH_COLUMN);
 $page_title = 'Localizações - Nova';
 include __DIR__ . '/../../includes/header.php';

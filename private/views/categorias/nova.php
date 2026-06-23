@@ -1,29 +1,30 @@
 <?php
-/**
- * Nova categoria
- * Formulário simples para criar uma nova categoria de equipamentos.
- */
-
+// pagina para criar uma categoria nova de equipamentos
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $nome      = trim($_POST['nome'] ?? '');
     $descricao = trim($_POST['descricao'] ?? '');
+    // o nome e obrigatorio
     if (!$nome) {
         $_SESSION['error_message'] = 'O campo Nome é obrigatório.';
         header('Location: nova.php'); exit;
     }
     try {
+        // grava a categoria nova na base de dados
         mhs_pdo()->prepare("INSERT INTO categorias (nome, descricao, criado_em) VALUES (?,?,NOW())")
             ->execute([$nome, $descricao ?: null]);
+        // guarda no historico
         mhs_historico('categoria', (int)mhs_pdo()->lastInsertId(), $nome, 'criar');
         $_SESSION['success_message'] = 'Categoria criada com sucesso.';
         header('Location: lista.php'); exit;
     } catch (PDOException $e) {
+        // se a gravacao falhar mostra o erro
         $_SESSION['error_message'] = 'Erro ao guardar: ' . $e->getMessage();
         header('Location: nova.php'); exit;
     }

@@ -1,24 +1,29 @@
 <?php
+// pagina para ler uma mensagem de contacto (e marca-la como lida)
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// so o admin pode ver as mensagens
 if (!is_admin()) {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
 }
 
+// vai buscar o id da mensagem ao link
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $msg = null;
 $erro = '';
 
 if ($id > 0) {
     try {
+        // procura a mensagem na base de dados
         $pdo = mhs_pdo();
         $stmt = $pdo->prepare("SELECT * FROM mensagens_contacto WHERE id = ? AND eliminado_em IS NULL");
         $stmt->execute([$id]);
         $msg = $stmt->fetch();
 
+        // se a mensagem ainda nao estava lida, marca como lida
         if ($msg && !$msg->lida) {
             $pdo->prepare("UPDATE mensagens_contacto SET lida = 1, atualizado_em = NOW() WHERE id = ?")->execute([$id]);
         }
@@ -27,6 +32,7 @@ if ($id > 0) {
     }
 }
 
+// se nao encontrou a mensagem volta para a lista
 if (!$msg && !$erro) {
     header('Location: lista.php');
     exit;

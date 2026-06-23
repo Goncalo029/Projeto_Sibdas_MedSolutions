@@ -1,8 +1,10 @@
 <?php
+// pagina que mostra as mensagens enviadas pelo formulario de contacto do site
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 
+// so o admin pode ver as mensagens
 if (!is_admin()) {
     header('Location: ' . BASE_URL . '/private/home.php');
     exit;
@@ -14,6 +16,7 @@ $total_nao_lidas = 0;
 
 try {
     $pdo = mhs_pdo();
+    // vai buscar as mensagens, primeiro as nao lidas e depois as mais recentes
     $mensagens = $pdo->query("
         SELECT id, nome, email,
                SUBSTRING(mensagem, 1, 100) AS resumo,
@@ -23,9 +26,11 @@ try {
         ORDER BY lida ASC, criado_em DESC
     ")->fetchAll();
 
+    // conta quantas mensagens ainda nao foram lidas (para o badge)
     $row = $pdo->query("SELECT COUNT(*) AS total FROM mensagens_contacto WHERE lida = 0 AND eliminado_em IS NULL")->fetch();
     $total_nao_lidas = (int)($row->total ?? 0);
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Não foi possível carregar as mensagens.';
 }
 
@@ -80,6 +85,7 @@ include __DIR__ . '/../../includes/header.php';
           </tr>
         </thead>
         <tbody>
+          <?php // mostra uma linha por cada mensagem (a negrito se nao estiver lida) ?>
           <?php foreach ($mensagens as $m): ?>
             <tr class="<?= !$m->lida ? 'mhs-row-unread' : '' ?>">
               <td style="width:28px">

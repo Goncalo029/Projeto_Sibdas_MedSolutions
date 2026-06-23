@@ -1,7 +1,9 @@
 <?php
+// junta os avisos a mostrar no sino do topo (mensagens novas, manutencoes em atraso, etc.)
 function get_notificacoes(): array {
     $profile = $_SESSION['profile'] ?? '';
 
+    // so admin e tecnico recebem avisos
     if (!in_array($profile, ['admin', 'tecnico'])) {
         return [];
     }

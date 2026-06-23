@@ -1,16 +1,20 @@
-﻿<?php
+<?php
+// pagina de login
 session_start();
 
-// Recolher mensagens de erro da sessão
+// vai buscar as mensagens de erro que ficaram guardadas na sessao
 $validation_errors = $_SESSION['validation_errors'] ?? [];
 $server_error = $_SESSION['server_error'] ?? '';
 unset($_SESSION['validation_errors']);
 unset($_SESSION['server_error']);
 
+// junta os erros todos numa so mensagem para mostrar
 $error_msg = $server_error;
 if (!empty($validation_errors)) {
     $error_msg = implode(' ', $validation_errors);
 }
+// versao do CSS (com base na data do ficheiro) para forcar o browser a recarregar
+$css_ver = @filemtime(__DIR__ . '/assets/css/medsolutions.css') ?: time();
 ?>
 <!DOCTYPE html>
 <html lang="pt">
@@ -23,7 +27,7 @@ if (!empty($validation_errors)) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/fontawesome/all.min.css">
-    <link rel="stylesheet" href="assets/css/estilos.css">
+    <link rel="stylesheet" href="assets/css/medsolutions.css?v=<?= $css_ver ?>">
 </head>
 <body class="mhs-auth-page">
 

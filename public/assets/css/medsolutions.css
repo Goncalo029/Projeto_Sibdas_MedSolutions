@@ -1,4 +1,4 @@
-/* ═══════════════════════ TOKENS ═══════════════════════ */
+/* variaveis de cores e medidas */
 :root {
     --c-blue:     #1d4ed8;
     --c-blue-dk:  #1e40af;
@@ -16,7 +16,7 @@
     --t:          .2s ease;
 }
 
-/* ═══════════════════════ RESET ═══════════════════════ */
+/* reset basico dos estilos */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html   { scroll-behavior:smooth; scroll-padding-top:80px; }
 body   { font-family:'Inter',system-ui,sans-serif; color:var(--c-ink); background:#ffffff; line-height:1.65; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
@@ -24,7 +24,7 @@ img    { max-width:100%; display:block; }
 a      { color:inherit; text-decoration:none; }
 button { font-family:inherit; }
 
-/* ═══════════════════════ TOPBAR ═══════════════════════ */
+/* barra do topo */
 .mhs-topbar {
     position:sticky; top:0; z-index:200;
     background:#ffffff;
@@ -71,7 +71,7 @@ button { font-family:inherit; }
 }
 .mhs-lang-btn.is-active { background:var(--c-blue); color:#fff; }
 
-/* ── Buttons ── */
+/* botoes */
 .mhs-btn-outline {
     display:inline-flex; align-items:center; gap:.4rem;
     padding:.6rem 1.1rem; border-radius:.6rem;
@@ -106,7 +106,7 @@ button { font-family:inherit; }
 }
 .mhs-burger span { width:22px; height:2px; border-radius:999px; background:var(--c-dark); display:block; }
 
-/* ═══════════════════════ HERO ═══════════════════════ */
+/* secao principal de apresentacao */
 .mhs-hero-wrap {
     background:linear-gradient(160deg, #0c1a4d 0%, #1d4ed8 52%, #0284c7 100%);
     position:relative;
@@ -171,7 +171,7 @@ button { font-family:inherit; }
 .mhs-hero-metric strong { display:block; font-size:.88rem; font-weight:700; color:#ffffff; margin-bottom:.15rem; }
 .mhs-hero-metric span   { color:rgba(255,255,255,.65); font-size:.76rem; }
 
-/* ── Screenshot da dashboard ── */
+/* Screenshot da dashboard */
 .mhs-hero-visual { position:relative; }
 
 .mhs-screenshot-wrap {
@@ -197,7 +197,7 @@ button { font-family:inherit; }
 .mhs-hero-float--tl { top:-14px; left:-16px; }
 .mhs-hero-float--br { bottom:-14px; right:-16px; }
 
-/* ── Sector stats (substitui badge grid) ── */
+/* numeros do setor da saude */
 .mhs-sector-stats {
     display:flex; flex-direction:column; gap:1rem;
     padding:1.5rem; border-radius:1rem;
@@ -221,7 +221,7 @@ button { font-family:inherit; }
 }
 .mhs-sector-stat span { font-size:.81rem; color:var(--c-muted); line-height:1.55; }
 
-/* ═══════════════════════ TRUST BAR ═══════════════════════ */
+/* barra de confianca */
 .mhs-trust-bar {
     background:#ffffff;
     border-bottom:1px solid var(--c-border);
@@ -243,7 +243,7 @@ button { font-family:inherit; }
 }
 .mhs-trust-items i { color:var(--c-blue); }
 
-/* ═══════════════════════ SECTIONS ═══════════════════════ */
+/* seccoes gerais */
 .mhs-section     { max-width:1280px; margin:0 auto; padding:5rem 1.5rem; }
 .mhs-section--alt {
     background:var(--c-bg);
@@ -275,7 +275,7 @@ button { font-family:inherit; }
     border:none;
 }
 
-/* ═══════════════════════ CARDS ═══════════════════════ */
+/* cartoes */
 .mhs-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; }
 .mhs-grid-4 {
     display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;
@@ -303,7 +303,7 @@ button { font-family:inherit; }
 }
 .mhs-info-card p, .mhs-feat-card p { color:var(--c-muted); font-size:.85rem; line-height:1.6; }
 
-/* ═══════════════════════ SPLIT ═══════════════════════ */
+/* seccao dividida em duas */
 .mhs-split { display:grid; grid-template-columns:1.1fr .9fr; gap:3.5rem; align-items:center; }
 .mhs-split-text h2 {
     font-family:'Sora',system-ui,sans-serif;
@@ -350,7 +350,7 @@ button { font-family:inherit; }
 .crit-med  { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
 .crit-low  { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
 
-/* ═══════════════════════ FORM ═══════════════════════ */
+/* formularios */
 .mhs-form {
     max-width:760px; margin:0 auto;
     display:flex; flex-direction:column; gap:1rem;
@@ -391,7 +391,7 @@ button { font-family:inherit; }
 .mhs-form-alert--success { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
 .mhs-form-alert--danger  { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
 
-/* ═══════════════════════ FOOTER ═══════════════════════ */
+/* rodape */
 .mhs-footer {
     background:linear-gradient(160deg, #0c1a4d 0%, #0f1f5c 100%);
     color:#94a3b8;
@@ -415,7 +415,7 @@ button { font-family:inherit; }
 .mhs-footer-cols strong { display:block; margin-bottom:.5rem; color:#e2e8f0; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; }
 .mhs-footer-cols p { font-size:.84rem; line-height:1.8; }
 
-/* ═══════════════════════ AUTH ═══════════════════════ */
+/* paginas de login */
 .mhs-auth-page {
     min-height:100vh; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:2rem 1.5rem;
@@ -496,12 +496,12 @@ button { font-family:inherit; }
 .mhs-auth-demo-btn--admin   { background:linear-gradient(135deg,#1d4ed8,#0284c7); box-shadow:0 6px 18px rgba(29,78,216,.3); }
 .mhs-auth-demo-btn--tecnico { background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 6px 18px rgba(99,102,241,.3); }
 
-/* ═══════════════════════ MOBILE NAV ═══════════════════════ */
+/* menu para telemovel */
 .mhs-mobile-tabbar  { display:none; }
 .mhs-mobile-sheet   { display:none; }
 .mhs-mobile-nav-backdrop { display:none; }
 
-/* ═══════════════════════ RESPONSIVE ═══════════════════════ */
+/* ajustes para ecras pequenos */
 @media (max-width:1100px) {
     .mhs-hero  { grid-template-columns:1fr; gap:2.5rem; padding-bottom:2rem; }
     .mhs-hero-visual { max-width:480px; margin:0 auto; }
@@ -611,9 +611,7 @@ button { font-family:inherit; }
     .mhs-auth-card { padding:1.1rem; border-radius:1.25rem; }
 }
 
-/* ════════════════════════════════════════════════════════════
-   LANDING PÚBLICA — modernização (efeitos fora da caixa)
-   ════════════════════════════════════════════════════════════ */
+/* pagina publica (efeitos visuais extra) */
 
 /* Aurora animada por trás do hero */
 .mhs-hero-wrap::after{
@@ -694,4 +692,35 @@ body.reveal-ready .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){
     .mhs-hero-wrap::after,.mhs-hero h1 strong,.mhs-hero-float{animation:none}
     body.reveal-ready .reveal{opacity:1;transform:none;transition:none}
+}
+
+/* pagina de login (so visual) */
+.mhs-auth-page{background:linear-gradient(135deg,#eef4ff 0%,#e8fbf4 100%)}
+.mhs-auth-blob{animation:mhsBlobFloat 15s ease-in-out infinite alternate}
+.mhs-auth-blob--2{animation-delay:-5s}
+.mhs-auth-blob--3{animation-delay:-9s}
+@keyframes mhsBlobFloat{0%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-26px) scale(1.08)}100%{transform:translate(-16px,14px) scale(1.03)}}
+
+.mhs-auth-card{background:rgba(255,255,255,.78);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    border:1px solid rgba(255,255,255,.7);box-shadow:0 40px 80px -30px rgba(13,40,90,.42);
+    animation:mhsAuthIn .6s cubic-bezier(.22,1,.36,1) both}
+@keyframes mhsAuthIn{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
+
+.mhs-auth-icon-circle{box-shadow:0 10px 26px rgba(29,78,216,.35);animation:mhsAuthPulse 3s ease-in-out infinite}
+@keyframes mhsAuthPulse{0%,100%{box-shadow:0 10px 26px rgba(29,78,216,.35)}50%{box-shadow:0 12px 36px rgba(2,132,199,.5)}}
+
+.mhs-auth-card-head h2{background:linear-gradient(100deg,#1d4ed8,#0284c7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+
+.mhs-input-wrap input{transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+.mhs-input-wrap input:focus{box-shadow:0 0 0 4px rgba(2,132,199,.14);border-color:#0284c7!important}
+.mhs-input-wrap:focus-within > i{color:#0284c7}
+
+.mhs-auth-submit{position:relative;overflow:hidden;background:linear-gradient(135deg,#1d4ed8,#0284c7)!important;box-shadow:0 10px 26px -8px rgba(29,78,216,.55)!important;transition:transform .18s ease,box-shadow .18s ease}
+.mhs-auth-submit:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(29,78,216,.6)!important}
+
+.mhs-auth-demo-btn{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.mhs-auth-demo-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+
+@media (prefers-reduced-motion: reduce){
+    .mhs-auth-blob,.mhs-auth-icon-circle,.mhs-auth-card{animation:none}
 }

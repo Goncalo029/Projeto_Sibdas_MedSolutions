@@ -1,17 +1,14 @@
 <?php
-/**
- * Nova garantia / contrato
- * Permite associar uma garantia ou contrato de manutenção a um equipamento.
- * É possível também anexar o documento PDF do contrato.
- */
-
+// pagina para criar uma garantia ou contrato de manutencao ligado a um equipamento
+// tambem da para anexar os PDF
 require_once __DIR__ . '/../../includes/funcoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// ─── Processar o formulário quando é submetido ────────────────────────────────
+// quando o formulario e enviado, valida e grava
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // le os campos do formulario
     $id_equipamento       = (int)($_POST['id_equipamento'] ?? 0);
     $data_inicio          = trim($_POST['data_inicio'] ?? '') ?: null;
     $data_fim             = trim($_POST['data_fim'] ?? '') ?: null;
@@ -20,15 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $entidade_responsavel = trim($_POST['entidade_responsavel'] ?? '');
     $periodicidade        = trim($_POST['periodicidade'] ?? '');
     $observacoes          = trim($_POST['observacoes'] ?? '');
+    // o equipamento e obrigatorio
     if (!$id_equipamento) {
         $_SESSION['error_message'] = 'O campo Equipamento é obrigatório.';
         header('Location: novo.php'); exit;
     }
+    // a data de fim tem de ser depois da de inicio
     if ($data_inicio && $data_fim && $data_fim < $data_inicio) {
         $_SESSION['error_message'] = 'A data de fim deve ser posterior à data de início.';
         header('Location: novo.php'); exit;
     }
-    // Importar ficheiros PDF (guardados na base de dados, opcionais)
+    // le os PDF que foram carregados (sao opcionais)
     $erro_upload = null;
     $pdf = mhs_ler_pdf_upload('ficheiro', $erro_upload);                   // documento do contrato
     if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header('Location: novo.php'); exit; }
@@ -36,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($erro_upload) { $_SESSION['error_message'] = $erro_upload; header('Location: novo.php'); exit; }
 
     try {
+        // grava a garantia/contrato (e os PDF) na base de dados
         mhs_ensure_garantia_doc_cols(mhs_pdo());
         $stmt = mhs_pdo()->prepare("INSERT INTO garantias_contratos (id_equipamento,data_inicio,data_fim,tem_contrato,tipo_contrato,entidade_responsavel,periodicidade,observacoes,nome_ficheiro,ficheiro_conteudo,ficheiro_mime,garantia_nome_ficheiro,garantia_ficheiro_conteudo,garantia_ficheiro_mime,criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())");
         $stmt->bindValue(1, $id_equipamento, PDO::PARAM_INT);
@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// vai buscar os equipamentos para a lista do formulario
 $pdo = mhs_pdo();
 $equipamentos = $pdo->query("SELECT id, codigo_inventario, designacao FROM equipamentos ORDER BY codigo_inventario")->fetchAll();
 

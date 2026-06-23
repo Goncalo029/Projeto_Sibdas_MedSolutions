@@ -1,20 +1,17 @@
 <?php
-/**
- * Detalhes do documento
- * Mostra a informação completa de um documento associado a um equipamento.
- * Permite descarregar o ficheiro PDF e aceder à edição do documento.
- */
-
+// pagina que mostra a informacao completa de um documento
+// da para descarregar o PDF e ir para a edicao
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra se tiver sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID do documento — se não existir, voltar à lista
+// vai buscar o id do documento ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// procura o documento e junta o equipamento e o fornecedor
 $stmt = mhs_pdo()->prepare("
     SELECT d.*, e.codigo_inventario, e.designacao, f.nome AS fornecedor
     FROM documentos d
@@ -24,9 +21,12 @@ $stmt = mhs_pdo()->prepare("
 ");
 $stmt->execute([$id]);
 $d = $stmt->fetch();
+// se o documento nao existir volta para a lista
 if (!$d) { header('Location: lista.php'); exit; }
 
+// funcao curta para mostrar as datas no formato dd/mm/aaaa
 $fmt = fn($x) => $x ? date('d/m/Y', strtotime($x)) : '—';
+// verifica se este documento tem mesmo um ficheiro guardado
 $temFicheiro = $d->ficheiro_conteudo !== null;
 
 $page_title = 'Documentos - Detalhes';

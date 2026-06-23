@@ -1,18 +1,22 @@
 <?php
+// pagina (so admin) com os detalhes de um utilizador
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 redirect_if_not_logged();
 require_admin();
 
+// vai buscar o id ao link, se nao tiver volta para a lista
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: lista.php'); exit; }
 
+// procura o utilizador e desencripta o email
 $stmt = mhs_pdo()->prepare("
     SELECT id, AES_DECRYPT(nome, ?) AS email, perfil AS profile, ultimo_acesso, criado_em
     FROM utilizadores WHERE id = ? AND eliminado_em IS NULL
 ");
 $stmt->execute([MYSQL_AES_KEY, $id]);
 $u = $stmt->fetch();
+// se nao existir volta para a lista
 if (!$u) { header('Location: lista.php'); exit; }
 
 $perfil_label = match ($u->profile) { 'admin' => 'Administrador', 'tecnico' => 'Técnico', default => ucfirst((string)$u->profile) };

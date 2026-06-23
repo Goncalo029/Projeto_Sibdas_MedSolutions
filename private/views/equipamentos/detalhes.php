@@ -1,21 +1,17 @@
 <?php
-/**
- * Detalhes do equipamento
- * Mostra toda a informação de um equipamento em abas: ficha técnica, aquisição,
- * localização, assistência técnica, documentos, garantias e histórico de movimentações.
- * Permite também fazer ações rápidas como mudar de localização ou registar manutenção.
- */
-
+// pagina com toda a informacao de um equipamento, organizada em separadores
+// (ficha, aquisicao, localizacao, assistencia, documentos, garantias e historico)
+// tambem deixa fazer acoes rapidas como mudar de sitio ou registar manutencao
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// so entra com sessao iniciada
 redirect_if_not_logged();
 
-// Obter o ID do equipamento — se não for válido, redirecionar para a lista
+// vai buscar o id ao link
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// ─── Processar ações dos formulários da própria ficha ────────────────────────
+// trata das acoes feitas nos formularios da propria ficha (manutencao, emprestimo, etc.)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     $accao = $_POST['accao'] ?? '';
     $tab   = $_POST['tab'] ?? 'ficha';
@@ -29,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
             $user = $_SESSION['user_email'] ?? null;
             $nome_eq = $eqRow->codigo_inventario . ' — ' . $eqRow->designacao;
 
-            // ── Manutenções ──
+            // acoes das manutencoes
             if ($accao === 'concluir_manutencao') {
                 if (mhs_concluir_manutencao($id)) {
                     $_SESSION['success_message'] = 'Manutenção confirmada. Equipamento marcado como Ativo.';
@@ -50,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                 }
                 $_SESSION['success_message'] = 'Manutenção registada com sucesso.' . ($em_curso ? ' Equipamento colocado em manutenção.' : '');
 
-            // ── Empréstimos ──
+            // acoes dos emprestimos
             } elseif ($accao === 'registar_emprestimo') {
                 $destino = (int)($_POST['id_localizacao_destino'] ?? 0);
                 $saida   = trim($_POST['data_saida'] ?? '') ?: date('Y-m-d');
@@ -91,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                     $_SESSION['error_message'] = 'Este empréstimo já não está ativo.';
                 }
 
-            // ── Movimentações (deslocação prolongada — NÃO altera a localização oficial) ──
+            // movimentacoes (deslocacao prolongada que nao muda a localizacao oficial)
             } elseif ($accao === 'registar_movimentacao') {
                 $destino = (int)($_POST['id_localizacao'] ?? 0);
                 $obs     = trim($_POST['observacoes'] ?? '');

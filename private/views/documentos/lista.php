@@ -1,24 +1,22 @@
 <?php
-/**
- * Lista de documentos
- * Mostra todos os documentos associados a equipamentos.
- * Permite ver, descarregar, editar e eliminar cada documento.
- */
-
+// pagina que mostra a lista de todos os documentos dos equipamentos
+// da para ver, descarregar, editar e apagar cada um
 require_once __DIR__ . '/../../includes/funcoes.php';
 require_once __DIR__ . '/../../includes/validacoes.php';
 
-// Verificar se o utilizador está autenticado
+// se nao tiver sessao iniciada manda para o login
 redirect_if_not_logged();
 
 $page_title = 'Documentos - Lista';
 $documentos = [];
 $erro_bd    = '';
+// fica true se vier o filtro de validade proxima no link
 $f_validade = ($_GET['validade'] ?? '') === 'proxima';
 
-// ─── Carregar documentos com o equipamento associado ─────────────────────────
+// vai buscar os documentos a base de dados (junta o equipamento de cada um)
 try {
     $where = "d.eliminado_em IS NULL";
+    // se o filtro estiver ligado, so mostra os que vencem nos proximos 30 dias
     if ($f_validade) {
         $where .= " AND d.data_validade IS NOT NULL AND d.data_validade BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
     }
@@ -32,16 +30,19 @@ try {
         ORDER BY d.data_validade ASC, d.data_documento DESC, d.nome_documento
     ")->fetchAll();
 } catch (PDOException $e) {
+    // se a query falhar guarda a mensagem de erro
     $erro_bd = 'Nao foi possivel carregar documentos.';
 }
 
-// ─── Exportação CSV ──────────────────────────────────────────────────────────
+// se clicaram em "Exportar CSV", gera o ficheiro e termina aqui
 if (($_GET['export'] ?? '') === 'csv' && !$erro_bd) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="documentos_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputs($out, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+    fputs($out, "\xEF\xBB\xBF"); // o BOM faz o Excel abrir os acentos certos
+    // primeira linha do CSV com os titulos das colunas
     fputcsv($out, ['Equipamento', 'Tipo', 'Nome do documento', 'Data', 'Validade', 'Tem PDF']);
+    // escreve uma linha no CSV por cada documento
     foreach ($documentos as $d) {
         fputcsv($out, [
             $d->codigo_inventario . ' - ' . $d->designacao,
@@ -92,6 +93,7 @@ include __DIR__ . '/../../includes/header.php';
           <tr><th>Equipamento</th><th>Tipo</th><th>Nome</th><th>Data</th><th>Validade</th><th>PDF</th><th>Acoes</th></tr>
         </thead>
         <tbody>
+          <?php // mostra uma linha na tabela por cada documento ?>
           <?php foreach ($documentos as $documento) : ?>
             <tr>
               <td><?= esc($documento->codigo_inventario . ' - ' . $documento->designacao) ?></td>

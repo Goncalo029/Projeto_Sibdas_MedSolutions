@@ -1,6 +1,6 @@
-    </div><!-- /.mhs-main-content -->
+    </div><!-- fim do conteudo principal -->
 
-<!-- Modal de confirmacao de apagar -->
+<!-- janela que pede confirmacao antes de apagar -->
 <div class="modal fade" id="mhsDeleteModal" tabindex="-1" aria-labelledby="mhsDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

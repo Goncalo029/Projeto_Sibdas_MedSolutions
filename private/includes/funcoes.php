@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
-// Captura exceções não tratadas → modal de erro em vez de página em branco
+// apanha erros nao tratados e mostra um aviso bonito em vez de uma pagina em branco
 if (!ob_get_level()) { ob_start(); }
 set_exception_handler(static function (\Throwable $e): void {
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -24,6 +24,7 @@ set_exception_handler(static function (\Throwable $e): void {
     exit;
 });
 
+// faz a ligacao a base de dados so uma vez e devolve-a sempre que for preciso
 function mhs_pdo() {
     static $pdo = null;
 
@@ -42,16 +43,7 @@ function mhs_pdo() {
     return $pdo;
 }
 
-/**
- * Registar uma alteração no histórico global (parte privada).
- * Nunca interrompe a operação principal: falha em silêncio.
- *
- * @param string   $entidade      ex: 'equipamento', 'categoria', 'fornecedor'
- * @param int|null $entidade_id   id do registo afetado
- * @param string   $entidade_nome rótulo legível (ex: 'EQ-001 — Monitor')
- * @param string   $acao          'criar' | 'editar' | 'apagar'
- * @param string   $detalhe       descrição opcional (campos alterados, etc.)
- */
+// guarda uma alteracao no historico (criar/editar/apagar); se falhar nao chateia
 function mhs_historico(string $entidade, ?int $entidade_id, string $entidade_nome, string $acao, string $detalhe = ''): void {
     try {
         mhs_pdo()->prepare(
@@ -70,10 +62,7 @@ function mhs_historico(string $entidade, ?int $entidade_id, string $entidade_nom
     }
 }
 
-/**
- * Comparar dois registos (arrays) e devolver descrição dos campos alterados.
- * Usado para detalhar edições no histórico.
- */
+// compara o antes e o depois e diz que campos mudaram (para o historico)
 function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): string {
     $alteracoes = [];
     foreach ($depois as $campo => $novo) {
@@ -86,11 +75,7 @@ function mhs_diff_campos(array $antes, array $depois, array $rotulos = []): stri
     return implode(' · ', $alteracoes);
 }
 
-/**
- * Ler um PDF carregado e devolver o seu CONTEÚDO (para guardar na base de dados).
- * Devolve ['conteudo' => binário, 'mime' => 'application/pdf', 'nome' => nomeOriginal]
- * ou null se não houve upload válido.
- */
+// le um PDF carregado e devolve o conteudo para guardar na base de dados (ou null se nao houver)
 function mhs_ler_pdf_upload(string $campo, ?string &$erro = null): ?array {
     if (empty($_FILES[$campo]['name']) || ($_FILES[$campo]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return null; // sem ficheiro — não é erro
@@ -115,10 +100,7 @@ function mhs_ler_pdf_upload(string $campo, ?string &$erro = null): ?array {
     return ['conteudo' => $bin, 'mime' => 'application/pdf', 'nome' => basename($_FILES[$campo]['name'])];
 }
 
-/**
- * Ler vários PDFs carregados (campo com name="campo[]") e devolver os conteúdos.
- * Devolve um array de ['conteudo','mime','nome'] (apenas os PDF válidos).
- */
+// le varios PDF carregados de uma vez (name="campo[]") e devolve os que sao validos
 function mhs_ler_pdfs_upload(string $campo): array {
     $out = [];
     if (empty($_FILES[$campo]) || !is_array($_FILES[$campo]['name'])) {
@@ -136,9 +118,7 @@ function mhs_ler_pdfs_upload(string $campo): array {
     return $out;
 }
 
-/**
- * Garantir que existe uma coluna numa tabela (adiciona-a se faltar). Idempotente.
- */
+// adiciona uma coluna a uma tabela so se ela ainda nao existir
 function mhs_ensure_col(PDO $pdo, string $table, string $col, string $definition): void {
     try {
         $st = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
@@ -149,29 +129,20 @@ function mhs_ensure_col(PDO $pdo, string $table, string $col, string $definition
     } catch (PDOException) {}
 }
 
-/**
- * Garantir as colunas do documento da Garantia em garantias_contratos.
- * (ficheiro_* guarda o Contrato; garantia_* guarda a Garantia.)
- */
+// garante que existem as colunas dos ficheiros na tabela garantias_contratos
+// (ficheiro_* guarda o contrato; garantia_* guarda a garantia)
 function mhs_ensure_garantia_doc_cols(PDO $pdo): void {
     mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_nome_ficheiro',     '`garantia_nome_ficheiro` VARCHAR(255) NULL');
     mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_ficheiro_conteudo', '`garantia_ficheiro_conteudo` LONGBLOB NULL');
     mhs_ensure_col($pdo, 'garantias_contratos', 'garantia_ficheiro_mime',     '`garantia_ficheiro_mime` VARCHAR(100) NULL');
 }
 
-/**
- * Partilhar o PDF do "Contrato de manutenção" do equipamento com a pasta
- * Garantias-Contrato: o mesmo ficheiro fica nos dois lados. Atualiza o registo
- * de garantia mais recente do equipamento ou cria um novo se ainda não existir.
- *
- * @param PDO   $pdo
- * @param int   $id_equipamento
- * @param array $pdf  ['nome' => string, 'conteudo' => binário, 'mime' => string]
- */
+// partilha o PDF do contrato do equipamento com a area das garantias/contratos
+// (o mesmo ficheiro fica nos dois lados); atualiza o registo mais recente ou cria um novo
 function mhs_sincronizar_contrato_pdf(PDO $pdo, int $id_equipamento, array $pdf): void {
     if (empty($pdf['conteudo'])) { return; }
     try {
-        // Existe já uma garantia/contrato para este equipamento?
+        // ve se ja existe uma garantia/contrato para este equipamento
         $st = $pdo->prepare("SELECT id FROM garantias_contratos WHERE id_equipamento = ? AND eliminado_em IS NULL ORDER BY id DESC LIMIT 1");
         $st->execute([$id_equipamento]);
         $gid = $st->fetchColumn();
@@ -201,10 +172,7 @@ function mhs_sincronizar_contrato_pdf(PDO $pdo, int $id_equipamento, array $pdf)
     }
 }
 
-/**
- * Partilhar o PDF da Garantia com a pasta Garantias-Contrato (colunas garantia_*).
- * Atualiza o registo mais recente do equipamento ou cria um novo se faltar.
- */
+// igual ao de cima mas para o PDF da garantia (colunas garantia_*)
 function mhs_sincronizar_garantia_pdf(PDO $pdo, int $id_equipamento, array $pdf): void {
     if (empty($pdf['conteudo'])) { return; }
     mhs_ensure_garantia_doc_cols($pdo);
@@ -236,10 +204,7 @@ function mhs_sincronizar_garantia_pdf(PDO $pdo, int $id_equipamento, array $pdf)
     }
 }
 
-/**
- * Tornar um equipamento Ativo (ex.: estava Inativo/Abatido). Regista a
- * movimentação de estado e o histórico. Usado da lista e dos detalhes.
- */
+// torna um equipamento ativo outra vez (estava inativo/abatido) e regista a mudanca
 function mhs_ativar_equipamento(int $id): bool {
     try {
         $pdo = mhs_pdo();
@@ -260,11 +225,7 @@ function mhs_ativar_equipamento(int $id): bool {
     }
 }
 
-/**
- * Confirmar/concluir a manutenção de um equipamento: fecha intervenções
- * abertas, atualiza o plano preventivo e repõe o equipamento como Ativo.
- * Usado a partir da lista e da ficha de detalhes (sem ficheiros separados).
- */
+// conclui a manutencao de um equipamento: fecha intervencoes abertas e poe-no outra vez ativo
 function mhs_concluir_manutencao(int $id): bool {
     try {
         $pdo = mhs_pdo();
@@ -309,9 +270,7 @@ function mhs_concluir_manutencao(int $id): bool {
     }
 }
 
-/**
- * Verificar se utilizador está autenticado
- */
+// diz se o utilizador tem sessao iniciada
 function is_logged_in() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -320,9 +279,7 @@ function is_logged_in() {
     return !empty($_SESSION['logged_in'] ?? false);
 }
 
-/**
- * Redirecionar se não estiver autenticado
- */
+// se nao tiver sessao iniciada, manda para a pagina de login
 function redirect_if_not_logged() {
     if (!is_logged_in()) {
         header('Location: ' . BASE_URL . '/public/login.php');
@@ -330,24 +287,17 @@ function redirect_if_not_logged() {
     }
 }
 
-/**
- * Perfil do utilizador autenticado.
- */
+// devolve o perfil do utilizador com sessao (admin ou tecnico)
 function mhs_profile(): string {
     return $_SESSION['profile'] ?? '';
 }
 
-/**
- * É administrador?
- */
+// diz se o utilizador e administrador
 function is_admin(): bool {
     return mhs_profile() === 'admin';
 }
 
-/**
- * Bloquear acesso a quem não for administrador (ações sensíveis: apagar, mensagens, etc.).
- * Redireciona para o dashboard com mensagem de erro.
- */
+// bloqueia o acesso a quem nao for admin (acoes sensiveis como apagar) e manda para o dashboard
 function require_admin(): void {
     if (!is_admin()) {
         $_SESSION['error_message'] = 'Sem permissões. Apenas administradores podem executar esta ação.';
@@ -356,9 +306,7 @@ function require_admin(): void {
     }
 }
 
-/**
- * Redirecionar se estiver autenticado
- */
+// se ja tiver sessao iniciada, manda logo para o dashboard
 function redirect_if_logged() {
     if (is_logged_in()) {
         header('Location: ' . BASE_URL . '/private/home.php');
@@ -366,9 +314,7 @@ function redirect_if_logged() {
     }
 }
 
-/**
- * Obter badge de estado
- */
+// devolve um badge colorido conforme o estado do equipamento
 function get_estado_badge($estado) {
     $estado = strtolower(trim($estado ?? ''));
     
@@ -383,9 +329,7 @@ function get_estado_badge($estado) {
     return '<span class="badge bg-light text-dark">' . htmlspecialchars($estado) . '</span>';
 }
 
-/**
- * Obter badge de criticidade
- */
+// devolve um badge colorido conforme a criticidade do equipamento
 function get_criticidade_badge($criticidade) {
     $criticidade = strtolower(trim($criticidade ?? ''));
     
@@ -402,16 +346,12 @@ function get_criticidade_badge($criticidade) {
     return '<span class="badge bg-light text-dark">' . htmlspecialchars($criticidade) . '</span>';
 }
 
-/**
- * Escape HTML
- */
+// escapa o texto para mostrar em HTML em seguranca (evita injecoes)
 function esc($text) {
     return htmlspecialchars($text ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Redirecionar com mensagem
- */
+// redireciona para uma pagina deixando uma mensagem guardada na sessao
 function redirect_with_message($url, $message, $type = 'success') {
     $_SESSION['message'] = $message;
     $_SESSION['message_type'] = $type;
@@ -419,9 +359,7 @@ function redirect_with_message($url, $message, $type = 'success') {
     exit;
 }
 
-/**
- * Obter e limpar mensagem de sessão
- */
+// vai buscar a mensagem guardada na sessao, apaga-a e devolve o alerta em HTML
 function get_message() {
     $message = $_SESSION['message'] ?? null;
     $type = $_SESSION['message_type'] ?? 'info';
@@ -441,18 +379,14 @@ function get_message() {
     return '';
 }
 
-/**
- * Encriptar string com AES-256-CBC (para URLs)
- */
+// encripta texto com AES-256-CBC (para esconder valores nos links)
 function aes_encrypt($data) {
     $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length(OPENSSL_METHOD));
     $encrypted = openssl_encrypt($data, OPENSSL_METHOD, OPENSSL_KEY, 0, $iv);
     return base64_encode($iv . $encrypted);
 }
 
-/**
- * Desencriptar string com AES-256-CBC (de URLs)
- */
+// desencripta o texto AES que veio nos links
 function aes_decrypt($data) {
     try {
         $data = base64_decode($data);
@@ -465,12 +399,10 @@ function aes_decrypt($data) {
     }
 }
 
-/**
- * Validações gerais (placeholder para extensão futura)
- */
+// validacoes gerais dos equipamentos (fica aqui para usar no futuro)
 function validate_equipment_fields($data) {
     $errors = [];
-    // Implementar validações conforme necessário
+    // depois pode-se acrescentar aqui as validacoes que faltarem
     return $errors;
 }
 ?>
